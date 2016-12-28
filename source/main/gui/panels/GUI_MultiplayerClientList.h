@@ -71,7 +71,7 @@ protected:
 
 	MyGUI::WindowPtr netmsgwin;
 	MyGUI::StaticTextPtr netmsgtext;
-	
+
 	void updateSlot(player_row_t *row, user_info_t c, bool self);
 
 	client_t *clients;
@@ -80,9 +80,10 @@ protected:
 	static const int sidebarWidth = 250;
 };
 
+} // namespace GUI
+} // namespace RoR
+
 #endif // __GUI_Mp_H_
 #endif // USE_SOCKETW
 #endif // USE_MYGUI
 
-} // namespace GUI
-} // namespace RoR

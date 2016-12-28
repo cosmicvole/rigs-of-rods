@@ -283,11 +283,14 @@ void MainThread::Go()
 
 			if (previous_application_state == App::APP_STATE_SIMULATION)
 			{
+//cosmic vole added fix for non SocketW builds 24 December 2016
+#ifdef USE_SOCKETW
                 if (App::GetActiveMpState() == App::MP_STATE_CONNECTED)
                 {
                     RoR::Networking::Disconnect();
                     App::GetGuiManager()->SetVisible_MpClientList(false);
                 }
+#endif
 				UnloadTerrain();
 				gEnv->cameraManager->OnReturnToMainMenu();
 				/* Hide top menu */
@@ -676,6 +679,8 @@ void MainThread::EnterMainMenuLoop()
 
 		RoR::App::GetOgreSubsystem()->GetOgreRoot()->renderOneFrame();
 
+//cosmic vole added fix for non SocketW builds 24 December 2016
+#ifdef USE_SOCKETW
 		if ((App::GetActiveMpState() == App::MP_STATE_CONNECTED) && RoR::Networking::CheckError())
 		{
 			Ogre::String title = Ogre::UTFString(_L("Network fatal error: ")).asUTF8();
@@ -686,6 +691,7 @@ void MainThread::EnterMainMenuLoop()
 			RoR::App::GetGuiManager()->GetMainSelector()->Hide();
 			RoR::App::GetGuiManager()->GetMainSelector()->Show(LT_Terrain);
 		}
+#endif
 
 		if (!rw->isActive() && rw->isVisible())
 			rw->update(); // update even when in background !
@@ -750,6 +756,8 @@ void MainThread::EnterGameplayLoop()
 
 		RoR::App::GetOgreSubsystem()->GetOgreRoot()->renderOneFrame();
 
+//cosmic vole added fix for non SocketW builds 24 December 2016
+#ifdef USE_SOCKETW
         if ((App::GetActiveMpState() == App::MP_STATE_CONNECTED) && RoR::Networking::CheckError())
         {
             Ogre::String title = Ogre::UTFString(_L("Network fatal error: ")).asUTF8();
@@ -757,6 +765,7 @@ void MainThread::EnterGameplayLoop()
             App::GetGuiManager()->ShowMessageBox(title, msg, true, "OK", true, false, "");
             App::SetPendingAppState(App::APP_STATE_MAIN_MENU);
         }
+#endif
 
 		if (!rw->isActive() && rw->isVisible())
 			rw->update(); // update even when in background !

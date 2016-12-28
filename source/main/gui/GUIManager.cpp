@@ -82,7 +82,10 @@ struct GuiManagerImpl
     GUI::GameChatBox            panel_ChatBox;
     GUI::RigSpawnerReportWindow panel_SpawnerReport;
     GUI::VehicleDescription     panel_VehicleDescription;
+//cosmic vole added fix for non SocketW builds 24 December 2016
+#ifdef USE_SOCKETW	
     GUI::MpClientList           panel_MpClientList;
+#endif
     GUI::FrictionSettings       panel_FrictionSettings;
     GUI::TextureToolWindow      panel_TextureToolWindow;
     GUI::LoadingWindow          panel_LoadingWindow;
@@ -102,7 +105,10 @@ void GUIManager::SetVisible_MultiplayerSelector (bool v) { m_impl->panel_Multipl
 void GUIManager::SetVisible_ChatBox             (bool v) { m_impl->panel_ChatBox            .SetVisible(v); }
 void GUIManager::SetVisible_SpawnerReport       (bool v) { m_impl->panel_SpawnerReport      .SetVisible(v); }
 void GUIManager::SetVisible_VehicleDescription  (bool v) { m_impl->panel_VehicleDescription .SetVisible(v); }
+//cosmic vole added fix for non SocketW builds 24 December 2016
+#ifdef USE_SOCKETW
 void GUIManager::SetVisible_MpClientList        (bool v) { m_impl->panel_MpClientList       .SetVisible(v); }
+#endif
 void GUIManager::SetVisible_FrictionSettings    (bool v) { m_impl->panel_FrictionSettings   .SetVisible(v); }
 void GUIManager::SetVisible_TextureToolWindow   (bool v) { m_impl->panel_TextureToolWindow  .SetVisible(v); }
 void GUIManager::SetVisible_LoadingWindow       (bool v) { m_impl->panel_LoadingWindow      .SetVisible(v); }
@@ -120,7 +126,10 @@ bool GUIManager::IsVisible_MainSelector         () { return m_impl->panel_MainSe
 bool GUIManager::IsVisible_ChatBox              () { return m_impl->panel_ChatBox            .IsVisible(); }
 bool GUIManager::IsVisible_SpawnerReport        () { return m_impl->panel_SpawnerReport      .IsVisible(); }
 bool GUIManager::IsVisible_VehicleDescription   () { return m_impl->panel_VehicleDescription .IsVisible(); }
+//cosmic vole added fix for non SocketW builds 24 December 2016
+#ifdef USE_SOCKETW
 bool GUIManager::IsVisible_MpClientList         () { return m_impl->panel_MpClientList       .IsVisible(); }
+#endif
 bool GUIManager::IsVisible_FrictionSettings     () { return m_impl->panel_FrictionSettings   .IsVisible(); }
 bool GUIManager::IsVisible_TextureToolWindow    () { return m_impl->panel_TextureToolWindow  .IsVisible(); }
 bool GUIManager::IsVisible_LoadingWindow        () { return m_impl->panel_LoadingWindow      .IsVisible(); }
@@ -131,7 +140,10 @@ bool GUIManager::IsVisible_Console              () { return m_impl->panel_GameCo
 Console*                    GUIManager::GetConsole()           { return &m_impl->panel_GameConsole         ; }
 GUI::MainSelector*          GUIManager::GetMainSelector()      { return &m_impl->panel_MainSelector        ; }
 GUI::LoadingWindow*         GUIManager::GetLoadingWindow()     { return &m_impl->panel_LoadingWindow       ; }
+//cosmic vole added fix for non SocketW builds 24 December 2016
+#ifdef USE_SOCKETW
 GUI::MpClientList*          GUIManager::GetMpClientList()      { return &m_impl->panel_MpClientList        ; }
+#endif
 GUI::MultiplayerSelector*   GUIManager::GetMpSelector()        { return &m_impl->panel_MultiplayerSelector ; }
 GUI::FrictionSettings*      GUIManager::GetFrictionSettings()  { return &m_impl->panel_FrictionSettings    ; }
 GUI::SimUtils*              GUIManager::GetSimUtils()          { return &m_impl->panel_SimUtils            ; }
@@ -384,7 +396,10 @@ void GUIManager::ReflectGameState()
         m_impl->panel_VehicleDescription .SetVisible(false);
         m_impl->panel_SpawnerReport      .SetVisible(false);
         m_impl->panel_SimUtils           .SetBaseVisible(false);
+//cosmic vole added fix for non SocketW builds 24 December 2016
+#ifdef USE_SOCKETW		
         m_impl->panel_MpClientList       .SetVisible(mp_state == App::MP_STATE_CONNECTED);
+#endif
         return;
     }
     if (app_state == App::APP_STATE_SIMULATION)

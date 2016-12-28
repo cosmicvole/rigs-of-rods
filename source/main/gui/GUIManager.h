@@ -60,7 +60,10 @@ public:
     void SetVisible_ChatBox             (bool visible);
     void SetVisible_SpawnerReport       (bool visible);
     void SetVisible_VehicleDescription  (bool visible);
+//cosmic vole added fix for non SocketW builds 24 December 2016
+#ifdef USE_SOCKETW	
     void SetVisible_MpClientList        (bool visible);
+#endif	
     void SetVisible_FrictionSettings    (bool visible);
     void SetVisible_TextureToolWindow   (bool visible);
     void SetVisible_LoadingWindow       (bool visible);
@@ -90,7 +93,10 @@ public:
     Console*                    GetConsole();
     GUI::MainSelector*          GetMainSelector();
     GUI::LoadingWindow*         GetLoadingWindow();
+//cosmic vole added fix for non SocketW builds 24 December 2016
+#ifdef USE_SOCKETW	
     GUI::MpClientList*          GetMpClientList();
+#endif	
     GUI::MultiplayerSelector*   GetMpSelector();
     GUI::FrictionSettings*      GetFrictionSettings();
     GUI::SimUtils*              GetSimUtils();
