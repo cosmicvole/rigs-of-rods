@@ -1,4 +1,4 @@
-﻿/*                                                  
+﻿/*
     This source file is part of Rigs of Rods
 
     Copyright 2005-2012 Pierre-Michel Ricordel
@@ -13,11 +13,11 @@
 
     Rigs of Rods is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifdef USE_ANGELSCRIPT
@@ -138,7 +138,6 @@ void VehicleAI::updateWaypoint()
     current_waypoint = waypoints[current_waypoint_id];
 }
 
-
 void VehicleAI::update(float dt, int doUpdate)
 {
     if (is_waiting)
@@ -159,11 +158,9 @@ void VehicleAI::update(float dt, int doUpdate)
         return;
     }
 
-
     Vector3 TargetPosition = current_waypoint;
     TargetPosition.y = 0; //Vector3 > Vector2
     Quaternion TargetOrientation = Quaternion::ZERO;
-
 
     mAgentPosition.y = 0; //Vector3 > Vector2
     Quaternion mAgentOrientation = Quaternion(Radian(beam->getHeadingDirectionAngle()), Vector3::NEGATIVE_UNIT_Y);
@@ -176,10 +173,6 @@ void VehicleAI::update(float dt, int doUpdate)
     Vector3 mTargetHeading = TargetOrientation * TargetPosition;
     mAgentHeading.normalise();
     mTargetHeading.normalise();
-
-    /* Orientation control - Vector3::UNIT_Y is common up vector.
-    Vector3 mAgentVO = mAgentOrientation.Inverse() * Vector3::UNIT_Y;
-    Vector3 mTargetVO = TargetOrientation * Vector3::UNIT_Y;*/
 
     // Compute new torque scalar (-1.0 to 1.0) based on heading vector to target.
     Vector3 mSteeringForce = mAgentOrientation.Inverse() * mVectorToTarget;
@@ -199,7 +192,6 @@ void VehicleAI::update(float dt, int doUpdate)
 
     // actually steer
     beam->hydrodircommand = mYaw;//mYaw
-
 
     if (beam->engine)
     {
@@ -246,6 +238,7 @@ void VehicleAI::update(float dt, int doUpdate)
             }
         }
     }
+<<<<<<< HEAD
 
 
 #if 0
@@ -337,6 +330,8 @@ void VehicleAI::update(float dt, int doUpdate)
             return true;
         }
         */
+=======
+>>>>>>> upstream/master
 }
 
 #endif // USE_ANGELSCRIPT

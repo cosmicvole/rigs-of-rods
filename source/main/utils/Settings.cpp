@@ -39,10 +39,9 @@
 #include <mach-o/dyld.h>
 #endif
 
-#define _L
-
 #include "Application.h"
 #include "ErrorUtils.h"
+#include "Language.h"
 #include "PlatformUtils.h"
 #include "RoRVersion.h"
 #include "SHA1.h"
@@ -97,8 +96,34 @@ CSimpleOpt::SOption cmdline_options[] = {
     SO_END_OF_OPTIONS
 };
 
-using namespace RoR;
+namespace RoR {
+
+void ShowCommandLineUsage()
+{
+    ErrorUtils::ShowInfo(
+        _L("Command Line Arguments"), 
+        _L("--help (this)"                              "\n"
+            "-map <map> (loads map on startup)"         "\n"
+            "-truck <truck> (loads truck on startup)"   "\n"
+            "-setup shows the ogre configurator"        "\n"
+            "-version shows the version information"    "\n"
+            "-enter enters the selected truck"          "\n"
+            "-userpath <path> sets the user directory"  "\n"
+            "For example: RoR.exe -map oahu -truck semi"));
+}
+
+void ShowVersion()
+{
+    ErrorUtils::ShowInfo(_L("Version Information"), getVersionString());
+#ifdef __GNUC__
+    printf(" * built with gcc %d.%d.%d\n", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+#endif //__GNUC__
+}
+
+}
+
 using namespace Ogre;
+using namespace RoR;
 
 bool FileExists(const char *path)
 {
@@ -626,6 +651,7 @@ static const char* CONF_REPLAY_MODE     = "Replay mode";
 static const char* CONF_REPLAY_LENGTH   = "Replay length";
 static const char* CONF_REPLAY_STEPPING = "Replay Steps per second";
 static const char* CONF_POS_STORAGE     = "Position Storage";
+static const char* CONF_LANGUAGE_SHORT  = "Language Short";
 
 #define I(_VAL_)  Ogre::StringConverter::parseInt (_VAL_)
 #define F(_VAL_)  Ogre::StringConverter::parseReal(_VAL_)
@@ -703,6 +729,7 @@ bool Settings::ParseGlobalVarSetting(std::string const & k, std::string const & 
     if (k == CONF_REPLAY_LENGTH   ) { App::SetSimReplayLength      (I(v)); return true; }
     if (k == CONF_REPLAY_STEPPING ) { App::SetSimReplayStepping    (I(v)); return true; }
     if (k == CONF_POS_STORAGE     ) { App::SetSimPositionStorage   (B(v)); return true; }
+    if (k == CONF_LANGUAGE_SHORT  ) { App::SetAppLocale            (S(v)); return true; }
 
     return false;
 }
@@ -965,6 +992,7 @@ void Settings::SaveSettings()
     f << CONF_REPLAY_LENGTH   << "=" << _(App::GetSimReplayLength     ()) << endl;
     f << CONF_REPLAY_STEPPING << "=" << _(App::GetSimReplayStepping   ()) << endl;
     f << CONF_POS_STORAGE     << "=" << B(App::GetSimPositionStorage  ()) << endl;
+    f << CONF_LANGUAGE_SHORT  << "=" << _(App::GetAppLocale           ()) << endl;
 
     // Append misc legacy entries
     f << endl << "; Misc" << endl;

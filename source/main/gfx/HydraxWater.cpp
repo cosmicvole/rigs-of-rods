@@ -1,21 +1,21 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
-Copyright 2013-2016 Petr Ohlidal
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
+    Copyright 2013-2016 Petr Ohlidal
 
-For more information, see http://www.rigsofrods.org/
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    For more information, see http://www.rigsofrods.org/
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "HydraxWater.h"
@@ -25,19 +25,19 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 #include "SkyManager.h"
 
 #ifdef USE_CAELUM
-  #include <Caelum.h>
+#include <Caelum.h>
 #endif // USE_CAELUM
 
 using namespace Ogre;
 
 // HydraxWater
-HydraxWater::HydraxWater(const Ogre::ConfigFile &mTerrainConfig, Ogre::String configFile):
-waternoise(0)
-, mHydrax(0)
-, waterHeight(5)
-, waveHeight(0)
-, mRenderCamera(gEnv->mainCamera)
-, CurrentConfigFile(configFile)
+HydraxWater::HydraxWater(const Ogre::ConfigFile& mTerrainConfig, Ogre::String configFile):
+    waternoise(0)
+    , mHydrax(0)
+    , waterHeight(5)
+    , waveHeight(0)
+    , mRenderCamera(gEnv->mainCamera)
+    , CurrentConfigFile(configFile)
 {
     waterHeight = PARSEREAL(mTerrainConfig.getSetting("WaterLine", "General"));
 
@@ -71,9 +71,9 @@ void HydraxWater::InitHydrax()
     mHydrax->setModule(static_cast<Hydrax::Module::Module*>(mModule));
 
     mHydrax->loadCfg(CurrentConfigFile);
-    
+
     // Choose shader language based on renderer (HLSL=0, CG=1, GLSL=2)
-    if(Root::getSingleton().getRenderSystem()->getName() == "Direct3D9 Rendering Subsystem" || Root::getSingleton().getRenderSystem()->getName() == "Direct3D11 Rendering Subsystem")
+    if (Root::getSingleton().getRenderSystem()->getName() == "Direct3D9 Rendering Subsystem" || Root::getSingleton().getRenderSystem()->getName() == "Direct3D11 Rendering Subsystem")
     {
         mHydrax->setShaderMode(static_cast<Hydrax::MaterialManager::ShaderMode>(0));
     }
@@ -81,7 +81,6 @@ void HydraxWater::InitHydrax()
     {
         mHydrax->setShaderMode(static_cast<Hydrax::MaterialManager::ShaderMode>(2));
     }
-
 
     mHydrax->create();
     mHydrax->setPosition(Ogre::Vector3(0, waterHeight, 0));
@@ -94,7 +93,7 @@ bool HydraxWater::isUnderWater(Ogre::Vector3 pos)
     return false;
 }
 
-void HydraxWater::setCamera(Ogre::Camera *cam)
+void HydraxWater::setCamera(Ogre::Camera* cam)
 {
 }
 
@@ -157,14 +156,14 @@ float HydraxWater::getHeightWaves(Vector3 pos)
 
 Vector3 HydraxWater::getVelocity(Vector3 pos)
 {
-    if (!RoR::App::GetGfxWaterUseWaves()) return Vector3(0, 0, 0);
+    if (!RoR::App::GetGfxWaterUseWaves())
+        return Vector3(0, 0, 0);
 
     return Vector3(0, 0, 0); //TODO
 }
 
 void HydraxWater::updateReflectionPlane(float h)
 {
-
 }
 
 void HydraxWater::setFadeColour(ColourValue ambient)
@@ -188,5 +187,4 @@ void HydraxWater::framestep(float dt)
 
 void HydraxWater::moveTo(float centerheight)
 {
-
 }

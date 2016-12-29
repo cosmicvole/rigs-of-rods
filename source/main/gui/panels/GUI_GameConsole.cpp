@@ -83,7 +83,6 @@ Console::Console()
 
 Console::~Console()
 {
-    
 }
 
 void Console::notifyWindowButtonPressed(MyGUI::WidgetPtr _sender, const std::string& _name)
@@ -109,17 +108,17 @@ void Console::frameEntered(float dt)
     messageUpdate(dt);
 }
 
-void Console::putMessage( int type, int sender_uid, UTFString txt, String icon, unsigned long ttl, bool forcevisible )
+void Console::putMessage(int type, int sender_uid, UTFString txt, String icon, unsigned long ttl, bool forcevisible)
 {
     ConsoleMessage t;
 
-    t.type       = type;
+    t.type = type;
     t.sender_uid = sender_uid;
-    t.time       = Root::getSingleton().getTimer()->getMilliseconds();
-    t.ttl        = ttl;
+    t.time = Root::getSingleton().getTimer()->getMilliseconds();
+    t.ttl = ttl;
     t.forcevisible = forcevisible;
     //strncpy(t.txt,  txt.c_str(), 2048);
-    t.txt        = txt;
+    t.txt = txt;
     strncpy(t.icon, icon.c_str(), 50);
     //t.channel = "default";
 
@@ -135,7 +134,7 @@ void Console::messageUpdate(float dt)
     int r = 0;
     if (results > 0)
     {
-        for (int i = 0; i < results; i++, r++)
+        for (int i = 0; i < results; i++ , r++)
         {
             TextCol = "#FFFFFF";
             if (tmpWaitingMessages[i].sender_uid == CONSOLE_TITLE)
@@ -149,7 +148,6 @@ void Console::messageUpdate(float dt)
 
             ConsoleText += TextCol + tmpWaitingMessages[i].txt + "\n";
 
-
             m_Console_MainBox->setMaxTextLength(ConsoleText.length() + 1);
 
             //if (getVisible())
@@ -161,7 +159,7 @@ void Console::messageUpdate(float dt)
 #if OGRE_VERSION < ((1 << 16) | (8 << 8 ) | 0)
 void Console::messageLogged(const String& message, LogMessageLevel lml, bool maskDebug, const String &logName)
 #else
-void Console::messageLogged(const String& message, LogMessageLevel lml, bool maskDebug, const String &logName, bool& skipThisMessage)
+void Console::messageLogged(const String& message, LogMessageLevel lml, bool maskDebug, const String& logName, bool& skipThisMessage)
 #endif // OGRE_VERSION
 {
     String msg = message;
@@ -197,7 +195,7 @@ void Console::eventButtonPressed(MyGUI::Widget* _sender, MyGUI::KeyCode _key, My
 {
     switch (MYGUI_GET_SCANCODE(_key))
     {
-        case MyGUI::KeyCode::ArrowUp:
+    case MyGUI::KeyCode::ArrowUp:
         {
             if (HistoryCursor > iText)
                 HistoryCursor = 0;
@@ -209,13 +207,13 @@ void Console::eventButtonPressed(MyGUI::Widget* _sender, MyGUI::KeyCode _key, My
         }
         break;
 
-        case MyGUI::KeyCode::ArrowDown:
+    case MyGUI::KeyCode::ArrowDown:
         {
             if (HistoryCursor < 0)
                 HistoryCursor = iText;
 
             if (sTextHistory[HistoryCursor] != "")
-                m_Console_TextBox->setCaption(sTextHistory[HistoryCursor]);    
+                m_Console_TextBox->setCaption(sTextHistory[HistoryCursor]);
 
             HistoryCursor--;
         }
@@ -231,7 +229,7 @@ void Console::eventCommandAccept(MyGUI::Edit* _sender)
     UTFString msg = convertFromMyGUIString(m_Console_TextBox->getCaption());
 
     const bool is_appstate_sim = (App::GetActiveAppState() == App::APP_STATE_SIMULATION);
-    const bool is_sim_select   = (App::GetActiveSimState() == App::SIM_STATE_SELECTING);
+    const bool is_sim_select = (App::GetActiveSimState() == App::SIM_STATE_SELECTING);
 
     // we did not autoComplete, so try to handle the message
     m_Console_TextBox->setCaption("");
@@ -254,7 +252,6 @@ void Console::eventCommandAccept(MyGUI::Edit* _sender)
             putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_HELP, _L("/pos - outputs the current position"), "world.png");
             putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_HELP, _L("/goto <x> <y> <z> - jumps to the mentioned position"), "world.png");
 
-
             //if (gEnv->terrainManager->getHeightFinder()) //Not needed imo -max98
             putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_HELP, _L("/terrainheight - get height of terrain at current position"), "world.png");
 
@@ -262,7 +259,7 @@ void Console::eventCommandAccept(MyGUI::Edit* _sender)
 
             putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_HELP, _L("/quit - exit Rigs of Rods"), "table_save.png");
 
-#ifdef USE_ANGELSCRIPT    
+#ifdef USE_ANGELSCRIPT	
             putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_HELP, _L("/as <code here> - interpret angel code using console"), "script_go.png");
 #endif // USE_ANGELSCRIPT
 
@@ -274,7 +271,8 @@ void Console::eventCommandAccept(MyGUI::Edit* _sender)
             putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_TITLE, _L("Tips:"), "help.png");
             putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_HELP, _L("- use Arrow Up/Down Keys in the InputBox to reuse old messages"), "information.png");
             return;
-        } else if (args[0] == "/gravity")
+        }
+        else if (args[0] == "/gravity")
         {
             float gValue;
 
@@ -288,7 +286,8 @@ void Console::eventCommandAccept(MyGUI::Edit* _sender)
                     gValue = -50;
                 else
                     gValue = std::stof(args[1]);
-            } else
+            }
+            else
             {
                 putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_SYSTEM_REPLY, _L("Current gravity is: ") + StringConverter::toString(gEnv->terrainManager->getGravity()), "information.png");
                 return;
@@ -297,7 +296,8 @@ void Console::eventCommandAccept(MyGUI::Edit* _sender)
             gEnv->terrainManager->setGravity(gValue);
             putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_SYSTEM_REPLY, _L("Gravity set to: ") + StringConverter::toString(gValue), "information.png");
             return;
-        } else if (args[0] == "/setwaterlevel")
+        }
+        else if (args[0] == "/setwaterlevel")
         {
             if (gEnv->terrainManager && gEnv->terrainManager->getWater() && args.size() > 1)
             {
@@ -315,7 +315,7 @@ void Console::eventCommandAccept(MyGUI::Edit* _sender)
         }
         else if (args[0] == "/pos" && (is_appstate_sim && !is_sim_select))
         {
-            Beam *b = BeamFactory::getSingleton().getCurrentTruck();
+            Beam* b = BeamFactory::getSingleton().getCurrentTruck();
             if (!b && gEnv->player)
             {
                 Vector3 pos = gEnv->player->getPosition();
@@ -339,7 +339,7 @@ void Console::eventCommandAccept(MyGUI::Edit* _sender)
 
             Vector3 pos = Vector3(PARSEREAL(args[1]), PARSEREAL(args[2]), PARSEREAL(args[3]));
 
-            Beam *b = BeamFactory::getSingleton().getCurrentTruck();
+            Beam* b = BeamFactory::getSingleton().getCurrentTruck();
             if (!b && gEnv->player)
             {
                 gEnv->player->setPosition(pos);
@@ -355,10 +355,11 @@ void Console::eventCommandAccept(MyGUI::Edit* _sender)
         }
         else if (args[0] == "/terrainheight" && (is_appstate_sim && !is_sim_select))
         {
-            if (!gEnv->terrainManager->getHeightFinder()) return;
+            if (!gEnv->terrainManager->getHeightFinder())
+                return;
             Vector3 pos = Vector3::ZERO;
 
-            Beam *b = BeamFactory::getSingleton().getCurrentTruck();
+            Beam* b = BeamFactory::getSingleton().getCurrentTruck();
             if (!b && gEnv->player)
             {
                 pos = gEnv->player->getPosition();
@@ -369,7 +370,7 @@ void Console::eventCommandAccept(MyGUI::Edit* _sender)
             }
 
             Real h = gEnv->terrainManager->getHeightFinder()->getHeightAt(pos.x, pos.z);
-            putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_SYSTEM_REPLY, _L("Terrain height at position: ") + String("x: ") + TOSTRING(pos.x) + String("z: ") + TOSTRING(pos.z) + _L(" = ")  + TOSTRING(h), "world.png");
+            putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_SYSTEM_REPLY, _L("Terrain height at position: ") + String("x: ") + TOSTRING(pos.x) + String("z: ") + TOSTRING(pos.z) + _L(" = ") + TOSTRING(h), "world.png");
 
             return;
         }
@@ -380,13 +381,11 @@ void Console::eventCommandAccept(MyGUI::Edit* _sender)
             putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_SYSTEM_REPLY, " Protocol version: " + String(RORNET_VERSION), "information.png");
             putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_SYSTEM_REPLY, " build time: " + String(__DATE__) + ", " + String(__TIME__), "information.png");
             return;
-
         }
         else if (args[0] == "/quit")
         {
             RoR::App::SetPendingAppState(RoR::App::APP_STATE_SHUTDOWN);
             return;
-
         }
 #ifdef USE_ANGELSCRIPT
         else if (args[0] == "/as" && (is_appstate_sim && !is_sim_select))
@@ -397,7 +396,8 @@ void Console::eventCommandAccept(MyGUI::Edit* _sender)
             String command = msg.substr(args[0].length());
 
             StringUtil::trim(command);
-            if (command.empty()) return;
+            if (command.empty())
+                return;
 
             String nmsg = RoR::Color::ScriptCommandColour + ">>> " + RoR::Color::NormalColour + command;
             putMessage(CONSOLE_MSGTYPE_SCRIPT, CONSOLE_LOCAL_SCRIPT, nmsg, "script_go.png");
@@ -427,5 +427,4 @@ void Console::eventCommandAccept(MyGUI::Edit* _sender)
             putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_SYSTEM_ERROR, _L("unknown command: ") + msg, "error.png");
         }
     }
-
 }

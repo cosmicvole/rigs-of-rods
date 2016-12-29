@@ -1,26 +1,24 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #pragma once
-#ifndef __Turboprop_H_
-#define __Turboprop_H_
 
 #include "RoRPrerequisites.h"
 
@@ -38,6 +36,7 @@ public:
     float max_torque;
 
     Turboprop(
+<<<<<<< HEAD
         char* propname, 
         node_t *nd, 
         int nr, 
@@ -54,6 +53,24 @@ public:
         bool disable_smoke, 
         bool ispiston, 
         float fpitch, 
+=======
+        char* propname,
+        node_t* nd,
+        int nr,
+        int nb,
+        int np1,
+        int np2,
+        int np3,
+        int np4,
+        int tqn,
+        float power,
+        Ogre::String const& propfoilname,
+        int mnumber,
+        int trucknum,
+        bool disable_smoke,
+        bool ispiston,
+        float fpitch,
+>>>>>>> upstream/master
         bool heathaze
     );
     ~Turboprop();
@@ -89,12 +106,12 @@ public:
 
 private:
 
-    node_t *nodes;
+    node_t* nodes;
     int nodeback;
     int nodep[4];
     int torquenode;
     float torquedist;
-    Airfoil *airfoil;
+    Airfoil* airfoil;
     float fullpower; //!< in kW
     float proparea;
     float airdensity;
@@ -113,7 +130,7 @@ private:
     int free_vpale;
     Ogre::ParticleSystem* smokePS;
     Ogre::ParticleSystem* heathazePS;
-    Ogre::SceneNode *smokeNode;
+    Ogre::SceneNode* smokeNode;
     float twistmap[5];
     double rotenergy;
     float fixed_pitch;
@@ -136,5 +153,3 @@ private:
     int src_id;
     int thr_id;
 };
-
-#endif // __Turboprop_H_

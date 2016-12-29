@@ -1,26 +1,24 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #pragma once
-#ifndef __FlexAirfoil_H__
-#define __FlexAirfoil_H__
 
 #include <Ogre.h>
 
@@ -33,7 +31,12 @@ class FlexAirfoil : public ZeroedMemoryAllocator
 
 public:
 
-    FlexAirfoil(Ogre::String const & wname, node_t *nds, int pnfld, int pnfrd, int pnflu, int pnfru, int pnbld, int pnbrd, int pnblu, int pnbru, char* texband, Ogre::Vector2 texlf, Ogre::Vector2 texrf, Ogre::Vector2 texlb, Ogre::Vector2 texrb, char mtype, float controlratio, float mind, float maxd, Ogre::String const & afname, float lift_coef, AeroEngine** tps, bool break_able);
+    FlexAirfoil(Ogre::String const& wname, node_t* nds,
+        int pnfld, int pnfrd, int pnflu, int pnfru, int pnbld, int pnbrd, int pnblu, int pnbru,
+        char* texband,
+        Ogre::Vector2 texlf, Ogre::Vector2 texrf, Ogre::Vector2 texlb, Ogre::Vector2 texrb,
+        char mtype, float controlratio, float mind, float maxd, Ogre::String const& afname, float lift_coef, AeroEngine** tps, bool break_able);
+
     ~FlexAirfoil();
 
     Ogre::Vector3 updateVertices();
@@ -59,7 +62,7 @@ public:
     int nblu;
     int nbru;
 
-    //    int innan;
+    //	int innan;
     bool broken;
     bool breakable;
     float liftcoef;
@@ -69,11 +72,12 @@ public:
 private:
 
     float airfoilpos[90];
+
     typedef struct
     {
         Ogre::Vector3 vertex;
         Ogre::Vector3 normal;
-    //    Ogre::Vector3 color;
+        //	Ogre::Vector3 color;
         Ogre::Vector2 texcoord;
     } CoVertice_t;
 
@@ -85,7 +89,7 @@ private:
     typedef struct
     {
         Ogre::Vector3 normal;
-    //    Ogre::Vector3 color;
+        //	Ogre::Vector3 color;
         Ogre::Vector2 texcoord;
     } norVertice_t;
 
@@ -101,34 +105,35 @@ private:
 
     size_t nVertices;
     size_t vbufCount;
+
     //shadow
     union
     {
-        float *shadowposvertices;
-        posVertice_t *coshadowposvertices;
-    };
-    union
-    {
-        float *shadownorvertices;
-        norVertice_t *coshadownorvertices;
-    };
-    union
-    {
-        float *vertices;
-        CoVertice_t *covertices;
+        float* shadowposvertices;
+        posVertice_t* coshadowposvertices;
     };
 
+    union
+    {
+        float* shadownorvertices;
+        norVertice_t* coshadownorvertices;
+    };
+
+    union
+    {
+        float* vertices;
+        CoVertice_t* covertices;
+    };
 
     size_t faceibufCount;
     size_t bandibufCount;
     size_t cupibufCount;
     size_t cdnibufCount;
-    unsigned short *facefaces;
-    unsigned short *bandfaces;
-    unsigned short *cupfaces;
-    unsigned short *cdnfaces;
-    node_t *nodes;
-
+    unsigned short* facefaces;
+    unsigned short* bandfaces;
+    unsigned short* cupfaces;
+    unsigned short* cdnfaces;
+    node_t* nodes;
 
     float sref;
 
@@ -147,11 +152,9 @@ private:
     float idArea;
     bool idLeft;
 
-    Airfoil *airfoil;
-    AeroEngine **aeroengines;
+    Airfoil* airfoil;
+    AeroEngine** aeroengines;
     int free_wash;
     int washpropnum[MAX_AEROENGINES];
     float washpropratio[MAX_AEROENGINES];
 };
-
-#endif // __FlexAirfoil_H__

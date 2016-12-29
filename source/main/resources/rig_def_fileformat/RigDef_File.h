@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2015 Petr Ohlidal
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -29,7 +29,7 @@
 
     NOTE ON ARCHITECTURE:
     These structs were designed for a single purpose - to bring data 
-    from rig def. file.    Do not use them for any other purpose, don't 
+    from rig def. file.	Do not use them for any other purpose, don't 
     modify them beyond their original purpose. Avoid modifying their
     contents, only Parser should do that; use them only for reading;
 
@@ -52,8 +52,7 @@
 #include <OgreVector3.h>
 #include <OgreStringConverter.h>
 
-namespace RigDef 
-{
+namespace RigDef {
 
 /* -------------------------------------------------------------------------- */
 /* Utility                                                                    */
@@ -541,7 +540,7 @@ struct Engine
         reverse_gear_ratio(0),
         neutral_gear_ratio(0)
     {
-        gear_ratios.reserve(5);    
+        gear_ratios.reserve(5);	
     }
 
     float shift_down_rpm;
@@ -1152,7 +1151,7 @@ struct Animator
         flags(0),
         short_limit(0),
         long_limit(0),
-         detacher_group(0)
+        detacher_group(0)
     {}
 
     static const unsigned int OPTION_VISIBLE           = BITMASK(1);
@@ -1391,7 +1390,7 @@ struct Trigger
 struct Lockgroup
 {
     Lockgroup()
-        :    number(0)
+        :	number(0)
     {
         nodes.reserve(20);
     }
@@ -1525,7 +1524,7 @@ struct Prop
     struct BeaconSpecial
     {
         BeaconSpecial():
-            color(0.0, 0.5, 0.0),
+            color(1.0, 0.5, 0.0),
             flare_material_name("tracks/beaconflare")
         {}
 
@@ -1644,8 +1643,8 @@ struct SlideNode
 
     BITMASK_PROPERTY( constraint_flags, 1, CONSTRAINT_ATTACH_ALL     , HasConstraint_a_AttachAll     , SetConstraint_a_AttachAll     )   
     BITMASK_PROPERTY( constraint_flags, 2, CONSTRAINT_ATTACH_FOREIGN , HasConstraint_f_AttachForeign , SetConstraint_f_AttachForeign )
-    BITMASK_PROPERTY( constraint_flags, 3, CONSTRAINT_ATTACH_SELF    , HasConstraint_s_AttachSelf      , SetConstraint_s_AttachSelf     )
-    BITMASK_PROPERTY( constraint_flags, 4, CONSTRAINT_ATTACH_NONE    , HasConstraint_n_AttachNone      , SetConstraint_n_AttachNone     )
+    BITMASK_PROPERTY( constraint_flags, 3, CONSTRAINT_ATTACH_SELF    , HasConstraint_s_AttachSelf 	 , SetConstraint_s_AttachSelf	 )
+    BITMASK_PROPERTY( constraint_flags, 4, CONSTRAINT_ATTACH_NONE    , HasConstraint_n_AttachNone 	 , SetConstraint_n_AttachNone	 )
 
     Node::Ref slide_node;
     std::vector<Node::Range> rail_node_ranges;
@@ -1964,7 +1963,7 @@ struct File
         std::shared_ptr<ExtCamera>         ext_camera;
         std::vector<Node::Ref>              fixes;
         std::vector<Flare2>                flares_2;
-        std::vector<std::shared_ptr<Flexbody>>    flexbodies;
+        std::vector<std::shared_ptr<Flexbody>>	flexbodies;
         std::vector<FlexBodyWheel>         flex_body_wheels;
         std::vector<Fusedrag>              fusedrag;
         std::shared_ptr<Globals>           globals;
@@ -2149,7 +2148,7 @@ struct File
         SECTION_FLARES,
         SECTION_FLARES_2,
         SECTION_FLEXBODIES,
-        SECTION_FLEX_BODY_WHEELS,    
+        SECTION_FLEX_BODY_WHEELS,	
         SECTION_FUSEDRAG,
         SECTION_GLOBALS,
         SECTION_GUI_SETTINGS,
@@ -2185,7 +2184,7 @@ struct File
         SECTION_TORQUE_CURVE,
         SECTION_TRACTION_CONTROL,
         SECTION_TRIGGERS,
-        SECTION_TRUCK_NAME, ///< The very start of file    
+        SECTION_TRUCK_NAME, ///< The very start of file	
         SECTION_TURBOJETS,
         SECTION_TURBOPROPS,
         SECTION_TURBOPROPS_2,
@@ -2248,4 +2247,4 @@ struct File
     std::shared_ptr<Fileinfo> file_info;
 };
 
-} // namespace RigParser
+} // namespace RigDef

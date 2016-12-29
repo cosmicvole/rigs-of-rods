@@ -27,8 +27,7 @@
 
 #include "Skin.h"
 
-namespace RoR
-{
+namespace RoR {
 
 /** Manages Skin resources, parsing .skin files and generally organizing them. */
 class SkinManager : public Ogre::ResourceManager
@@ -37,7 +36,7 @@ public:
     SkinManager();
     ~SkinManager();
 
-    void GetUsableSkins(Ogre::String guid, std::vector<Skin *> &skins);
+    void GetUsableSkins(Ogre::String guid, std::vector<Skin *>& skins);
 
     // == Ogre::ResourceManager interface functions ==
 
@@ -55,7 +54,7 @@ public:
 
 protected:
 
-    void ParseSkinAttribute(const Ogre::String& line, Skin *pSkin);
+    void ParseSkinAttribute(const Ogre::String& line, Skin* pSkin);
 
     // Internal methods
     Ogre::Resource* createImpl(const Ogre::String& name, Ogre::ResourceHandle handle,

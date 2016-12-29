@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2014 Petr Ohlidal
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -19,11 +19,9 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** 
-    @file   
-    @author Moncef Ben Slimane
-    @date   12/2014
-*/
+/// @file
+/// @author Moncef Ben Slimane
+/// @date   12/2014
 
 #include "GUI_DebugOptions.h"
 
@@ -37,7 +35,6 @@
 
 #include <MyGUI.h>
 
-
 using namespace RoR;
 using namespace GUI;
 
@@ -48,10 +45,10 @@ CLASS::CLASS()
 {
     MyGUI::WindowPtr win = dynamic_cast<MyGUI::WindowPtr>(mMainWidget);
     win->eventWindowButtonPressed += MyGUI::newDelegate(this, &CLASS::notifyWindowButtonPressed); //The "X" button thing
-    
+
     MyGUI::IntSize gui_area = MyGUI::RenderManager::getInstance().getViewSize();
-    mMainWidget->setPosition(gui_area.width/2 - mMainWidget->getWidth()/2, gui_area.height/2 - mMainWidget->getHeight()/2);
-    
+    mMainWidget->setPosition(gui_area.width / 2 - mMainWidget->getWidth() / 2, gui_area.height / 2 - mMainWidget->getHeight() / 2);
+
     //checkboxes
     m_debug_truck_mass->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::OnDebugTruckMassCheck);
     m_debug_collision_meshes->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::OnDebugColiMeshesCheck);
@@ -73,7 +70,6 @@ CLASS::CLASS()
 
 CLASS::~CLASS()
 {
-
 }
 
 void CLASS::Show()
@@ -112,12 +108,11 @@ void CLASS::UpdateControls()
 
     m_disable_crash_reporting->setStateCheck(Settings::getSingleton().getBooleanSetting("NoCrashRpt", true));
 
-
     if (App::GetIoInputGrabMode() == App::INPUT_GRAB_DYNAMIC)
         m_input_grabing->setIndexSelected(1);
     else if (App::GetIoInputGrabMode() == App::INPUT_GRAB_NONE)
         m_input_grabing->setIndexSelected(2);
-    else 
+    else
         m_input_grabing->setIndexSelected(0);
 
     m_preselected_map->setCaption(RoR::App::GetSimNextTerrain());
@@ -128,7 +123,6 @@ void CLASS::notifyWindowButtonPressed(MyGUI::WidgetPtr _sender, const std::strin
 {
     if (_name == "close")
         Hide();
-
 }
 
 void CLASS::OnDebugTruckMassCheck(MyGUI::WidgetPtr _sender)

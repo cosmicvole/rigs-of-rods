@@ -1,34 +1,38 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
-// created: 12th of January 2009, thomas fischer thomas{AT}thomasfischer{DOT}biz
+
+/// @file
+/// @author Thomas Fischer (thomas{AT}thomasfischer{DOT}biz)
+/// @date   12th of January 2009
+
 #ifndef NOLANG
 
 #include "Language.h"
 
 #ifdef ROR_USE_OGRE_1_9
-#    include <Overlay/OgreOverlayManager.h>
-#    include <Overlay/OgreOverlay.h>
+#	include <Overlay/OgreOverlayManager.h>
+#	include <Overlay/OgreOverlay.h>
 #else
-#    include <OgreOverlayManager.h>
-#    include <OgreOverlayElement.h>
-#    include <OgreTextAreaOverlayElement.h>
+#	include <OgreOverlayManager.h>
+#	include <OgreOverlayElement.h>
+#	include <OgreTextAreaOverlayElement.h>
 #endif
 
 #ifdef USE_MYGUI
@@ -61,7 +65,8 @@ Ogre::String LanguageEngine::getMyGUIFontConfigFilename()
     try
     {
         group = ResourceGroupManager::getSingleton().findGroupContainingResource(myguiConfigFilename);
-    }catch(...)
+    }
+    catch (...)
     {
     }
     if (group == "")
@@ -82,14 +87,14 @@ void LanguageEngine::setup()
 
     // Load a .mo-File.
     LOG("*** Loading Language ***");
-    std::string lang_dir =  App::GetSysProcessDir() + PATH_SLASH + "languages" + PATH_SLASH;
+    std::string lang_dir = App::GetSysProcessDir() + PATH_SLASH + "languages" + PATH_SLASH;
     String langfile = lang_dir + language_short + String("/LC_MESSAGES/ror.mo");
-    if (reader->ReadFile(langfile.c_str()) != moFileLib::moFileReader::EC_SUCCESS )
+    if (reader->ReadFile(langfile.c_str()) != moFileLib::moFileReader::EC_SUCCESS)
     {
         LOG("* error loading language file " + langfile);
         return;
     }
-    working=true;
+    working = true;
 
     // add resource path
     ResourceGroupManager::getSingleton().addResourceLocation(lang_dir + language_short + String("/LC_MESSAGES"), "FileSystem", "LanguageFolder");
@@ -132,13 +137,14 @@ void LanguageEngine::postSetup()
 {
     // set some overlay used fonts to the new font config
     String newfont = "CyberbitEnglish";
-    const char *overlays[] = {"Core/CurrFps", "Core/AverageFps", "Core/WorstFps", "Core/BestFps", "Core/NumTris", "Core/DebugText", "Core/CurrMemory", "Core/MemoryText", "Core/LoadPanel/Description", "Core/LoadPanel/Comment", 0};
-    for (int i=0;overlays[i]!=0;i++)
+    const char* overlays[] = {"Core/CurrFps", "Core/AverageFps", "Core/WorstFps", "Core/BestFps", "Core/NumTris", "Core/DebugText", "Core/CurrMemory", "Core/MemoryText", "Core/LoadPanel/Description", "Core/LoadPanel/Comment", 0};
+    for (int i = 0; overlays[i] != 0; i++)
     {
         try
         {
-            Ogre::TextAreaOverlayElement *ot = (Ogre::TextAreaOverlayElement *)OverlayManager::getSingleton().getOverlayElement(overlays[i]);
-            if (ot) ot->setFontName(newfont);
+            Ogre::TextAreaOverlayElement* ot = (Ogre::TextAreaOverlayElement *)OverlayManager::getSingleton().getOverlayElement(overlays[i]);
+            if (ot)
+                ot->setFontName(newfont);
         }
         catch (...)
         {
@@ -161,68 +167,5 @@ void LanguageEngine::setupCodeRanges(String codeRangesFilename, String codeRange
 {
     // not using the default mygui font config
     myguiConfigFilename = "MyGUI_FontConfig.xml";
-
-    /*
-    DataStreamPtr ds;
-    try
-    {
-        ds = ResourceGroupManager::getSingleton().openResource(codeRangesFilename, codeRangesGroupname);
-        if (ds.isNull())
-        {
-            LOG("unable to load language code points file: " + codeRangesFilename);
-            return;
-        }
-
-    } catch(...)
-    {
-        LOG("unable to load language code points file: " + codeRangesFilename);
-        return;
-    }
-    LOG("loading code_range file: " + codeRangesFilename);
-
-    char line[9046] = "";
-    while (!ds->eof())
-    {
-        size_t ll = ds->readLine(line, 9045);
-        // only process valid lines
-        if (strncmp(line, "code_points ", 12) && strlen(line) > 13)
-            continue;
-        Ogre::StringVector args = StringUtil::split(line + 12, " ");
-        for (Ogre::StringVector::iterator it=args.begin(); it!=args.end(); it++)
-        {
-            Font::CodePointRange range;
-            StringVector itemVec = StringUtil::split(*it, "-");
-            if (itemVec.size() == 2)
-                range = Font::CodePointRange(StringConverter::parseLong(itemVec[0]), StringConverter::parseLong(itemVec[1]));
-
-            // add this code range to all available fonts
-            ResourceManager::ResourceMapIterator itf = FontManager::getSingleton().getResourceIterator();
-            while (itf.hasMoreElements())
-                ((FontPtr)itf.getNext())->addCodePointRange(range);
-
-            // add code points to all MyGUI fonts
-#ifdef USE_MYGUI
-            // well, we load a reconfigured mygui font config xml file, easier for now
-            //MyGUI::IFont *fp = MyGUI::FontManager::getInstance().getByName("Default");
-            //if (fp) fp-> addCodePointRange(range.first, range.second);
-            //fp = MyGUI::FontManager::getInstance().getByName("DefaultBig");
-            //if (fp) fp->addCodePointRange(range.first, range.second);
-#endif //USE_MYGUI
-        }
-    }
-
-    // reload all ttf fonts
-    ResourceManager::ResourceMapIterator itf = FontManager::getSingleton().getResourceIterator();
-    while (itf.hasMoreElements())
-    {
-        FontPtr font = itf.getNext();
-        // if the font is a ttf font and loaded, then reload it in order to regenenerate the glyphs with corrected code_points
-        if (font->getType() == Ogre::FT_TRUETYPE && font->isLoaded())
-            font->reload();
-    }
-    */
-
-    //fontCacheInit("CyberbitEnglish");
-    //generateAllFontTextures();
 }
 #endif //NOLANG

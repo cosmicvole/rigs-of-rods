@@ -1,4 +1,3 @@
-
 // ===========================================================================
 // A high performance multi-threaded C++ profiler, currently for x86 (32bit)
 // under Windows and Linux.
@@ -69,8 +68,8 @@
 
 namespace Profiler {
 
-    #if defined(__PROFILER_SMP__)
-        #if defined(_MSC_VER)
+#if defined(__PROFILER_SMP__)
+#if defined(_MSC_VER)
 
             template< class type >
             inline bool CAS( volatile type &ptr_, const type old_, const type new_ ) {
@@ -83,7 +82,7 @@ namespace Profiler {
                 }
             }
 
-        #elif defined(__GNUC__) || defined(__ICC)
+#elif defined(__GNUC__) || defined(__ICC)
 
             template< class type >
             inline bool CAS( volatile type &ptr_, const type old_, const type new_ ) {
@@ -99,9 +98,9 @@ namespace Profiler {
                 return ret;
             }
 
-        #else
+#else
             #error Define a compare-and-swap / full memory barrier implementation!
-        #endif
+#endif
 
         struct CASLock {
             void Acquire() { while ( !CAS( mLock, u32(0), u32(1) ) ) YIELD() }
@@ -109,10 +108,10 @@ namespace Profiler {
             bool TryAcquire() { return CAS( mLock, u32(0), u32(1) ); }
             bool TryRelease() { return CAS( mLock, u32(1), u32(0) ); }
             u32 Value() const { return mLock; }
-        //protected:
+//protected:
             volatile u32 mLock;
         };
-    #else
+#else
         struct CASLock {
             void Acquire() {}
             void Release() {}
@@ -121,7 +120,7 @@ namespace Profiler {
             u32 Value() const { return 0; }
             u32 dummy;
         };
-    #endif
+#endif
 
     u32 nextpow2( u32 x ) {
         x |= ( x >>  1 );
@@ -162,11 +161,11 @@ namespace Profiler {
         return ( a < b ) ? b : a;
     }
 
-    /*
-    =============
-    Buffer - Don't use for anything with a constructor/destructor. Doesn't shrink on popping
-    =============
-    */
+/*
+=============
+Buffer - Don't use for anything with a constructor/destructor. Doesn't shrink on popping
+=============
+*/
 
     template< class type >
     struct Buffer {
@@ -195,7 +194,7 @@ namespace Profiler {
             
             Buffer scratch( mItems );
 
-            // merge sort with scratch buffer
+// merge sort with scratch buffer
             type *src = Data(), *dst = scratch.Data();
             for( u32 log = 2; log < mItems * 2; log *= 2 ) {
                 type *out = dst;
@@ -223,8 +222,8 @@ namespace Profiler {
                 mapto( mBuffer[ i ], i == last );
         }
 
-        template< class Mapto >    void ForEach( Mapto mapto, u32 limit ) { ForEachByRef( mapto, limit ); }
-        template< class Mapto >    void ForEach( Mapto mapto ) { ForEachByRef( mapto, mItems ); }
+        template< class Mapto >	void ForEach( Mapto mapto, u32 limit ) { ForEachByRef( mapto, limit ); }
+        template< class Mapto >	void ForEach( Mapto mapto ) { ForEachByRef( mapto, mItems ); }
 
         type &operator[] ( u32 index ) { return ( mBuffer[ index ] ); }
         const type &operator[] ( u32 index ) const { return ( mBuffer[ index ] ); }
@@ -232,14 +231,14 @@ namespace Profiler {
     protected:
         type *mBuffer;
         u32 mAlloc, mItems;
-    };    
+    };	
 
 
-    /*
-    ===================
-    ColorRamp for HTML
-    ===================
-    */
+/*
+===================
+ColorRamp for HTML
+===================
+*/
 
     struct ColorF {
         ColorF() {}
@@ -284,16 +283,16 @@ namespace Profiler {
         Buffer<Marker> mColors;
     };
 
-    /*
-    =============
-    Caller
-    =============
-    */
+/*
+=============
+Caller
+=============
+*/
 
     #pragma pack(push,1)
     struct Caller {
         struct foreach {
-            // Adds each Caller to the specified buckets
+// Adds each Caller to the specified buckets
             struct AddToNewBuckets {
                 AddToNewBuckets( Caller **buckets, u32 bucket_count ) : mBuckets(buckets), mBucketCount(bucket_count) {}
                 void operator()( Caller *item ) {
@@ -304,14 +303,14 @@ namespace Profiler {
             };
 
 
-            // Destructs a Caller
+// Destructs a Caller
             struct Deleter { 
                 void operator()( Caller *item ) { 
                     delete item;
                 } 
             };
 
-            // Merges a Caller with the root
+// Merges a Caller with the root
             struct Merger {
                 Merger( Caller *root ) : mRoot(root) {}
                 void addFrom( Caller *item ) { (*this)( item ); }
@@ -324,7 +323,7 @@ namespace Profiler {
                 Caller *mRoot;
             };
 
-            // Prints a Caller
+// Prints a Caller
             struct Printer {
                 Printer( u32 indent ) : mIndent(indent) { }
                 void operator()( Caller *item, bool islast ) const {
@@ -349,7 +348,7 @@ namespace Profiler {
                 } 
             };
 
-            // Sums Caller's ticks 
+// Sums Caller's ticks 
             struct SumTicks {
                 SumTicks() : sum(0) {}
                 void operator()( Caller *item ) { 
@@ -391,14 +390,13 @@ namespace Profiler {
             };
         }; // sort
 
+/*
+    Since Caller.mTimer.ticks is inclusive of all children, summing the first level
+    children of a Caller to Caller.mChildTicks is an accurate total of the complete
+    child tree.
 
-        /*
-            Since Caller.mTimer.ticks is inclusive of all children, summing the first level
-            children of a Caller to Caller.mChildTicks is an accurate total of the complete
-            child tree.
-
-            mTotals is used to keep track of total ticks by Caller excluding children
-        */
+    mTotals is used to keep track of total ticks by Caller excluding children
+*/
         struct ComputeChildTicks {
             ComputeChildTicks( Caller &totals ) : mTotals(totals) { maxStats.reset(); }
             void operator()( Caller *item ) {
@@ -412,7 +410,7 @@ namespace Profiler {
                 totalitem.mTimer.calls += item->mTimer.calls;
                 totalitem.SetParent( item->GetParent() );
 
-                // don't include the root node in the max stats
+// don't include the root node in the max stats
                 if ( item->GetParent() ) {
                     maxStats.check( Max::SelfMs, Timer::ms( selfticks ) );
                     maxStats.check( Max::Calls, item->mTimer.calls );
@@ -421,16 +419,16 @@ namespace Profiler {
                     maxStats.check( Max::SelfAvg, average( Timer::ms( selfticks ), item->mTimer.calls ) );
                 }
 
-                // compute child ticks for all children of children of this caller
+// compute child ticks for all children of children of this caller
                 item->ForEachByRefNonEmpty( *this );
             }
             Caller &mTotals;
         };
 
-        /*
-            Format a Caller's information. ComputeChildTicks will need to be used on the Root
-            to generate mChildTicks for all Callers
-        */
+/*
+    Format a Caller's information. ComputeChildTicks will need to be used on the Root
+    to generate mChildTicks for all Callers
+*/
         struct Format {
             Format( const char *prefix ) : mPrefix(prefix) {}
             void operator()( Caller *item, bool islast ) const {
@@ -504,11 +502,11 @@ namespace Profiler {
             FILE *mFile;
         };
 
-        /* 
-            Methods
-        */
+/* 
+    Methods
+*/
 
-        // we're guaranteed to be null because of calloc. ONLY create Callers with "new"!
+// we're guaranteed to be null because of calloc. ONLY create Callers with "new"!
         Caller( const char *name, Caller *parent = NULL ) { 
             mName = name;
             mParent = parent;
@@ -537,7 +535,7 @@ namespace Profiler {
                 index = ( index + 1 );
             }
 
-            // didn't find the caller, lock this thread and mutate
+// didn't find the caller, lock this thread and mutate
             AcquirePerThreadLock();
             EnsureCapacity( ++mNumChildren );
             Caller *&slot = FindEmptyChildSlot( mBuckets, mBucketCount, name );
@@ -626,14 +624,14 @@ namespace Profiler {
             
             FormatHtml(f, mHTMLFormatter)( this );
 
-            mHTMLFormatter[indent] = ( islast || !indent ) ? "img/blank.gif" : "img/vertical.gif";    
+            mHTMLFormatter[indent] = ( islast || !indent ) ? "img/blank.gif" : "img/vertical.gif";	
 
             if ( children.Size() ) {
                 children.Sort( compare::Ticks() );
                 children.ForEach( foreach::PrinterHtml(f,indent+1) );
             }
 
-            mHTMLFormatter.Pop();        
+            mHTMLFormatter.Pop();		
         }
 
         void PrintTopStats( u32 nitems ) {
@@ -659,7 +657,7 @@ namespace Profiler {
             ForEach( foreach::Deleter() );
             zeroarray( mBuckets, mBucketCount );
             mNumChildren = ( 0 );
-            mTimer.Reset();            
+            mTimer.Reset();			
         }
 
         void SetActive( bool active ) {
@@ -692,7 +690,7 @@ namespace Profiler {
         }
 
 
-        /* Acquire the caller lock for this thread */
+/* Acquire the caller lock for this thread */
 
         inline static void AcquirePerThreadLock() {
 #if defined(__PROFILER_SMP__)
@@ -737,12 +735,12 @@ namespace Profiler {
         u64 mChildTicks;
 
     public:
-        // caller
+// caller
         static Buffer<char> mFormatter;
         static Buffer<const char *> mHTMLFormatter;
         static ColorRamp mColors;
 
-        // global
+// global
         static f64 mTimerOverhead, mRdtscOverhead;
         static u64 mGlobalDuration;
         static struct Max {
@@ -767,7 +765,7 @@ namespace Profiler {
             f64 f64fields[f64Enums];
         } maxStats;
 
-        // per thread state
+// per thread state
         struct ThreadState {
             CASLock threadLock;
             bool requireThreadLock;
@@ -829,11 +827,11 @@ namespace Profiler {
 #endif
     }
 
-    /*
-    ============
-    Root - Holds the root caller and the thread state for a thread
-    ============
-    */
+/*
+============
+Root - Holds the root caller and the thread state for a thread
+============
+*/
 
     struct Root {
         Root( Caller *caller, Caller::ThreadState *ts ) : root(caller), threadState(ts) {}
@@ -871,9 +869,9 @@ namespace Profiler {
     threadlocal Caller *root = NULL;
     
 
-    /*
-        Thread Dumping
-    */
+/*
+    Thread Dumping
+*/
 
     struct PrintfDumper {
         void Init() {
@@ -908,7 +906,7 @@ namespace Profiler {
         void Init() {
             Caller::mColors.clear();
             Caller::mColors.push( ColorF( 255.0f/255.0f, 255.0f/255.0f, 255.0f/255.0f ), 0.00f );
-            //Caller::mColors.push( ColorF( 255.0f/255.0f, 212.0f/255.0f, 129.0f/255.0f ), 0.50f );
+//Caller::mColors.push( ColorF( 255.0f/255.0f, 212.0f/255.0f, 129.0f/255.0f ), 0.50f );
             Caller::mColors.push( ColorF( 255.0f/255.0f,  203.0f/255.0f,  203.0f/255.0f ), 0.20f );
             Caller::mColors.push( ColorF( 255.0f/255.0f,  128.0f/255.0f,  128.0f/255.0f ), 1.00f );
             
@@ -926,26 +924,26 @@ namespace Profiler {
                 "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n"
                 "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\" class=\"\">\n"
                 "<head>\n"
-                "    <style type=\"text/css\">\n"
-                "        body {font-family: arial;font-size: 11px;}\n"
-                "        table {padding: 0px;margin: 0px;border-spacing: 0pt 0pt;}\n"
-                "        table.tree td {padding: 0px; margin: 0px;}\n"
-                "        tr {padding: 0px;margin: 0px;}\n"
-                "        tr.h:hover {background-color: #EEEEEE; color:blue;}\n"
-                "        tr.header {background-image: url(img/tile.gif); background-position: left bottom; background-repeat: repeat-x; height: 24px;}\n"
-                "        tr.header td { padding-left: 8px; padding-right:8px; border-right:1px solid " css_outline_color "; border-top:1px solid " css_outline_color "; }\n"
-                "        tr.header td.left { border-left:1px solid " css_outline_color "; }\n"
-                "        tr.header td.right { border-right:1px solid " css_outline_color "; }\n"
-                "        tr.spacer {height: 24px;}\n"
-                "        td {padding: 0px;padding-left:3px;padding-right:3px;margin: 0px;}\n"
-                "        td.text {text-align: left;}\n"
-                "        td.number {text-align: right;}\n"
-                "        div.overall { background-color: #F0F0F0; width: 98%; color: #A31212; font-size: 16px; padding: 5px; padding-left: 20px; margin-bottom: 15px; }\n"
-                "        div.thread { margin-bottom: 15px; }\n"
-                "        div.overall td.title { padding-left: 10px; font-weight: bold; }\n"
-                "    </style>\n"
+                "	<style type=\"text/css\">\n"
+                "		body {font-family: arial;font-size: 11px;}\n"
+                "		table {padding: 0px;margin: 0px;border-spacing: 0pt 0pt;}\n"
+                "		table.tree td {padding: 0px; margin: 0px;}\n"
+                "		tr {padding: 0px;margin: 0px;}\n"
+                "		tr.h:hover {background-color: #EEEEEE; color:blue;}\n"
+                "		tr.header {background-image: url(img/tile.gif); background-position: left bottom; background-repeat: repeat-x; height: 24px;}\n"
+                "		tr.header td { padding-left: 8px; padding-right:8px; border-right:1px solid " css_outline_color "; border-top:1px solid " css_outline_color "; }\n"
+                "		tr.header td.left { border-left:1px solid " css_outline_color "; }\n"
+                "		tr.header td.right { border-right:1px solid " css_outline_color "; }\n"
+                "		tr.spacer {height: 24px;}\n"
+                "		td {padding: 0px;padding-left:3px;padding-right:3px;margin: 0px;}\n"
+                "		td.text {text-align: left;}\n"
+                "		td.number {text-align: right;}\n"
+                "		div.overall { background-color: #F0F0F0; width: 98%; color: #A31212; font-size: 16px; padding: 5px; padding-left: 20px; margin-bottom: 15px; }\n"
+                "		div.thread { margin-bottom: 15px; }\n"
+                "		div.overall td.title { padding-left: 10px; font-weight: bold; }\n"
+                "	</style>\n"
                 "</head>\n"
-                "<body>\n\n",            
+                "<body>\n\n",			
                 f
             );
         }
@@ -988,7 +986,7 @@ namespace Profiler {
             Buffer<Caller *> sorted;
             accumulated->CopyToListNonEmpty( sorted );
             sorted.ForEach( Caller::foreach::UpdateTopMaxStats() );
-            sorted.Sort( Caller::compare::SelfTicks() );        
+            sorted.Sort( Caller::compare::SelfTicks() );		
             sorted.ForEach( Caller::FormatHtmlTop(f) );
             fputs( "</table></div>\n", f );
         }
@@ -1016,35 +1014,35 @@ namespace Profiler {
         dumper.Init();
         dumper.GlobalInfo( rawDuration );
 
-        threads.AcquireGlobalLock();    
+        threads.AcquireGlobalLock();	
 
-        // crawl the list of theads and store their data in to packer
+// crawl the list of theads and store their data in to packer
         Buffer<Root> &threadsref = *threads.list;
         for ( u32 i = 0; i < threadsref.Size(); i++ ) {
             Root &thread = threadsref[i];
 
-            // if the thread is no longer active, the lock won't be valid
+// if the thread is no longer active, the lock won't be valid
             bool active = ( thread.root->IsActive() );
             if ( active ) {
                 thread.threadState->threadLock.Acquire();
-                // disable requiring our local lock in case the caller is in our thread, accumulate will try to set it otherwise
+// disable requiring our local lock in case the caller is in our thread, accumulate will try to set it otherwise
                 Caller::thisThread.requireThreadLock = false;
                 for ( Caller *walk = thread.threadState->activeCaller; walk; walk = walk->GetParent() )
                     walk->GetTimer().SoftStop();
             }
 
 #if defined(__PROFILER_CONSOLIDATE_THREADS__)
-            // merge the thread into the packer object, will result in 1 caller per thread name, not 1 caller per thread instance
+// merge the thread into the packer object, will result in 1 caller per thread name, not 1 caller per thread instance
             Caller::foreach::Merger( packer ).addFrom( thread.root );
             Caller *child = packer->FindOrCreate( thread.root->GetName() );
 
-            // add the child to the list of threads to dump (use the active flag to indicate if it's been added)
+// add the child to the list of threads to dump (use the active flag to indicate if it's been added)
             if ( !child->IsActive() ) {
                 packedThreads.Push( child );
                 child->SetActive( true );
             }
 #else
-            // create a dummy entry for each thread (fake a name with the address of the thread root)
+// create a dummy entry for each thread (fake a name with the address of the thread root)
             Caller *stub = packer->FindOrCreate( (const char *)thread.root );
             Caller::foreach::Merger( stub ).addFrom( thread.root );
             Caller *stubroot = stub->FindOrCreate( thread.root->GetName() );
@@ -1058,17 +1056,17 @@ namespace Profiler {
             }
         }
 
-        // working on local data now, don't need the threads lock any more
-        threads.ReleaseGlobalLock();    
+// working on local data now, don't need the threads lock any more
+        threads.ReleaseGlobalLock();	
 
-        // do the pre-computations on the gathered threads
+// do the pre-computations on the gathered threads
         Caller::ComputeChildTicks preprocessor( *accumulate );
         for ( u32 i = 0; i < packedThreads.Size(); i++ )
             preprocessor( packedThreads[i] );
 
         dumper.ThreadsInfo( Caller::maxStats( Caller::Max::TotalCalls ), Caller::mTimerOverhead, Caller::mRdtscOverhead );
 
-        // print the gathered threads
+// print the gathered threads
         u64 sumTicks = 0;
         for ( u32 i = 0; i < packedThreads.Size(); i++ ) {
             Caller *root = packedThreads[i];
@@ -1078,9 +1076,9 @@ namespace Profiler {
             dumper.PrintThread( root );
         }
 
-        // print the totals, use the summed total of ticks to adjust percentages
+// print the totals, use the summed total of ticks to adjust percentages
         Caller::mGlobalDuration = sumTicks;
-        dumper.PrintAccumulated( accumulate );        
+        dumper.PrintAccumulated( accumulate );		
         dumper.Finish();
 
         delete accumulate;
@@ -1098,7 +1096,7 @@ namespace Profiler {
         for ( u32 i = 0; i < cnt; i++ ) {
             Root &thread = threadsref[i];
             if ( !thread.root->IsActive() ) {
-                // thread isn't active, remove it
+// thread isn't active, remove it
                 delete thread.root;
                 Root removed = threadsref.Pop();
                 if ( i != last )
@@ -1181,12 +1179,12 @@ namespace Profiler {
             iter->GetTimer().Unpause( curticks );
     }
 
-    // enter the main thread automatically
+// enter the main thread automatically
     struct MakeRoot {
         MakeRoot() {
-            // get an idea of how long timer calls / rdtsc takes
+// get an idea of how long timer calls / rdtsc takes
             const u32 reps = 1000;
-            Caller::mTimerOverhead = Caller::mRdtscOverhead = 1000000;            
+            Caller::mTimerOverhead = Caller::mRdtscOverhead = 1000000;			
             for ( u32 tries = 0; tries < 20; tries++ ) {
                 Timer t, t2;
                 t.Start();

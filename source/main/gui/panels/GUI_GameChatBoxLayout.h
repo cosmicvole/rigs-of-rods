@@ -11,12 +11,9 @@
 #include "ForwardDeclarations.h"
 #include "BaseLayout.h"
 
-namespace RoR
-{
+namespace RoR {
+namespace GUI {
 
-namespace GUI
-{
-    
 ATTRIBUTE_CLASS_LAYOUT(GameChatBoxLayout, "Chatbox.layout");
 class GameChatBoxLayout : public wraps::BaseLayout
 {

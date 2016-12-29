@@ -11,12 +11,9 @@
 #include "ForwardDeclarations.h"
 #include "BaseLayout.h"
 
-namespace RoR
-{
+namespace RoR {
+namespace GUI {
 
-namespace GUI
-{
-    
 ATTRIBUTE_CLASS_LAYOUT(MainSelectorLayout, "SelectorWindow.layout");
 class MainSelectorLayout : public wraps::BaseLayout
 {
@@ -63,6 +60,5 @@ protected:
 };
 
 } // namespace GUI
-
 } // namespace RoR
 

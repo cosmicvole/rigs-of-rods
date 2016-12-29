@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2016 Petr Ohlidal & contributors
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -19,11 +19,9 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
-    @file
-    @author Moncef Ben Slimane
-    @date   11/2014
-*/
+/// @file
+/// @author Moncef Ben Slimane
+/// @date   11/2014
 
 #include "GUI_GamePauseMenu.h"
 
@@ -36,7 +34,6 @@
 #include "RoRPrerequisites.h"
 
 #include <MyGUI.h>
-
 
 using namespace RoR;
 using namespace GUI;
@@ -68,7 +65,6 @@ CLASS::CLASS()
 
 CLASS::~CLASS()
 {
-
 }
 
 void CLASS::SetPosition(int pixels_left, int pixels_top)
@@ -148,5 +144,10 @@ void CLASS::eventMouseButtonClickQuitButton(MyGUI::WidgetPtr _sender)
     RoR::App::SetPendingAppState(RoR::App::APP_STATE_SHUTDOWN);
 }
 
-void CLASS::SetVisible(bool v) { if (v) { this->Show(); } else { this->Hide(); } }
-bool CLASS::IsVisible()        { return MAIN_WIDGET->getVisible(); }
+void CLASS::SetVisible(bool v)
+{
+    if (v) { this->Show(); }
+    else { this->Hide(); }
+}
+
+bool CLASS::IsVisible() { return MAIN_WIDGET->getVisible(); }

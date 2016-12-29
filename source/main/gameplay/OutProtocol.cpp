@@ -32,8 +32,8 @@
 using namespace Ogre;
 using namespace RoR;
 
-OutProtocol::OutProtocol(void) : 
-      delay(0.1f)
+OutProtocol::OutProtocol(void) :
+    delay(0.1f)
     , id(0)
     , mode(0)
     , sockfd(-1)
@@ -41,10 +41,10 @@ OutProtocol::OutProtocol(void) :
     , working(false)
 {
     delay *= App::GetIoOutGaugeDelay();
-    mode   = App::GetIoOutGaugeMode();
-    id     = App::GetIoOutGaugeId();
+    mode = App::GetIoOutGaugeMode();
+    id = App::GetIoOutGaugeId();
 
-    if ( mode > 0 )
+    if (mode > 0)
     {
         startup();
     }
@@ -52,12 +52,12 @@ OutProtocol::OutProtocol(void) :
 
 OutProtocol::~OutProtocol(void)
 {
-    if ( sockfd != 0 )
+    if (sockfd != 0)
     {
 #if _WIN32
-        closesocket( sockfd );
+        closesocket(sockfd);
 #else
-        close( sockfd );
+		close( sockfd );
 #endif
         sockfd = 0;
     }
@@ -67,35 +67,35 @@ void OutProtocol::startup()
 {
 #ifdef _WIN32
     SWBaseSocket::SWBaseError error;
-    
+
     // startup winsock
     WSADATA wsd;
-    if ( WSAStartup(MAKEWORD(2, 2), &wsd) != 0 )
+    if (WSAStartup(MAKEWORD(2, 2), &wsd) != 0)
     {
         LOG("[RoR|OutGauge] Error starting up winsock. OutGauge disabled.");
         return;
     }
 
     // open a new socket
-    if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 )
+    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
     {
         LOG(String("[RoR|OutGauge] Error creating socket for OutGauge: ").append(strerror(errno)));
         return;
     }
 
     // get the IP of the remote side, this function is compatible with windows 2000
-    hostent *remoteHost = gethostbyname(App::GetIoOutGaugeIp().c_str());
-    char *ip = inet_ntoa(*(struct in_addr *)*remoteHost->h_addr_list);
+    hostent* remoteHost = gethostbyname(App::GetIoOutGaugeIp().c_str());
+    char* ip = inet_ntoa(*(struct in_addr *)*remoteHost->h_addr_list);
 
     // init socket data
     struct sockaddr_in sendaddr;
     memset(&sendaddr, 0, sizeof(sendaddr));
-    sendaddr.sin_family      = AF_INET;
+    sendaddr.sin_family = AF_INET;
     sendaddr.sin_addr.s_addr = inet_addr(ip);
-    sendaddr.sin_port        = htons(App::GetIoOutGaugePort());
+    sendaddr.sin_port = htons(App::GetIoOutGaugePort());
 
     // connect
-    if ( connect(sockfd, (struct sockaddr *) &sendaddr, sizeof(sendaddr)) == SOCKET_ERROR )
+    if (connect(sockfd, (struct sockaddr *) &sendaddr, sizeof(sendaddr)) == SOCKET_ERROR)
     {
         LOG(String("[RoR|OutGauge] Error connecting socket for OutGauge: ").append(strerror(errno)));
         return;
@@ -111,14 +111,14 @@ void OutProtocol::startup()
 bool OutProtocol::update(float dt)
 {
 #ifdef _WIN32
-    if ( !working )
+    if (!working)
     {
         return false;
     }
 
     // below the set delay?
     timer += dt;
-    if ( timer < delay )
+    if (timer < delay)
     {
         return true;
     }
@@ -129,62 +129,74 @@ bool OutProtocol::update(float dt)
     memset(&gd, 0, sizeof(gd));
 
     // set some common things
-    gd.Time  = Root::getSingleton().getTimer()->getMilliseconds();
-    gd.ID    = id;
+    gd.Time = Root::getSingleton().getTimer()->getMilliseconds();
+    gd.ID = id;
     gd.Flags = 0 | OG_KM;
     sprintf(gd.Car, "RoR");
 
-    Beam *truck = BeamFactory::getSingleton().getCurrentTruck();
-    if ( !truck )
+    Beam* truck = BeamFactory::getSingleton().getCurrentTruck();
+    if (!truck)
     {
         // not in a truck?
         sprintf(gd.Display2, "not in vehicle");
-    } else if ( truck && !truck->engine )
+    }
+    else if (truck && !truck->engine)
     {
         // no engine?
         sprintf(gd.Display2, "no engine");
-    } else if ( truck && truck->engine )
+    }
+    else if (truck && truck->engine)
     {
         // truck and engine valid
-        if ( truck->engine->hasTurbo() )
+        if (truck->engine->hasTurbo())
         {
             gd.Flags |= OG_TURBO;
         }
-        gd.Gear        = std::max(0, truck->engine->getGear() + 1); // we only support one reverse gear
-        gd.PLID        = 0;
-        gd.Speed       = fabs(truck->WheelSpeed);
-        gd.RPM         = truck->engine->getRPM();
-        gd.Turbo       = truck->engine->getTurboPSI() * 0.0689475729f;
-        gd.EngTemp     = 0; // TODO
-        gd.Fuel        = 0; // TODO
+        gd.Gear = std::max(0, truck->engine->getGear() + 1); // we only support one reverse gear
+        gd.PLID = 0;
+        gd.Speed = fabs(truck->WheelSpeed);
+        gd.RPM = truck->engine->getRPM();
+        gd.Turbo = truck->engine->getTurboPSI() * 0.0689475729f;
+        gd.EngTemp = 0; // TODO
+        gd.Fuel = 0; // TODO
         gd.OilPressure = 0; // TODO
-        gd.OilTemp     = 0; // TODO
+        gd.OilTemp = 0; // TODO
 
-        gd.DashLights  = 0;
+        gd.DashLights = 0;
         gd.DashLights |= DL_HANDBRAKE;
         gd.DashLights |= DL_BATTERY;
         gd.DashLights |= DL_SIGNAL_L;
         gd.DashLights |= DL_SIGNAL_R;
         gd.DashLights |= DL_SIGNAL_ANY;
-        if (truck->tc_present)   gd.DashLights |= DL_TC;
-        if (truck->alb_present)  gd.DashLights |= DL_ABS;
+        if (truck->tc_present)
+            gd.DashLights |= DL_TC;
+        if (truck->alb_present)
+            gd.DashLights |= DL_ABS;
 
         gd.ShowLights = 0;
-        if (truck->parkingbrake)   gd.ShowLights |= DL_HANDBRAKE;
-        if (truck->lights)         gd.ShowLights |= DL_FULLBEAM;
-        if (truck->engine->hasContact() && !truck->engine->isRunning()) gd.ShowLights |=  DL_BATTERY;
-        if (truck->left_blink_on)  gd.ShowLights |= DL_SIGNAL_L;
-        if (truck->right_blink_on) gd.ShowLights |= DL_SIGNAL_R;
-        if (truck->warn_blink_on)  gd.ShowLights |= DL_SIGNAL_ANY;
-        if (truck->tc_mode)        gd.ShowLights |= DL_TC;
-        if (truck->alb_mode)       gd.ShowLights |= DL_ABS;
+        if (truck->parkingbrake)
+            gd.ShowLights |= DL_HANDBRAKE;
+        if (truck->lights)
+            gd.ShowLights |= DL_FULLBEAM;
+        if (truck->engine->hasContact() && !truck->engine->isRunning())
+            gd.ShowLights |= DL_BATTERY;
+        if (truck->left_blink_on)
+            gd.ShowLights |= DL_SIGNAL_L;
+        if (truck->right_blink_on)
+            gd.ShowLights |= DL_SIGNAL_R;
+        if (truck->warn_blink_on)
+            gd.ShowLights |= DL_SIGNAL_ANY;
+        if (truck->tc_mode)
+            gd.ShowLights |= DL_TC;
+        if (truck->alb_mode)
+            gd.ShowLights |= DL_ABS;
 
         gd.Throttle = truck->engine->getAcc();
-        gd.Brake    = truck->brake / truck->brakeforce;
-        gd.Clutch   = 1 - truck->engine->getClutch(); // 0-1
+        gd.Brake = truck->brake / truck->brakeforce;
+        gd.Clutch = 1 - truck->engine->getClutch(); // 0-1
 
         strncpy(gd.Display1, truck->realtruckname.c_str(), 15);
-        if ( truck->realtruckname.length() > 15 )
+        if (truck->realtruckname.length() > 15)
         {
             strncpy(gd.Display2, truck->realtruckname.c_str() + 15, 15);
         }
@@ -195,6 +207,6 @@ bool OutProtocol::update(float dt)
     return true;
 #else
     // TODO: fix linux
-    return false;
+	return false;
 #endif // _WIN32
 }

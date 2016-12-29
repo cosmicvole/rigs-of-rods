@@ -1,23 +1,27 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
-// created by Thomas Fischer thomas{AT}thomasfischer{DOT}biz, 7th of September 2009
+
+/// @file
+/// @author Thomas Fischer (thomas{AT}thomasfischer{DOT}biz)
+/// @date   7th of September 2009
+
 #ifdef USE_MYGUI
 #ifdef USE_SOCKETW
 
@@ -34,63 +38,59 @@ using namespace GUI;
 using namespace Ogre;
 
 MpClientList::MpClientList() :
-      clients(0)
+    clients(0)
     , lineheight(16)
     , msgwin(0)
 {
-    
     // allocate some buffers
-    clients = (client_t *)calloc(MAX_PEERS,sizeof(client_t));
-    
+    clients = (client_t *)calloc(MAX_PEERS, sizeof(client_t));
 
     // tooltip window
-    tooltipPanel = MyGUI::Gui::getInstance().createWidget<MyGUI::Widget>("PanelSkin", 0, 0, 200, 20,  MyGUI::Align::Default, "ToolTip");
-    tooltipText = tooltipPanel->createWidget<MyGUI::TextBox>("TextBox", 4, 2, 200, 16,  MyGUI::Align::Default);
+    tooltipPanel = MyGUI::Gui::getInstance().createWidget<MyGUI::Widget>("PanelSkin", 0, 0, 200, 20, MyGUI::Align::Default, "ToolTip");
+    tooltipText = tooltipPanel->createWidget<MyGUI::TextBox>("TextBox", 4, 2, 200, 16, MyGUI::Align::Default);
     tooltipText->setFontName("VeraMono");
     //tooltipPanel->setAlpha(0.9f);
     tooltipText->setFontHeight(16);
     tooltipPanel->setVisible(false);
-    
+
     // message window
-    msgwin = MyGUI::Gui::getInstance().createWidget<MyGUI::Window>("WindowCSX", 0, 0, 400, 300,  MyGUI::Align::Center, "Overlapped");
+    msgwin = MyGUI::Gui::getInstance().createWidget<MyGUI::Window>("WindowCSX", 0, 0, 400, 300, MyGUI::Align::Center, "Overlapped");
     msgwin->setCaption(_L("Player Information"));
-    msgtext = msgwin->createWidget<MyGUI::Edit>("EditStretch", 0, 0, 400, 300,  MyGUI::Align::Default, "helptext");
+    msgtext = msgwin->createWidget<MyGUI::Edit>("EditStretch", 0, 0, 400, 300, MyGUI::Align::Default, "helptext");
     msgtext->setCaption("");
     msgtext->setEditWordWrap(true);
     msgtext->setEditStatic(true);
     msgwin->setVisible(false);
 
-
     // network quality warning
-    netmsgwin = MyGUI::Gui::getInstance().createWidget<MyGUI::Window>("FlowContainer", 5, 30, 300, 40,  MyGUI::Align::Default, "Main");
+    netmsgwin = MyGUI::Gui::getInstance().createWidget<MyGUI::Window>("FlowContainer", 5, 30, 300, 40, MyGUI::Align::Default, "Main");
     netmsgwin->setAlpha(0.8f);
-    MyGUI::ImageBox *nimg = netmsgwin->createWidget<MyGUI::ImageBox>("ImageBox", 0, 0, 16, 16,  MyGUI::Align::Default, "Main");
+    MyGUI::ImageBox* nimg = netmsgwin->createWidget<MyGUI::ImageBox>("ImageBox", 0, 0, 16, 16, MyGUI::Align::Default, "Main");
     nimg->setImageTexture("error.png");
-    netmsgtext = netmsgwin->createWidget<MyGUI::TextBox>("TextBox", 18, 2, 300, 40,  MyGUI::Align::Default, "helptext");
+    netmsgtext = netmsgwin->createWidget<MyGUI::TextBox>("TextBox", 18, 2, 300, 40, MyGUI::Align::Default, "helptext");
     netmsgtext->setCaption(_L("Slow  Network  Download"));
     netmsgtext->setFontName("DefaultBig");
     netmsgtext->setTextColour(MyGUI::Colour::Red);
     netmsgtext->setFontHeight(lineheight);
     netmsgwin->setVisible(false);
 
-
     // now the main GUI
     MyGUI::IntSize gui_area = MyGUI::RenderManager::getInstance().getViewSize();
-    int x=gui_area.width - 300, y=30;
+    int x = gui_area.width - 300, y = 30;
 
-    MyGUI::ImageBox *ib = MyGUI::Gui::getInstance().createWidget<MyGUI::ImageBox>("ImageBox", x, y, sidebarWidth, gui_area.height,  MyGUI::Align::Default, "Main");
+    MyGUI::ImageBox* ib = MyGUI::Gui::getInstance().createWidget<MyGUI::ImageBox>("ImageBox", x, y, sidebarWidth, gui_area.height, MyGUI::Align::Default, "Main");
     ib->setImageTexture("mpbg.png");
 
     mpPanel = ib; //->createWidget<MyGUI::Widget>("FlowContainer", x, y, sidebarWidth, gui_area.height,  MyGUI::Align::Default, "Main");
     mpPanel->setVisible(false);
 
-    y=5;
+    y = 5;
     UTFString tmp;
     for (int i = 0; i < MAX_PEERS + 1; i++) // plus 1 for local entry
     {
-        x=100; // space for icons
-        player_row_t *row = &player_rows[i];
-        row->playername = mpPanel->createWidget<MyGUI::TextBox>("TextBox", x, y+1, sidebarWidth, lineheight,  MyGUI::Align::Default, "Main");
+        x = 100; // space for icons
+        player_row_t* row = &player_rows[i];
+        row->playername = mpPanel->createWidget<MyGUI::TextBox>("TextBox", x, y + 1, sidebarWidth, lineheight, MyGUI::Align::Default, "Main");
         row->playername->setCaption("Player " + TOSTRING(i));
         row->playername->setFontName("DefaultBig");
         tmp = _L("user name");
@@ -102,7 +102,7 @@ MpClientList::MpClientList() :
         row->playername->setAlpha(1);
 
         x -= 18;
-        row->flagimg = mpPanel->createWidget<MyGUI::ImageBox>("ImageBox", x, y + 3, 16, 11,  MyGUI::Align::Default, "Main");
+        row->flagimg = mpPanel->createWidget<MyGUI::ImageBox>("ImageBox", x, y + 3, 16, 11, MyGUI::Align::Default, "Main");
         tmp = _L("user country");
         row->flagimg->setUserString("tooltip", tmp.asUTF8());
         row->flagimg->eventToolTip += MyGUI::newDelegate(this, &MpClientList::openToolTip);
@@ -110,7 +110,7 @@ MpClientList::MpClientList() :
         row->flagimg->setVisible(false);
 
         x -= 18;
-        row->statimg = mpPanel->createWidget<MyGUI::ImageBox>("ImageBox", x, y, 16, 16,  MyGUI::Align::Default, "Main");
+        row->statimg = mpPanel->createWidget<MyGUI::ImageBox>("ImageBox", x, y, 16, 16, MyGUI::Align::Default, "Main");
         tmp = _L("user authentication level");
         row->statimg->setUserString("tooltip", tmp.asUTF8());
         row->statimg->eventToolTip += MyGUI::newDelegate(this, &MpClientList::openToolTip);
@@ -118,7 +118,7 @@ MpClientList::MpClientList() :
         row->statimg->setVisible(false);
 
         x -= 18;
-        row->userTruckOKImg = mpPanel->createWidget<MyGUI::ImageBox>("ImageBox", x, y, 16, 16,  MyGUI::Align::Default, "Main");
+        row->userTruckOKImg = mpPanel->createWidget<MyGUI::ImageBox>("ImageBox", x, y, 16, 16, MyGUI::Align::Default, "Main");
         tmp = _L("truck loading state");
         row->userTruckOKImg->setUserString("tooltip", tmp.asUTF8());
         row->userTruckOKImg->eventToolTip += MyGUI::newDelegate(this, &MpClientList::openToolTip);
@@ -127,16 +127,16 @@ MpClientList::MpClientList() :
         row->userTruckOKImg->eventMouseButtonClick += MyGUI::newDelegate(this, &MpClientList::clickInfoIcon);
 
         x -= 18;
-        row->userTruckOKRemoteImg = mpPanel->createWidget<MyGUI::ImageBox>("ImageBox", x, y, 16, 16,  MyGUI::Align::Default, "Main");
+        row->userTruckOKRemoteImg = mpPanel->createWidget<MyGUI::ImageBox>("ImageBox", x, y, 16, 16, MyGUI::Align::Default, "Main");
         tmp = _L("remote truck loading state");
         row->userTruckOKRemoteImg->setUserString("tooltip", tmp.asUTF8());
         row->userTruckOKRemoteImg->eventToolTip += MyGUI::newDelegate(this, &MpClientList::openToolTip);
         row->userTruckOKRemoteImg->setNeedToolTip(true);
         row->userTruckOKRemoteImg->setVisible(false);
         row->userTruckOKRemoteImg->eventMouseButtonClick += MyGUI::newDelegate(this, &MpClientList::clickInfoIcon);
-        
+
         x -= 18;
-        row->usergoimg = mpPanel->createWidget<MyGUI::ImageBox>("ImageBox", x, y, 16, 16,  MyGUI::Align::Default, "Main");
+        row->usergoimg = mpPanel->createWidget<MyGUI::ImageBox>("ImageBox", x, y, 16, 16, MyGUI::Align::Default, "Main");
         row->usergoimg->setUserString("num", TOSTRING(i));
         tmp = _L("go to user");
         row->usergoimg->setUserString("tooltip", tmp.asUTF8());
@@ -169,9 +169,10 @@ MpClientList::~MpClientList()
     }
 }
 
-void MpClientList::updateSlot(player_row_t *row, user_info_t c, bool self)
+void MpClientList::updateSlot(player_row_t* row, user_info_t c, bool self)
 {
-    if (!row) return;
+    if (!row)
+        return;
 
     int x = 100;
     int y = row->playername->getPosition().top;
@@ -181,7 +182,7 @@ void MpClientList::updateSlot(player_row_t *row, user_info_t c, bool self)
     row->playername->setTextColour(MyGUI::Colour(col.r, col.g, col.b, col.a));
     row->playername->setVisible(true);
     x -= 18;
-    
+
     // flag
     StringVector parts = StringUtil::split(String(c.language), "_");
     if (parts.size() == 2)
@@ -193,17 +194,19 @@ void MpClientList::updateSlot(player_row_t *row, user_info_t c, bool self)
         row->flagimg->setVisible(true);
         row->flagimg->setPosition(x, y);
         x -= 18;
-    } else
+    }
+    else
     {
         row->flagimg->setVisible(false);
     }
-    
+
     UTFString tmp;
     // auth
     if (c.authstatus == AUTH_NONE)
     {
         row->statimg->setVisible(false);
-    } else if (c.authstatus & AUTH_ADMIN)
+    }
+    else if (c.authstatus & AUTH_ADMIN)
     {
         row->statimg->setVisible(true);
         row->statimg->setImageTexture("flag_red.png");
@@ -211,7 +214,8 @@ void MpClientList::updateSlot(player_row_t *row, user_info_t c, bool self)
         row->statimg->setUserString("tooltip", tmp.asUTF8());
         row->statimg->setPosition(x, y);
         x -= 18;
-    } else if (c.authstatus & AUTH_MOD)
+    }
+    else if (c.authstatus & AUTH_MOD)
     {
         row->statimg->setVisible(true);
         row->statimg->setImageTexture("flag_blue.png");
@@ -219,7 +223,8 @@ void MpClientList::updateSlot(player_row_t *row, user_info_t c, bool self)
         row->statimg->setUserString("tooltip", tmp.asUTF8());
         row->statimg->setPosition(x, y);
         x -= 18;
-    } else if (c.authstatus & AUTH_RANKED)
+    }
+    else if (c.authstatus & AUTH_RANKED)
     {
         row->statimg->setVisible(true);
         row->statimg->setImageTexture("flag_green.png");
@@ -247,12 +252,14 @@ void MpClientList::updateSlot(player_row_t *row, user_info_t c, bool self)
             row->userTruckOKImg->setImageTexture("arrow_down_red.png");
             tmp = _L("Truck loading errors");
             row->userTruckOKImg->setUserString("tooltip", tmp.asUTF8());
-        } else if (ok == 1)
+        }
+        else if (ok == 1)
         {
             row->userTruckOKImg->setImageTexture("arrow_down.png");
             tmp = _L("Truck loaded correctly, no errors");
             row->userTruckOKImg->setUserString("tooltip", tmp.asUTF8());
-        } else if (ok == 2)
+        }
+        else if (ok == 2)
         {
             row->userTruckOKImg->setImageTexture("arrow_down_grey.png");
             tmp = _L("no truck loaded");
@@ -265,23 +272,26 @@ void MpClientList::updateSlot(player_row_t *row, user_info_t c, bool self)
             row->userTruckOKRemoteImg->setImageTexture("arrow_up_red.png");
             tmp = _L("Remote Truck loading errors");
             row->userTruckOKRemoteImg->setUserString("tooltip", tmp.asUTF8());
-        } else if (rok == 1)
+        }
+        else if (rok == 1)
         {
             row->userTruckOKRemoteImg->setImageTexture("arrow_up.png");
             tmp = _L("Remote Truck loaded correctly, no errors");
             row->userTruckOKRemoteImg->setUserString("tooltip", tmp.asUTF8());
-        } else if (rok == 2)
+        }
+        else if (rok == 2)
         {
             row->userTruckOKRemoteImg->setImageTexture("arrow_up_grey.png");
             tmp = _L("No Trucks loaded");
             row->userTruckOKRemoteImg->setUserString("tooltip", tmp.asUTF8());
         }
-    } else
+    }
+    else
     {
         row->userTruckOKImg->setVisible(false);
         row->userTruckOKRemoteImg->setVisible(false);
     }
-    
+
     // user go img
     row->usergoimg->setVisible(false);
 }
@@ -289,10 +299,10 @@ void MpClientList::updateSlot(player_row_t *row, user_info_t c, bool self)
 void MpClientList::update()
 {
     int slotid = 0;
-    
+
     MyGUI::IntSize gui_area = MyGUI::RenderManager::getInstance().getViewSize();
-    int x=gui_area.width - sidebarWidth, y=30;
-    mpPanel->setPosition(x,y);
+    int x = gui_area.width - sidebarWidth, y = 30;
+    mpPanel->setPosition(x, y);
 
     // add local player to first slot always
     user_info_t lu = RoR::Networking::GetLocalUserData();
@@ -303,19 +313,19 @@ void MpClientList::update()
     std::vector<user_info_t> users = RoR::Networking::GetUserInfos();
     for (user_info_t user : users)
     {
-        player_row_t *row = &player_rows[slotid];
+        player_row_t* row = &player_rows[slotid];
         slotid++;
         try
         {
             updateSlot(row, user, false);
-        } catch(...)
+        }
+        catch (...)
         {
         }
-        
     }
     for (int i = slotid; i < MAX_PEERS; i++)
     {
-        player_row_t *row = &player_rows[i];
+        player_row_t* row = &player_rows[i];
         // not used, hide everything
         row->flagimg->setVisible(false);
         row->playername->setVisible(false);
@@ -342,7 +352,7 @@ void MpClientList::clickInfoIcon(MyGUI::WidgetPtr sender)
     //msgwin->setVisible(true);
 }
 
-void MpClientList::openToolTip(MyGUI::WidgetPtr sender, const MyGUI::ToolTipInfo &t)
+void MpClientList::openToolTip(MyGUI::WidgetPtr sender, const MyGUI::ToolTipInfo& t)
 {
     if (t.type == MyGUI::ToolTipInfo::Show)
     {
@@ -357,7 +367,8 @@ void MpClientList::openToolTip(MyGUI::WidgetPtr sender, const MyGUI::ToolTipInfo
             tooltipText->setSize(newWidth, 16);
             tooltipPanel->setVisible(true);
         }
-    } else if (t.type == MyGUI::ToolTipInfo::Hide)
+    }
+    else if (t.type == MyGUI::ToolTipInfo::Hide)
     {
         tooltipPanel->setVisible(false);
     }

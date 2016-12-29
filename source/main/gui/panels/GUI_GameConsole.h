@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2014 Petr Ohlidal
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -12,16 +12,14 @@
 
     Rigs of Rods is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** 
-    @file
-*/
+/// @file
 
 #pragma once
 
@@ -37,15 +35,15 @@
 #include "GUI_GameConsoleLayout.h"
 
 namespace RoR {
-    // Special - not in namespace GUI
+// Special - not in namespace GUI
 
 struct ConsoleMessage
 {
     //Kept this for comptability rather than remplacing hunderd of lines.
-    char type; 
+    char type;
     int sender_uid; //Not used
     unsigned long time; //Not used !< post time in milliseconds since RoR start
-    unsigned long ttl;  //Not used !< in milliseconds
+    unsigned long ttl; //Not used !< in milliseconds
     Ogre::UTFString txt; //!< not POD, beware...
     char icon[50]; //Not used
     bool forcevisible; //Not used
@@ -57,7 +55,6 @@ class Console :
     public GUI::GameConsoleLayout,
     public ZeroedMemoryAllocator
 {
-
 public:
 
     Console();
@@ -66,9 +63,18 @@ public:
     void SetVisible(bool _visible);
     bool IsVisible();
 
-    enum { CONSOLE_MSGTYPE_LOG, CONSOLE_MSGTYPE_INFO, CONSOLE_MSGTYPE_SCRIPT, CONSOLE_MSGTYPE_NETWORK, CONSOLE_MSGTYPE_FLASHMESSAGE, CONSOLE_MSGTYPE_HIGHSCORE };
+    enum
+    {
+        CONSOLE_MSGTYPE_LOG,
+        CONSOLE_MSGTYPE_INFO,
+        CONSOLE_MSGTYPE_SCRIPT,
+        CONSOLE_MSGTYPE_NETWORK,
+        CONSOLE_MSGTYPE_FLASHMESSAGE,
+        CONSOLE_MSGTYPE_HIGHSCORE
+    };
 
-    enum {
+    enum
+    {
         // detailed message type identifier, mostly used for message filtering
         CONSOLE_HELP,
         CONSOLE_TITLE,
@@ -100,15 +106,14 @@ protected:
     void frameEntered(float dt);
 
 #if OGRE_VERSION < ((1 << 16) | (8 << 8 ) | 0)
-    void messageLogged(const Ogre::String& message, Ogre::LogMessageLevel lml, bool maskDebug, const Ogre::String &logName);
+	void messageLogged(const Ogre::String& message, Ogre::LogMessageLevel lml, bool maskDebug, const Ogre::String &logName);
 #else
-    void messageLogged( const Ogre::String& message, Ogre::LogMessageLevel lml, bool maskDebug, const Ogre::String &logName, bool& skipThisMessage);
+    void messageLogged(const Ogre::String& message, Ogre::LogMessageLevel lml, bool maskDebug, const Ogre::String& logName, bool& skipThisMessage);
 #endif // OGRE_VERSION
 
     void eventCommandAccept(MyGUI::Edit* _sender);
     void eventMouseButtonClickSendButton(MyGUI::WidgetPtr _sender);
     void eventButtonPressed(MyGUI::Widget* _sender, MyGUI::KeyCode _key, MyGUI::Char _char);
-
 
     Ogre::String sTextHistory[500];
     int iText;

@@ -49,7 +49,7 @@ FlexBody::FlexBody(
     MaterialReplacer *material_replacer,
     bool enable_LODs // = false
 ):
-      m_camera_mode(-2)    
+      m_camera_mode(-2)	
     , m_center_offset(offset)
     , m_node_center(ref)
     , m_node_x(nx)
@@ -130,7 +130,7 @@ FlexBody::FlexBody(
     {
         // now find possible LODs
         FLEXBODY_PROFILER_ENTER("Handle LODs >> Split mesh name");
-         String basename, ext;
+        String basename, ext;
         StringUtil::splitBaseFilename(String(meshname), basename, ext);
         FLEXBODY_PROFILER_ENTER("Handle LODs >> Run loop");
         for (int i=0; i<4;i++)
@@ -740,7 +740,7 @@ bool FlexBody::flexitPrepare()
     }
 
     return true;
-}    
+}	
 
 void FlexBody::flexitCompute()
 {

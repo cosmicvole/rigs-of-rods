@@ -1,22 +1,23 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
+
 #include "WriteTextToTexture.h"
 
 #include <OgreFont.h>
@@ -40,7 +41,7 @@ void SaveImage(TexturePtr TextureToSave, String filename)
 
     Image img;
     img = img.loadDynamicImage(readrefdata, TextureToSave->getWidth(),
-                               TextureToSave->getHeight(), TextureToSave->getFormat());
+        TextureToSave->getHeight(), TextureToSave->getFormat());
     img.save(filename);
 
     readbuffer->unlock();
@@ -88,7 +89,6 @@ void WriteToTexture(const String& str, TexturePtr destTexture, Image::Box destRe
     // create pixel box using the copy of the buffer
     PixelBox fontPb(fontBuffer->getWidth(), fontBuffer->getHeight(), fontBuffer->getDepth(), fontBuffer->getFormat(), buffer);
     fontBuffer->blitToMemory(fontPb);
-
 
     uint8* fontData = static_cast<uint8*>(fontPb.data);
     uint8* destData = static_cast<uint8*>(destPb.data);

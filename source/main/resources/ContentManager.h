@@ -19,9 +19,7 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** 
-    @file ContentManager.h
-*/
+/// @file
 
 #pragma once
 
@@ -31,8 +29,7 @@
 
 #include <OgreResourceGroupManager.h>
 
-namespace RoR
-{
+namespace RoR {
 
 class ContentManager : public Ogre::ResourceLoadingListener, public ZeroedMemoryAllocator
 {
@@ -43,11 +40,12 @@ public:
 
     struct ResourcePack
     {
-        ResourcePack(Ogre::uint64 mask, const char * name, const char * resource_group_name):
+        ResourcePack(Ogre::uint64 mask, const char* name, const char* resource_group_name):
             mask(mask),
             name(name),
             resource_group_name(resource_group_name)
-        {}
+        {
+        }
 
         static const ResourcePack OGRE_CORE;
         static const ResourcePack GUI_MENU_WALLPAPERS;
@@ -79,13 +77,12 @@ public:
         static const ResourcePack SUNBURN;
         static const ResourcePack TEXTURES;
 
-
         Ogre::uint64 mask;
-        const char * name;
-        const char * resource_group_name;
+        const char* name;
+        const char* resource_group_name;
     };
 
-    void AddResourcePack(ResourcePack const & resource_pack);
+    void AddResourcePack(ResourcePack const& resource_pack);
 
     bool isLoaded(Ogre::uint64 res_pack_id);
 
@@ -101,9 +98,9 @@ protected:
     void exploreZipFolders(Ogre::String rg);
 
     // implementation for resource loading listener
-    Ogre::DataStreamPtr resourceLoading(const Ogre::String &name, const Ogre::String &group, Ogre::Resource *resource);
-    void resourceStreamOpened(const Ogre::String &name, const Ogre::String &group, Ogre::Resource *resource, Ogre::DataStreamPtr& dataStream);
-    bool resourceCollision(Ogre::Resource *resource, Ogre::ResourceManager *resourceManager);
+    Ogre::DataStreamPtr resourceLoading(const Ogre::String& name, const Ogre::String& group, Ogre::Resource* resource);
+    void resourceStreamOpened(const Ogre::String& name, const Ogre::String& group, Ogre::Resource* resource, Ogre::DataStreamPtr& dataStream);
+    bool resourceCollision(Ogre::Resource* resource, Ogre::ResourceManager* resourceManager);
 
     Ogre::uint64 m_loaded_resource_packs;
     RoR::SkinManager* m_skin_manager;

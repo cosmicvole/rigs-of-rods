@@ -19,11 +19,9 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** 
-    @file   GUI_GameAbout.cpp
-    @author Moncef Ben Slimane
-    @date   11/2014
-*/
+/// @file   GUI_GameAbout.cpp
+/// @author Moncef Ben Slimane
+/// @date   11/2014
 
 #include "GUI_GameAbout.h"
 
@@ -38,7 +36,6 @@
 
 #include <MyGUI.h>
 
-
 using namespace RoR;
 using namespace GUI;
 
@@ -49,21 +46,20 @@ CLASS::CLASS()
 {
     MyGUI::WindowPtr win = dynamic_cast<MyGUI::WindowPtr>(mMainWidget);
     win->eventWindowButtonPressed += MyGUI::newDelegate(this, &CLASS::notifyWindowButtonPressed); //The "X" button thing
-    
-    m_backbtn->eventMouseButtonClick      += MyGUI::newDelegate(this, &CLASS::eventMouseButtonClickBackButton);
+
+    m_backbtn->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::eventMouseButtonClickBackButton);
     m_ror_version->setCaption(Ogre::String(ROR_VERSION_STRING));
     m_net_version->setCaption(Ogre::String(RORNET_VERSION));
     m_build_time->setCaption(Ogre::String(__DATE__) + ", " + Ogre::String(__TIME__));
-  
+
     initMisc();
     CenterToScreen();
-    
+
     MAIN_WIDGET->setVisible(false);
 }
 
 CLASS::~CLASS()
 {
-
 }
 
 void CLASS::Show()
@@ -96,16 +92,16 @@ bool CLASS::IsVisible()
 void CLASS::initMisc()
 {
     Ogre::UTFString AuthorsText = "";
-    Ogre::UTFString orange      = U("#FF7D02"); // colour key shortcut
-    Ogre::UTFString white       = U("#FFFFFF"); // colour key shortcut
-    Ogre::UTFString color1      = U("#66FF33"); // colour key shortcut
-    Ogre::UTFString newline     = U("\n");
+    Ogre::UTFString orange = U("#FF7D02"); // colour key shortcut
+    Ogre::UTFString white = U("#FFFFFF"); // colour key shortcut
+    Ogre::UTFString color1 = U("#66FF33"); // colour key shortcut
+    Ogre::UTFString newline = U("\n");
 
     //Authors:
     AuthorsText = orange + "Authors:" + newline;
     AuthorsText = AuthorsText + color1 + "Pierre-Michel Ricordel (pricorde):" + white + " Physics Genius, Original Author, Core Developer, retired" + newline;
     AuthorsText = AuthorsText + color1 + "Thomas Fischer (tdev):" + white + " Core Developer, inactive" + newline;
-    
+
     //Current Project devs:
     AuthorsText = AuthorsText + newline;
     AuthorsText = AuthorsText + orange + "Current Developers:" + newline;
@@ -217,4 +213,3 @@ void CLASS::SetVisible(bool v)
     else
         Hide();
 }
-

@@ -1,31 +1,32 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
+
 #include "EnvironmentMap.h"
 
 #include <Ogre.h>
 #ifdef ROR_USE_OGRE_1_9
-#    include <Overlay/OgreOverlayManager.h>
-#    include <Overlay/OgreOverlay.h>
+#   include <Overlay/OgreOverlayManager.h>
+#   include <Overlay/OgreOverlay.h>
 #else
-#    include <OgreOverlayManager.h>
-#    include <OgreOverlayElement.h>
+#   include <OgreOverlayManager.h>
+#   include <OgreOverlayElement.h>
 #endif
 
 #include "Application.h"
@@ -38,15 +39,14 @@ using namespace RoR;
 using namespace Ogre;
 
 Envmap::Envmap() :
-      mInitiated(false)
+    mInitiated(false)
     , mRound(0)
 {
-
     TexturePtr texture = TextureManager::getSingleton().createManual("EnvironmentTexture",
         ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, TEX_TYPE_CUBE_MAP, 256, 256, 0,
         PF_R8G8B8, TU_RENDERTARGET);
 
-    for (int face=0; face < NUM_FACES; face++)
+    for (int face = 0; face < NUM_FACES; face++)
     {
         mRenderTargets[face] = texture->getBuffer(face)->getRenderTarget();
         mCameras[face] = gEnv->sceneManager->createCamera("EnvironmentCamera-" + TOSTRING(face));
@@ -57,7 +57,7 @@ Envmap::Envmap() :
         mCameras[face]->setNearClipDistance(0.1f);
         mCameras[face]->setFarClipDistance(gEnv->mainCamera->getFarClipDistance());
 
-        Viewport *v = mRenderTargets[face]->addViewport(mCameras[face]);
+        Viewport* v = mRenderTargets[face]->addViewport(mCameras[face]);
         v->setOverlaysEnabled(false);
         v->setClearEveryFrame(true);
         v->setBackgroundColour(gEnv->mainCamera->getViewport()->getBackgroundColour());
@@ -89,15 +89,15 @@ Envmap::Envmap() :
     if (App::GetDiagEnvmap())
     {
         // create fancy mesh for debugging the envmap
-        Overlay *overlay = OverlayManager::getSingleton().create("EnvMapDebugOverlay");
+        Overlay* overlay = OverlayManager::getSingleton().create("EnvMapDebugOverlay");
         if (overlay)
         {
             Vector3 position = Vector3::ZERO;
             float scale = 1.0f;
-            
+
             MeshPtr mesh = MeshManager::getSingletonPtr()->createManual("cubeMapDebug", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
             // create sub mesh
-            SubMesh *sub = mesh->createSubMesh();
+            SubMesh* sub = mesh->createSubMesh();
 
             // Initialize render operation
             sub->operationType = RenderOperation::OT_TRIANGLE_LIST;
@@ -117,71 +117,71 @@ Envmap::Envmap() :
             // Create and bind vertex buffer
             mesh->sharedVertexData->vertexCount = 14;
             HardwareVertexBufferSharedPtr vertexBuffer =
-              HardwareBufferManager::getSingleton().createVertexBuffer(
-                 mesh->sharedVertexData->vertexDeclaration->getVertexSize(0),
-                 mesh->sharedVertexData->vertexCount,
-                 HardwareBuffer::HBU_STATIC_WRITE_ONLY);
+                HardwareBufferManager::getSingleton().createVertexBuffer(
+                    mesh->sharedVertexData->vertexDeclaration->getVertexSize(0),
+                    mesh->sharedVertexData->vertexCount,
+                    HardwareBuffer::HBU_STATIC_WRITE_ONLY);
             mesh->sharedVertexData->vertexBufferBinding->setBinding(0, vertexBuffer);
 
             // Vertex data
             static const float vertexData[] = {
-            // Position      Texture coordinates    // Index
-              0.0, 2.0,      -1.0,  1.0,  1.0,      //  0
-              0.0, 1.0,      -1.0, -1.0,  1.0,      //  1
-              1.0, 2.0,      -1.0,  1.0, -1.0,      //  2
-              1.0, 1.0,      -1.0, -1.0, -1.0,      //  3
-              2.0, 2.0,       1.0,  1.0, -1.0,      //  4
-              2.0, 1.0,       1.0, -1.0, -1.0,      //  5
-              3.0, 2.0,       1.0,  1.0,  1.0,      //  6
-              3.0, 1.0,       1.0, -1.0,  1.0,      //  7
-              4.0, 2.0,      -1.0,  1.0,  1.0,      //  8
-              4.0, 1.0,      -1.0, -1.0,  1.0,      //  9
-              1.0, 3.0,      -1.0,  1.0,  1.0,      // 10
-              2.0, 3.0,       1.0,  1.0,  1.0,      // 11
-              1.0, 0.0,      -1.0, -1.0,  1.0,      // 12
-              2.0, 0.0,       1.0, -1.0,  1.0,      // 13
+                // Position      Texture coordinates    // Index
+                0.0, 2.0, -1.0, 1.0, 1.0, //  0
+                0.0, 1.0, -1.0, -1.0, 1.0, //  1
+                1.0, 2.0, -1.0, 1.0, -1.0, //  2
+                1.0, 1.0, -1.0, -1.0, -1.0, //  3
+                2.0, 2.0, 1.0, 1.0, -1.0, //  4
+                2.0, 1.0, 1.0, -1.0, -1.0, //  5
+                3.0, 2.0, 1.0, 1.0, 1.0, //  6
+                3.0, 1.0, 1.0, -1.0, 1.0, //  7
+                4.0, 2.0, -1.0, 1.0, 1.0, //  8
+                4.0, 1.0, -1.0, -1.0, 1.0, //  9
+                1.0, 3.0, -1.0, 1.0, 1.0, // 10
+                2.0, 3.0, 1.0, 1.0, 1.0, // 11
+                1.0, 0.0, -1.0, -1.0, 1.0, // 12
+                2.0, 0.0, 1.0, -1.0, 1.0, // 13
             };
 
             // Fill vertex buffer
-            float *pData = static_cast<float*>(vertexBuffer->lock(HardwareBuffer::HBL_DISCARD));
-            for (size_t vertex=0, i=0; vertex < mesh->sharedVertexData->vertexCount; vertex++)
+            float* pData = static_cast<float*>(vertexBuffer->lock(HardwareBuffer::HBL_DISCARD));
+            for (size_t vertex = 0, i = 0; vertex < mesh->sharedVertexData->vertexCount; vertex++)
             {
-              // Position
-              *pData++ = position.x + scale * vertexData[i++];
-              *pData++ = position.y + scale * vertexData[i++];
-              *pData++ = 0.0;
+                // Position
+                *pData++ = position.x + scale * vertexData[i++];
+                *pData++ = position.y + scale * vertexData[i++];
+                *pData++ = 0.0;
 
-              // Texture coordinates
-              *pData++ = vertexData[i++];
-              *pData++ = vertexData[i++];
-              *pData++ = vertexData[i++];
+                // Texture coordinates
+                *pData++ = vertexData[i++];
+                *pData++ = vertexData[i++];
+                *pData++ = vertexData[i++];
             }
             vertexBuffer->unlock();
 
             // Create index buffer
             sub->indexData->indexCount = 36;
             HardwareIndexBufferSharedPtr indexBuffer =
-              HardwareBufferManager::getSingleton().createIndexBuffer(
-                 HardwareIndexBuffer::IT_16BIT,
-                 sub->indexData->indexCount,
-                 HardwareBuffer::HBU_STATIC_WRITE_ONLY);
+                HardwareBufferManager::getSingleton().createIndexBuffer(
+                    HardwareIndexBuffer::IT_16BIT,
+                    sub->indexData->indexCount,
+                    HardwareBuffer::HBU_STATIC_WRITE_ONLY);
             sub->indexData->indexBuffer = indexBuffer;
 
             // Index data
             static const uint16 indexData[] = {
-            // Indices         // Face
-               0,  1,  2,      //  0
-               2,  1,  3,      //  1
-               2,  3,  4,      //  2
-               4,  3,  5,      //  3
-               4,  5,  6,      //  4
-               6,  5,  7,      //  5
-               6,  7,  8,      //  6
-               8,  7,  9,      //  7
-              10,  2, 11,      //  8
-              11,  2,  4,      //  9
-               3, 12,  5,      // 10
-               5, 12, 13,      // 11
+                // Indices         // Face
+                 0,  1,  2,        //  0
+                 2,  1,  3,        //  1
+                 2,  3,  4,        //  2
+                 4,  3,  5,        //  3
+                 4,  5,  6,        //  4
+                 6,  5,  7,        //  5
+                 6,  7,  8,        //  6
+                 8,  7,  9,        //  7
+                10,  2, 11,        //  8
+                11,  2,  4,        //  9
+                 3, 12,  5,        // 10
+                 5, 12, 13,        // 11
             };
 
             // Fill index buffer
@@ -191,9 +191,9 @@ Envmap::Envmap() :
             mesh->_setBoundingSphereRadius(10);
             mesh->load();
 
-            Entity *e = gEnv->sceneManager->createEntity(mesh->getName());
+            Entity* e = gEnv->sceneManager->createEntity(mesh->getName());
             e->setCastShadows(false);
-            e->setRenderQueueGroup(RENDER_QUEUE_OVERLAY-1);
+            e->setRenderQueueGroup(RENDER_QUEUE_OVERLAY - 1);
             e->setVisible(true);
 
             e->setMaterialName("tracks/EnvMapDebug");
@@ -206,7 +206,7 @@ Envmap::Envmap() :
             mDebugSceneNode->_updateBounds();
             overlay->add3D(mDebugSceneNode);
             overlay->show();
-            
+
             // example update
             init(Vector3::ZERO);
         }
@@ -221,7 +221,7 @@ Envmap::~Envmap()
     }
 }
 
-void Envmap::update(Ogre::Vector3 center, Beam *beam /* = 0 */)
+void Envmap::update(Ogre::Vector3 center, Beam* beam /* = 0 */)
 {
     if (!App::GetGfxEnvmapEnabled() || !beam)
     {
@@ -232,7 +232,7 @@ void Envmap::update(Ogre::Vector3 center, Beam *beam /* = 0 */)
         return;
     }
 
-    for (int i=0; i < NUM_FACES; i++)
+    for (int i = 0; i < NUM_FACES; i++)
     {
         mCameras[i]->setPosition(center);
     }
@@ -254,21 +254,21 @@ void Envmap::update(Ogre::Vector3 center, Beam *beam /* = 0 */)
     }
 
     const int update_rate = App::GetGfxEnvmapRate();
-    for (int i=0; i < update_rate; i++)
+    for (int i = 0; i < update_rate; i++)
     {
         // caelum needs to know that we changed the cameras
-    #ifdef USE_CAELUM
-        
+#ifdef USE_CAELUM
+
         if (gEnv->terrainManager->getSkyManager())
         {
             gEnv->terrainManager->getSkyManager()->notifyCameraChanged(mCameras[mRound]);
         }
-    #endif // USE_CAELUM
+#endif // USE_CAELUM
         mRenderTargets[mRound]->update();
         mRound = (mRound + 1) % NUM_FACES;
     }
 #ifdef USE_CAELUM
-    
+
     if (gEnv->terrainManager->getSkyManager())
     {
         gEnv->terrainManager->getSkyManager()->notifyCameraChanged(gEnv->mainCamera);
@@ -287,9 +287,8 @@ void Envmap::update(Ogre::Vector3 center, Beam *beam /* = 0 */)
 
 void Envmap::init(Vector3 center)
 {
-
     // capture all images at once
-    for (int i=0; i < NUM_FACES; i++)
+    for (int i = 0; i < NUM_FACES; i++)
     {
         mCameras[i]->setPosition(center);
         mRenderTargets[i]->update();

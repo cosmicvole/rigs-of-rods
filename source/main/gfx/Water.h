@@ -31,14 +31,14 @@ class Water : public IWater, public ZeroedMemoryAllocator
 {
 public:
 
-    Water(const Ogre::ConfigFile &mTerrainConfig);
+    Water(const Ogre::ConfigFile& mTerrainConfig);
     ~Water();
 
     float getHeight();
     float getHeightWaves(Ogre::Vector3 pos);
     Ogre::Vector3 getVelocity(Ogre::Vector3 pos);
 
-    void setCamera(Ogre::Camera *cam);
+    void setCamera(Ogre::Camera* cam);
     void setFadeColour(Ogre::ColourValue ambient);
     void setHeight(float value);
     void setSunPosition(Ogre::Vector3);
@@ -60,7 +60,7 @@ private:
 
     float getWaveHeight(Ogre::Vector3 pos);
 
-    typedef struct
+    struct wavetrain_t
     {
         float amplitude;
         float maxheight;
@@ -69,13 +69,13 @@ private:
         float direction;
         float dir_sin;
         float dir_cos;
-    } wavetrain_t;
+    };
 
     static const int WAVEREZ = 100;
     static const int MAX_WAVETRAINS = 10;
 
     bool visible;
-    float *wbuffer;
+    float* wbuffer;
     float wHeight, orgHeight, wbHeight;
     float maxampl;
     float mScale;
@@ -85,17 +85,15 @@ private:
 
     Ogre::MeshPtr mprt;
     Ogre::Vector3 mapSize;
-    Ogre::Camera *mRenderCamera;
-    Ogre::Camera *mReflectCam;
-    Ogre::Camera *mRefractCam;
+    Ogre::Camera* mRenderCamera;
+    Ogre::Camera* mReflectCam;
+    Ogre::Camera* mRefractCam;
     Ogre::HardwareVertexBufferSharedPtr wbuf;
     Ogre::RenderTexture* rttTex1;
     Ogre::RenderTexture* rttTex2;
-    Ogre::SceneNode *pBottomNode;
-    Ogre::SceneNode *pWaterNode;
+    Ogre::SceneNode* pBottomNode;
+    Ogre::SceneNode* pWaterNode;
     Ogre::Viewport *vRtt1, *vRtt2;
     Ogre::ColourValue fade;
     wavetrain_t wavetrains[MAX_WAVETRAINS];
-
 };
-

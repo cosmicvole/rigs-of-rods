@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2015 Petr Ohlidal
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -19,11 +19,11 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
-    @file   
-    @author Petr Ohlidal
-    @date   05/2015
-*/
+
+/// @file
+/// @author Petr Ohlidal
+/// @date   05/2015
+
 
 #pragma once
 
@@ -45,9 +45,9 @@ struct FlexBodyRecordHeader
     {}
 
     int            vertex_count;
-    int               node_center;
-    int               node_x;
-    int               node_y;
+    int	           node_center;
+    int	           node_x;
+    int	           node_y;
     Ogre::Vector3  center_offset;
     int            camera_mode;
     int            shared_buf_num_verts;
@@ -133,22 +133,22 @@ private:
                 
     void        WriteSignature();
     void         ReadAndCheckSignature();
-                
+
     void        WriteMetadata();
     void         ReadMetadata(FlexBodyFileMetadata* meta);
-                
+
     void        WriteFlexbodyHeader(FlexBody*          flexbody);
     void         ReadFlexbodyHeader(FlexBodyCacheData* flexbody);
-                
+
     void        WriteFlexbodyLocatorList(FlexBody*          flexbody);
     void         ReadFlexbodyLocatorList(FlexBodyCacheData* flexbody);
-                
+
     void        WriteFlexbodyNormalsBuffer(FlexBody*          flexbody);
     void         ReadFlexbodyNormalsBuffer(FlexBodyCacheData* flexbody);
 
     void        WriteFlexbodyPositionsBuffer(FlexBody*          flexbody);
     void         ReadFlexbodyPositionsBuffer(FlexBodyCacheData* flexbody);
-                
+
     void        WriteFlexbodyColorsBuffer(FlexBody*          flexbody);
     void         ReadFlexbodyColorsBuffer(FlexBodyCacheData* flexbody);
 

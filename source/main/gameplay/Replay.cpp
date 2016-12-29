@@ -1,22 +1,23 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
+
 #include "Replay.h"
 
 #include <Ogre.h>
@@ -31,7 +32,7 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace Ogre;
 
-Replay::Replay(Beam *b, int _numFrames)
+Replay::Replay(Beam* b, int _numFrames)
 {
     numNodes = b->getNodeCount();
     numBeams = b->getBeamCount();
@@ -66,12 +67,11 @@ Replay::Replay(Beam *b, int _numFrames)
     //panel->setCaption(_L("Replay"));
     panel->setAlpha(0.6);
 
-    pr = panel->createWidget<MyGUI::Progress>("Progress", 10, 10, 280, 20,  MyGUI::Align::Default);
+    pr = panel->createWidget<MyGUI::Progress>("Progress", 10, 10, 280, 20, MyGUI::Align::Default);
     pr->setProgressRange(_numFrames);
     pr->setProgressPosition(0);
 
-
-    txt = panel->createWidget<MyGUI::StaticText>("StaticText", 10, 30, 280, 20,  MyGUI::Align::Default);
+    txt = panel->createWidget<MyGUI::StaticText>("StaticText", 10, 30, 280, 20, MyGUI::Align::Default);
     txt->setCaption(_L("Position:"));
 
     panel->setVisible(false);
@@ -82,48 +82,56 @@ Replay::~Replay()
 {
     if (nodes)
     {
-        free(nodes); nodes=0;
-        free(beams); beams=0;
-        free(times); times=0;
+        free(nodes);
+        nodes = 0;
+        free(beams);
+        beams = 0;
+        free(times);
+        times = 0;
     }
     delete replayTimer;
 }
 
-void *Replay::getWriteBuffer(int type)
+void* Replay::getWriteBuffer(int type)
 {
-    if (outOfMemory) return 0;
+    if (outOfMemory)
+        return 0;
     if (!nodes)
     {
         // get memory
         nodes = (node_simple_t*)calloc(numNodes * numFrames, sizeof(node_simple_t));
         if (!nodes)
         {
-            outOfMemory=true;
+            outOfMemory = true;
             return 0;
         }
-        beams = (beam_simple_t*)calloc(numBeams * numFrames, sizeof(beam_simple_t));    
+        beams = (beam_simple_t*)calloc(numBeams * numFrames, sizeof(beam_simple_t));
         if (!beams)
         {
-            free(nodes); nodes=0;
-            outOfMemory=true;
+            free(nodes);
+            nodes = 0;
+            outOfMemory = true;
             return 0;
         }
         times = (unsigned long*)calloc(numFrames, sizeof(unsigned long));
         if (!times)
         {
-            free(nodes); nodes=0;
-            free(beams); beams=0;
-            outOfMemory=true;
+            free(nodes);
+            nodes = 0;
+            free(beams);
+            beams = 0;
+            outOfMemory = true;
             return 0;
         }
     }
-    void *ptr = 0;
+    void* ptr = 0;
     times[writeIndex] = replayTimer->getMicroseconds();
     if (type == 0)
     {
         // nodes
         ptr = (void *)(nodes + (writeIndex * numNodes));
-    }else if (type == 1)
+    }
+    else if (type == 1)
     {
         // beams
         ptr = (void *)(beams + (writeIndex * numBeams));
@@ -133,7 +141,8 @@ void *Replay::getWriteBuffer(int type)
 
 void Replay::writeDone()
 {
-    if (outOfMemory) return;
+    if (outOfMemory)
+        return;
     writeIndex++;
     if (writeIndex == numFrames)
     {
@@ -143,11 +152,13 @@ void Replay::writeDone()
 }
 
 //we take negative offsets only
-void *Replay::getReadBuffer(int offset, int type, unsigned long &time)
+void* Replay::getReadBuffer(int offset, int type, unsigned long& time)
 {
-    if (offset >= 0) offset=-1;
-    if (offset <= -numFrames) offset = -numFrames + 1;
-    
+    if (offset >= 0)
+        offset = -1;
+    if (offset <= -numFrames)
+        offset = -numFrames + 1;
+
     int delta = writeIndex + offset;
     if (delta < 0)
         if (firstRun && type == 0)
@@ -156,14 +167,15 @@ void *Replay::getReadBuffer(int offset, int type, unsigned long &time)
             return (void *)(beams);
         else
             delta += numFrames;
-    
+
     // set the time
     time = times[delta];
     curFrameTime = time;
     curOffset = offset;
     updateGUI();
-    
-    if (outOfMemory) return 0;
+
+    if (outOfMemory)
+        return 0;
 
     // return buffer pointer
     if (type == 0)
@@ -180,12 +192,13 @@ void Replay::updateGUI()
     {
         txt->setCaption(_L("Out of Memory"));
         pr->setProgressPosition(0);
-    } else
+    }
+    else
     {
         wchar_t tmp[128] = L"";
         unsigned long t = curFrameTime;
         UTFString format = _L("Position: %0.6f s, frame %i / %i");
-        swprintf(tmp, 128, format.asWStr_c_str(), ((float)t)/1000000.0f, curOffset, numFrames);
+        swprintf(tmp, 128, format.asWStr_c_str(), ((float)t) / 1000000.0f, curOffset, numFrames);
         txt->setCaption(convertToMyGUIString(tmp, 128));
         pr->setProgressPosition(abs(curOffset));
     }

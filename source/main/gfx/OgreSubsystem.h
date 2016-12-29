@@ -19,19 +19,16 @@
     along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** 
-    @file   OgreSubsystem.h
-    @author Petr Ohlidal
-    @date   05/2014
-    @brief  OGRE engine wrapper.
-*/
+/// @file
+/// @author Petr Ohlidal
+/// @date   05/2014
+/// @brief  OGRE engine wrapper.
 
 #pragma once
 
 #include "RoRPrerequisites.h"
 
-namespace RoR
-{
+namespace RoR {
 
 class OgreSubsystem : public ZeroedMemoryAllocator
 {

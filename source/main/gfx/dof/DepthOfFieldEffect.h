@@ -1,30 +1,29 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
+
 // "Depth of Field" demo for Ogre
 // Copyright (C) 2006  Christian Lindequist Larsen
 //
 // This code is in the public domain. You may do whatever you want with it.
 
 #pragma once
-#ifndef __DepthOfFieldEffect_H_
-#define __DepthOfFieldEffect_H_
 
 #include <OgrePrerequisites.h>
 #include <OgreCompositorInstance.h>
@@ -37,20 +36,20 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 class Lens;
 
 class DepthOfFieldEffect : public Ogre::CompositorInstance::Listener,
-                           public Ogre::RenderTargetListener,
-                           public Ogre::RenderQueue::RenderableListener,
-                           public ZeroedMemoryAllocator
+    public Ogre::RenderTargetListener,
+    public Ogre::RenderQueue::RenderableListener,
+    public ZeroedMemoryAllocator
 {
 public:
 
     DepthOfFieldEffect();
     ~DepthOfFieldEffect();
 
-    float getNearDepth() const {return mNearDepth; }
-    float getFocalDepth() const {return mFocalDepth; }
-    float getFarDepth() const {return mFarDepth; }
+    float getNearDepth() const { return mNearDepth; }
+    float getFocalDepth() const { return mFocalDepth; }
+    float getFarDepth() const { return mFarDepth; }
     void setFocalDepths(float nearDepth, float focalDepth, float farDepth);
-    float getFarBlurCutoff() const {return mFarBlurCutoff; }
+    float getFarBlurCutoff() const { return mFarBlurCutoff; }
     void setFarBlurCutoff(float cutoff);
     bool getEnabled() const;
     void setEnabled(bool value);
@@ -66,7 +65,7 @@ private:
 
     // Implementation of Ogre::RenderQueue::RenderableListener
     virtual bool renderableQueued(Ogre::Renderable* rend, Ogre::uint8 groupID,
-                Ogre::ushort priority, Ogre::Technique** ppTech, Ogre::RenderQueue* pQueue);
+        Ogre::ushort priority, Ogre::Technique** ppTech, Ogre::RenderQueue* pQueue);
 
     int mWidth;
     int mHeight;
@@ -93,8 +92,8 @@ private:
 
     void createDepthRenderTexture();
     void destroyDepthRenderTexture();
-//    void createCompositor();
-//    void destroyCompositor();
+    //	void createCompositor();
+    //	void destroyCompositor();
     void addCompositor();
     void removeCompositor();
 };
@@ -106,19 +105,23 @@ public:
     DOFManager();
     ~DOFManager();
 
-
     void setEnabled(bool enabled);
     bool getEnabled();
 
     // controls
-    enum FocusMode {Auto, Manual, Pinhole};
+    enum FocusMode
+    {
+        Auto,
+        Manual,
+        Pinhole
+    };
 
     void Aperture(float delta);
     void moveFocus(float delta);
     void setAperture(float f);
     void setAutoSpeed(float f);
     void setFocus(float f);
-    void setFocusMode(int mode) {mFocusMode = (FocusMode)mode;}
+    void setFocusMode(int mode) { mFocusMode = (FocusMode)mode; }
     void setLensFOV(Ogre::Radian fov);
     void setZoom(float f);
     void zoomView(float delta);
@@ -132,11 +135,9 @@ protected:
     DepthOfFieldEffect* mDepthOfFieldEffect;
     FocusMode mFocusMode;
     Lens* mLens;
-    Ogre::RaySceneQuery *mRaySceneQuery;
+    Ogre::RaySceneQuery* mRaySceneQuery;
     Ogre::Real targetFocalDistance;
-    Ogre::SceneNode *debugNode;
+    Ogre::SceneNode* debugNode;
     float mAutoSpeed;
     float mAutoTime;
 };
-
-#endif // __DepthOfFieldEffect_H_

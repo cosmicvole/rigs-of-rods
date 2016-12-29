@@ -21,15 +21,13 @@
 
 #include "ContentManager.h"
 
-
-
 #ifdef ROR_USE_OGRE_1_9
-#    include <Overlay/OgreOverlayManager.h>
-#    include <Overlay/OgreOverlay.h>
-#    include <Plugins/ParticleFX/OgreBoxEmitterFactory.h>
+#	include <Overlay/OgreOverlayManager.h>
+#	include <Overlay/OgreOverlay.h>
+#	include <Plugins/ParticleFX/OgreBoxEmitterFactory.h>
 #else
-#    include <OgreOverlayManager.h>
-#    include <OgreOverlayElement.h>
+#	include <OgreOverlayManager.h>
+#	include <OgreOverlayElement.h>
 #endif
 
 #include "Application.h"
@@ -120,7 +118,7 @@ bool ContentManager::isLoaded(Ogre::uint64 res_pack_id)
     return false;
 }
 
-void ContentManager::AddResourcePack(ResourcePack const & resource_pack)
+void ContentManager::AddResourcePack(ResourcePack const& resource_pack)
 {
     std::stringstream log_msg;
     if (BITMASK_64_IS_1(m_loaded_resource_packs, resource_pack.mask)) // Already loaded?
@@ -182,14 +180,14 @@ bool ContentManager::init(void)
     // TODO: FIX UNDER LINUX!
     // register particle classes
     LOG("RoR|ContentManager: Registering Particle Box Emitter");
-    ParticleSystemRendererFactory *mParticleSystemRendererFact = OGRE_NEW ShaderParticleRendererFactory();
+    ParticleSystemRendererFactory* mParticleSystemRendererFact = OGRE_NEW ShaderParticleRendererFactory();
     ParticleSystemManager::getSingleton().addRendererFactory(mParticleSystemRendererFact);
 
     // Removed by Skybon as part of OGRE 1.9 port 
     // Disabling temporarily for 1.8.1 as well.  ~ only_a_ptr, 2015-11
     //ParticleEmitterFactory *mParticleEmitterFact = OGRE_NEW BoxEmitterFactory();
     //ParticleSystemManager::getSingleton().addEmitterFactory(mParticleEmitterFact);
-    
+
 #endif // _WIN32
 
 #ifdef USE_ANGELSCRIPT
@@ -231,7 +229,7 @@ bool ContentManager::init(void)
     m_skin_manager = new RoR::SkinManager(); // SkinManager registers itself
 
     LOG("RoR|ContentManager: Registering colored text overlay factory");
-    ColoredTextAreaOverlayElementFactory *pCT = new ColoredTextAreaOverlayElementFactory();
+    ColoredTextAreaOverlayElementFactory* pCT = new ColoredTextAreaOverlayElementFactory();
     OverlayManager::getSingleton().addOverlayElementFactory(pCT);
 
     // set default mipmap level (NB some APIs ignore this)
@@ -241,10 +239,14 @@ bool ContentManager::init(void)
     TextureFilterOptions tfo = TFO_NONE;
     switch (App::GetGfxTexFiltering())
     {
-    case App::GFX_TEXFILTER_ANISOTROPIC: tfo = TFO_ANISOTROPIC; break;
-    case App::GFX_TEXFILTER_TRILINEAR:   tfo = TFO_TRILINEAR;   break;
-    case App::GFX_TEXFILTER_BILINEAR:    tfo = TFO_BILINEAR;    break;
-    case App::GFX_TEXFILTER_NONE:        tfo = TFO_NONE;        break;
+    case App::GFX_TEXFILTER_ANISOTROPIC: tfo = TFO_ANISOTROPIC;
+        break;
+    case App::GFX_TEXFILTER_TRILINEAR: tfo = TFO_TRILINEAR;
+        break;
+    case App::GFX_TEXFILTER_BILINEAR: tfo = TFO_BILINEAR;
+        break;
+    case App::GFX_TEXFILTER_NONE: tfo = TFO_NONE;
+        break;
     }
     MaterialManager::getSingleton().setDefaultAnisotropy(8);
     MaterialManager::getSingleton().setDefaultTextureFiltering(tfo);
@@ -257,7 +259,8 @@ bool ContentManager::init(void)
             ResourceBackgroundQueue::getSingleton().initialiseAllResourceGroups();
         else
             ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
-    } catch(Ogre::Exception& e)
+    }
+    catch (Ogre::Exception& e)
     {
         LOG("RoR|ContentManager: catched error while initializing Resource groups: " + e.getFullDescription());
     }
@@ -268,7 +271,7 @@ bool ContentManager::init(void)
     // and the content
     std::string content_base = App::GetSysUserDir() + PATH_SLASH;
     ResourceGroupManager::getSingleton().addResourceLocation(content_base + "packs", "FileSystem", "Packs", true);
-    ResourceGroupManager::getSingleton().addResourceLocation(content_base + "mods",  "FileSystem", "Packs", true);
+    ResourceGroupManager::getSingleton().addResourceLocation(content_base + "mods", "FileSystem", "Packs", true);
 
     ResourceGroupManager::getSingleton().addResourceLocation(content_base + "vehicles", "FileSystem", "VehicleFolders");
     ResourceGroupManager::getSingleton().addResourceLocation(content_base + "terrains", "FileSystem", "TerrainFolders");
@@ -284,7 +287,8 @@ bool ContentManager::init(void)
             ResourceBackgroundQueue::getSingleton().initialiseResourceGroup("Packs");
         else
             ResourceGroupManager::getSingleton().initialiseResourceGroup("Packs");
-    } catch(Ogre::Exception& e)
+    }
+    catch (Ogre::Exception& e)
     {
         LOG("RoR|ContentManager: catched error while initializing Content Resource groups: " + e.getFullDescription());
     }
@@ -294,16 +298,16 @@ bool ContentManager::init(void)
     return true;
 }
 
-Ogre::DataStreamPtr ContentManager::resourceLoading(const Ogre::String &name, const Ogre::String &group, Ogre::Resource *resource)
+Ogre::DataStreamPtr ContentManager::resourceLoading(const Ogre::String& name, const Ogre::String& group, Ogre::Resource* resource)
 {
     return Ogre::DataStreamPtr();
 }
 
-void ContentManager::resourceStreamOpened(const Ogre::String &name, const Ogre::String &group, Ogre::Resource *resource, Ogre::DataStreamPtr& dataStream)
+void ContentManager::resourceStreamOpened(const Ogre::String& name, const Ogre::String& group, Ogre::Resource* resource, Ogre::DataStreamPtr& dataStream)
 {
 }
 
-bool ContentManager::resourceCollision(Ogre::Resource *resource, Ogre::ResourceManager *resourceManager)
+bool ContentManager::resourceCollision(Ogre::Resource* resource, Ogre::ResourceManager* resourceManager)
 {
     /*
     // TODO: do something useful here
@@ -322,17 +326,16 @@ bool ContentManager::resourceCollision(Ogre::Resource *resource, Ogre::ResourceM
     return false;
 }
 
-    
-
 void ContentManager::exploreZipFolders(Ogre::String rg)
 {
     ResourceGroupManager& rgm = ResourceGroupManager::getSingleton();
 
-    FileInfoListPtr files= rgm.findResourceFileInfo(rg, "*.skinzip"); //search for skins
+    FileInfoListPtr files = rgm.findResourceFileInfo(rg, "*.skinzip"); //search for skins
     FileInfoList::iterator iterFiles = files->begin();
-    for (; iterFiles!= files->end(); ++iterFiles)
+    for (; iterFiles != files->end(); ++iterFiles)
     {
-        if (!iterFiles->archive) continue;
+        if (!iterFiles->archive)
+            continue;
         String fullpath = iterFiles->archive->getName() + PATH_SLASH;
         rgm.addResourceLocation(fullpath + iterFiles->filename, "Zip", rg);
     }
@@ -343,15 +346,17 @@ void ContentManager::exploreFolders(Ogre::String rg)
 {
     ResourceGroupManager& rgm = ResourceGroupManager::getSingleton();
 
-    FileInfoListPtr files= rgm.findResourceFileInfo(rg, "*", true); // searching for dirs
+    FileInfoListPtr files = rgm.findResourceFileInfo(rg, "*", true); // searching for dirs
     FileInfoList::iterator iterFiles = files->begin();
-    for (; iterFiles!= files->end(); ++iterFiles)
+    for (; iterFiles != files->end(); ++iterFiles)
     {
-        if (!iterFiles->archive) continue;
-        if (iterFiles->filename==String(".svn")) continue;
+        if (!iterFiles->archive)
+            continue;
+        if (iterFiles->filename == String(".svn"))
+            continue;
         // trying to get the full path
         String fullpath = iterFiles->archive->getName() + PATH_SLASH;
-        rgm.addResourceLocation(fullpath+iterFiles->filename, "FileSystem", rg);
+        rgm.addResourceLocation(fullpath + iterFiles->filename, "FileSystem", rg);
     }
     LOG("initialiseResourceGroups: "+rg);
     try
@@ -360,7 +365,8 @@ void ContentManager::exploreFolders(Ogre::String rg)
             ResourceBackgroundQueue::getSingleton().initialiseResourceGroup(rg);
         else
             ResourceGroupManager::getSingleton().initialiseResourceGroup(rg);
-    } catch(Ogre::Exception& e)
+    }
+    catch (Ogre::Exception& e)
     {
         LOG("catched error while initializing Resource group '" + rg + "' : " + e.getFullDescription());
     }

@@ -1,22 +1,23 @@
-/*/
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+/*
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.com/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
+
 #include "Character.h"
 
 #include "Application.h"
@@ -39,7 +40,7 @@ using namespace RoR;
 unsigned int Character::characterCounter = 0;
 
 Character::Character(int source, unsigned int streamid, int colourNumber, bool remote) :
-      beamCoupling(0)
+    beamCoupling(0)
     , canJump(false)
     , characterRotation(0.0f)
     , characterSpeed(2.0f)
@@ -59,11 +60,11 @@ Character::Character(int source, unsigned int streamid, int colourNumber, bool r
     , isCoupled(0)
 {
     myNumber = characterCounter++;
-    myName   = "Character" + TOSTRING(myNumber);
+    myName = "Character" + TOSTRING(myNumber);
 
-    Entity *entity = gEnv->sceneManager->createEntity(myName+"_mesh", "character.mesh");
+    Entity* entity = gEnv->sceneManager->createEntity(myName + "_mesh", "character.mesh");
 #if OGRE_VERSION<0x010602
-    entity->setNormaliseNormals(true);
+	entity->setNormaliseNormals(true);
 #endif //OGRE_VERSION
 
     // fix disappearing mesh
@@ -87,13 +88,13 @@ Character::Character(int source, unsigned int streamid, int colourNumber, bool r
     }
     // setup colour
     MaterialPtr mat1 = MaterialManager::getSingleton().getByName("tracks/character");
-    MaterialPtr mat2 = mat1->clone("tracks/"+myName);
-    entity->setMaterialName("tracks/"+myName);
+    MaterialPtr mat2 = mat1->clone("tracks/" + myName);
+    entity->setMaterialName("tracks/" + myName);
 
 #ifdef USE_SOCKETW
     if ((App::GetActiveMpState() == App::MP_STATE_CONNECTED) && (remote || !mHideOwnNetLabel))
     {
-        mMoveableText = new MovableText("netlabel-"+myName, "");
+        mMoveableText = new MovableText("netlabel-" + myName, "");
         mCharacterNode->attachObject(mMoveableText);
         mMoveableText->setFontName("CyberbitEnglish");
         mMoveableText->setTextAlignment(MovableText::H_CENTER, MovableText::V_ABOVE);
@@ -127,8 +128,11 @@ Character::~Character()
     // try to unload some materials
     try
     {
-        MaterialManager::getSingleton().unload("tracks/"+myName);
-    } catch(...) {}
+        MaterialManager::getSingleton().unload("tracks/" + myName);
+    }
+    catch (...)
+    {
+    }
 }
 
 void Character::updateCharacterRotation()
@@ -153,7 +157,8 @@ void Character::updateLabels()
     {
         if (!RoR::Networking::GetUserInfo(m_source_id, info))
             return;
-    } else
+    }
+    else
     {
         info = RoR::Networking::GetLocalUserData();
     }
@@ -163,7 +168,8 @@ void Character::updateLabels()
     colourNumber = info.colournum;
     updateCharacterColour();
 
-    if (String(info.username).empty()) return;
+    if (String(info.username).empty())
+        return;
     networkUsername = tryConvertUTF(info.username);
 
     if (mMoveableText)
@@ -206,9 +212,10 @@ void Character::setVisible(bool visible)
 #ifdef USE_MYGUI
     if (gEnv->surveyMap)
     {
-        SurveyMapEntity *e = gEnv->surveyMap->getMapEntityByName(myName);
-        if (e) e->setVisibility(visible);
-    }    
+        SurveyMapEntity* e = gEnv->surveyMap->getMapEntityByName(myName);
+        if (e)
+            e->setVisibility(visible);
+    }
 #endif // USE_MYGUI
 }
 
@@ -236,9 +243,9 @@ void Character::setAnimationMode(String mode, float time)
     if (mLastAnimMode != mode)
     {
         AnimationStateIterator it = mAnimState->getAnimationStateIterator();
-        while(it.hasMoreElements())
+        while (it.hasMoreElements())
         {
-            AnimationState *as = it.getNext();
+            AnimationState* as = it.getNext();
             if (as->getAnimationName() == mode)
             {
                 as->setEnabled(true);
@@ -252,7 +259,8 @@ void Character::setAnimationMode(String mode, float time)
             }
         }
         mLastAnimMode = mode;
-    } else
+    }
+    else
     {
         mAnimState->getAnimationState(mode)->addTime(time);
     }
@@ -276,7 +284,8 @@ void Character::update(float dt)
     {
         // disable character movement when using the free camera mode or when the menu is opened
         // TODO: check for menu being opened
-        if (gEnv->cameraManager && gEnv->cameraManager->gameControlsLocked()) return;
+        if (gEnv->cameraManager && gEnv->cameraManager->gameControlsLocked())
+            return;
 
         Vector3 position = mCharacterNode->getPosition();
 
@@ -321,12 +330,12 @@ void Character::update(float dt)
             {
                 const int numstep = 100;
                 Vector3 base = lastPosition + Vector3::UNIT_Y * 0.5f;
-                for (int i=1; i<numstep; i++)
+                for (int i = 1; i < numstep; i++)
                 {
                     Vector3 query = base + diff * ((float)i / numstep);
                     if (gEnv->collisions->collisionCorrect(&query, false))
                     {
-                        position = lastPosition + diff * ((float)(i-1) / numstep);;
+                        position = lastPosition + diff * ((float)(i - 1) / numstep);;
                         break;
                     }
                 }
@@ -341,7 +350,7 @@ void Character::update(float dt)
         }
 
         // ground contact
-        float pheight = gEnv->terrainManager->getHeightFinder()->getHeightAt(position.x,position.z);
+        float pheight = gEnv->terrainManager->getHeightFinder()->getHeightAt(position.x, position.z);
 
         if (position.y < pheight)
         {
@@ -405,59 +414,64 @@ void Character::update(float dt)
                 idleanim = false;
             }
         }
-                
+
         float tmpRun = RoR::App::GetInputEngine()->getEventValue(EV_CHARACTER_RUN);
         float accel = 1.0f;
 
         tmpJoy = accel = RoR::App::GetInputEngine()->getEventValue(EV_CHARACTER_SIDESTEP_LEFT);
         if (tmpJoy > 0.0f)
         {
-            if (tmpRun > 0.0f) accel = 3.0f * tmpRun;
+            if (tmpRun > 0.0f)
+                accel = 3.0f * tmpRun;
             // animation missing for that
-            position += dt * characterSpeed *0.5f * accel * Vector3(cos(characterRotation.valueRadians() - Math::HALF_PI), 0.0f, sin(characterRotation.valueRadians() - Math::HALF_PI));
+            position += dt * characterSpeed * 0.5f * accel * Vector3(cos(characterRotation.valueRadians() - Math::HALF_PI), 0.0f, sin(characterRotation.valueRadians() - Math::HALF_PI));
             if (!isswimming)
-                        {
-                                setAnimationMode("Side_step", -dt);
-                                idleanim = false;
-                        }
+            {
+                setAnimationMode("Side_step", -dt);
+                idleanim = false;
+            }
         }
 
         tmpJoy = accel = RoR::App::GetInputEngine()->getEventValue(EV_CHARACTER_SIDESTEP_RIGHT);
         if (tmpJoy > 0.0f)
         {
-            if (tmpRun > 0.0f) accel = 3.0f * tmpRun;
+            if (tmpRun > 0.0f)
+                accel = 3.0f * tmpRun;
             // animation missing for that
             position += dt * characterSpeed * 0.5f * accel * Vector3(cos(characterRotation.valueRadians() + Math::HALF_PI), 0.0f, sin(characterRotation.valueRadians() + Math::HALF_PI));
             if (!isswimming)
-                        {
-                                setAnimationMode("Side_step", dt);
-                                idleanim = false;
-                        }
+            {
+                setAnimationMode("Side_step", dt);
+                idleanim = false;
+            }
         }
 
         tmpJoy = accel = RoR::App::GetInputEngine()->getEventValue(EV_CHARACTER_FORWARD) + RoR::App::GetInputEngine()->getEventValue(EV_CHARACTER_ROT_UP);
-        float tmpBack  = RoR::App::GetInputEngine()->getEventValue(EV_CHARACTER_BACKWARDS) + RoR::App::GetInputEngine()->getEventValue(EV_CHARACTER_ROT_DOWN);
-        
-        tmpJoy  = std::min(tmpJoy, 1.0f);
+        float tmpBack = RoR::App::GetInputEngine()->getEventValue(EV_CHARACTER_BACKWARDS) + RoR::App::GetInputEngine()->getEventValue(EV_CHARACTER_ROT_DOWN);
+
+        tmpJoy = std::min(tmpJoy, 1.0f);
         tmpBack = std::min(tmpBack, 1.0f);
 
         if (tmpJoy > 0.0f || tmpRun > 0.0f)
         {
-            if (tmpRun > 0.0f) accel = 3.0f * tmpRun;
-            
+            if (tmpRun > 0.0f)
+                accel = 3.0f * tmpRun;
+
             float time = dt * tmpJoy * characterSpeed;
 
             if (isswimming)
             {
                 setAnimationMode("Swim_loop", time);
                 idleanim = false;
-            } else
+            }
+            else
             {
                 if (tmpRun > 0.0f)
                 {
                     setAnimationMode("Run", time);
                     idleanim = false;
-                } else
+                }
+                else
                 {
                     setAnimationMode("Walk", time);
                     idleanim = false;
@@ -465,14 +479,16 @@ void Character::update(float dt)
             }
             // 0.005f fixes character getting stuck on meshes
             position += dt * characterSpeed * 1.5f * accel * Vector3(cos(characterRotation.valueRadians()), 0.01f, sin(characterRotation.valueRadians()));
-        } else if (tmpBack > 0.0f)
+        }
+        else if (tmpBack > 0.0f)
         {
             float time = -dt * characterSpeed;
             if (isswimming)
             {
                 setAnimationMode("Spot_swim", time);
                 idleanim = false;
-            } else
+            }
+            else
             {
                 setAnimationMode("Walk", time);
                 idleanim = false;
@@ -486,7 +502,8 @@ void Character::update(float dt)
             if (isswimming)
             {
                 setAnimationMode("Spot_swim", dt * 2.0f);
-            } else
+            }
+            else
             {
                 setAnimationMode("Idle_sway", dt * 1.0f);
             }
@@ -494,7 +511,7 @@ void Character::update(float dt)
 
         mCharacterNode->setPosition(position);
         updateMapIcon();
-    } 
+    }
     else if (beamCoupling && beamCoupling->hasDriverSeat()) // beamCoupling = The vehicle or machine which the character occupies
     {
         Vector3 pos;
@@ -502,7 +519,7 @@ void Character::update(float dt)
         beamCoupling->calculateDriverPos(pos, rot);
         float angle = beamCoupling->hydrodirwheeldisplay * -1.0f; // not getSteeringAngle(), but this, as its smoothed
         mCharacterNode->setOrientation(rot);
-        setPosition(pos + (rot * Vector3(0.f,-0.6f,0.f))); // hack to position the character right perfect on the default seat
+        setPosition(pos + (rot * Vector3(0.f, -0.6f, 0.f))); // hack to position the character right perfect on the default seat
 
         // Animation
         this->setAnimationMode("Driving");
@@ -531,14 +548,16 @@ void Character::update(float dt)
 void Character::updateMapIcon()
 {
 #ifdef USE_MYGUI
-    if (!gEnv->surveyMap) return;
+    if (!gEnv->surveyMap)
+        return;
     SurveyMapEntity* e = gEnv->surveyMap->getMapEntityByName(myName);
     if (e)
     {
         e->setPosition(mCharacterNode->getPosition());
         e->setRotation(mCharacterNode->getOrientation());
         e->setVisibility(!beamCoupling);
-    } else
+    }
+    else
     {
         createMapEntity();
     }
@@ -547,7 +566,8 @@ void Character::updateMapIcon()
 
 void Character::unwindMovement(float distance)
 {
-    if (mLastPosition.size() == 0) return;
+    if (mLastPosition.size() == 0)
+        return;
 
     Vector3 curPos = getPosition();
     Vector3 oldPos = curPos;
@@ -570,7 +590,8 @@ void Character::move(Vector3 offset)
 void Character::sendStreamSetup()
 {
 #ifdef USE_SOCKETW
-    if (remote) return;
+    if (remote)
+        return;
 
     stream_register_t reg;
     memset(&reg, 0, sizeof(reg));
@@ -590,7 +611,8 @@ void Character::sendStreamData()
 {
 #ifdef USE_SOCKETW
     // do not send position data if coupled to a truck already
-    if (beamCoupling) return;
+    if (beamCoupling)
+        return;
 
     pos_netdata_t data;
     data.command = CHARCMD_POSITION;
@@ -609,27 +631,29 @@ void Character::sendStreamData()
 #endif // USE_SOCKETW
 }
 
-void Character::receiveStreamData(unsigned int &type, int &source, unsigned int &streamid, char *buffer)
+void Character::receiveStreamData(unsigned int& type, int& source, unsigned int& streamid, char* buffer)
 {
     if (type == MSG2_STREAM_DATA && m_source_id == source && m_stream_id == streamid)
     {
-        header_netdata_t *header = (header_netdata_t *)buffer;
+        header_netdata_t* header = (header_netdata_t *)buffer;
         if (header->command == CHARCMD_POSITION)
         {
-            pos_netdata_t *data = (pos_netdata_t *)buffer;
+            pos_netdata_t* data = (pos_netdata_t *)buffer;
             Vector3 pos(data->posx, data->posy, data->posz);
             setPosition(pos);
             Quaternion rot(data->rotw, data->rotx, data->roty, data->rotz);
             mCharacterNode->setOrientation(rot);
             setAnimationMode(getASCIIFromCharString(data->animationMode, 255), data->animationTime);
-        } else if (header->command == CHARCMD_ATTACH)
+        }
+        else if (header->command == CHARCMD_ATTACH)
         {
-            attach_netdata_t *data = (attach_netdata_t *)buffer;
+            attach_netdata_t* data = (attach_netdata_t *)buffer;
             if (data->enabled)
             {
-                Beam *beam = BeamFactory::getSingleton().getBeam(data->source_id, data->stream_id);
+                Beam* beam = BeamFactory::getSingleton().getBeam(data->source_id, data->stream_id);
                 setBeamCoupling(true, beam);
-            } else
+            }
+            else
             {
                 setBeamCoupling(false);
             }
@@ -639,8 +663,10 @@ void Character::receiveStreamData(unsigned int &type, int &source, unsigned int 
 
 void Character::updateNetLabelSize()
 {
-    if (!mMoveableText) return;
-    if (networkUsername.empty()) return;
+    if (!mMoveableText)
+        return;
+    if (networkUsername.empty())
+        return;
 
     float camDist = (mCharacterNode->getPosition() - mCamera->getPosition()).length();
     float h = std::max(9.0f, camDist * 1.2f);
@@ -648,18 +674,19 @@ void Character::updateNetLabelSize()
     mMoveableText->setCharacterHeight(h);
 
     if (camDist > 1000.0f)
-        mMoveableText->setCaption(networkUsername + "  (" + TOSTRING((float)(ceil(camDist / 100) / 10.0f))+ " km)");
+        mMoveableText->setCaption(networkUsername + "  (" + TOSTRING((float)(ceil(camDist / 100) / 10.0f)) + " km)");
     else if (camDist > 20.0f && camDist <= 1000.0f)
-        mMoveableText->setCaption(networkUsername + "  (" + TOSTRING((int)camDist)+ " m)");
+        mMoveableText->setCaption(networkUsername + "  (" + TOSTRING((int)camDist) + " m)");
     else
         mMoveableText->setCaption(networkUsername);
 }
 
-void Character::setBeamCoupling(bool enabled, Beam *truck /* = 0 */)
+void Character::setBeamCoupling(bool enabled, Beam* truck /* = 0 */)
 {
     if (enabled)
     {
-        if (!truck) return;
+        if (!truck)
+            return;
         beamCoupling = truck;
         setPhysicsEnabled(false);
         if (mMoveableText && mMoveableText->isVisible())
@@ -688,7 +715,8 @@ void Character::setBeamCoupling(bool enabled, Beam *truck /* = 0 */)
             setVisible(false);
             isCoupled = false;
         }
-    } else
+    }
+    else
     {
         isCoupled = false;
         setPhysicsEnabled(true);

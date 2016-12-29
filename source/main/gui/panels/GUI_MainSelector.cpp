@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2014 Petr Ohlidal
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -17,10 +17,6 @@
 
     You should have received a copy of the GNU General Public License
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
-*/
-
-/** 
-    @file   GUI_MainSelector.cpp
 */
 
 #include "GUI_MainSelector.h"
@@ -47,10 +43,10 @@ using namespace GUI;
 #define MAIN_WIDGET  ((MyGUI::Window*)mMainWidget)
 
 CLASS::CLASS() :
-  m_keys_bound(false)
-, m_selected_skin(nullptr)
-, m_selected_entry(nullptr)
-, m_selection_done(true)
+    m_keys_bound(false)
+    , m_selected_skin(nullptr)
+    , m_selected_entry(nullptr)
+    , m_selection_done(true)
 {
     MAIN_WIDGET->setVisible(false);
     m_skin_manager = RoR::App::GetContentManager()->GetSkinManager();
@@ -76,7 +72,7 @@ CLASS::CLASS() :
     m_SearchLine->eventKeySetFocus += MyGUI::newDelegate(this, &CLASS::EventSearchTextGotFocus);
 
     MAIN_WIDGET->setPosition((parentSize.width - windowSize.width) / 2, (parentSize.height - windowSize.height) / 2);
-    
+
     //From old file
     MAIN_WIDGET->setCaption(_L("Loader"));
 
@@ -94,7 +90,6 @@ CLASS::CLASS() :
 
 CLASS::~CLASS()
 {
-
 }
 
 void CLASS::Reset()
@@ -130,7 +125,8 @@ void CLASS::NotifyWindowChangeCoord(MyGUI::Window* _sender)
 
 void CLASS::EventKeyButtonPressed_Main(MyGUI::WidgetPtr _sender, MyGUI::KeyCode _key, MyGUI::Char _char)
 {
-    if (!mMainWidget->getVisible()) return;
+    if (!mMainWidget->getVisible())
+        return;
     int cid = (int)m_Type->getIndexSelected();
     int iid = (int)m_Model->getIndexSelected();
 
@@ -141,13 +137,15 @@ void CLASS::EventKeyButtonPressed_Main(MyGUI::WidgetPtr _sender, MyGUI::KeyCode 
         MyGUI::InputManager::getInstance().setKeyFocusWidget(m_SearchLine);
         m_SearchLine->setCaption("");
         searching = true;
-    } else if (_key == MyGUI::KeyCode::Tab)
+    }
+    else if (_key == MyGUI::KeyCode::Tab)
     {
         if (searching)
         {
             MyGUI::InputManager::getInstance().setKeyFocusWidget(mMainWidget);
             m_SearchLine->setCaption(_L("Search ..."));
-        } else
+        }
+        else
         {
             MyGUI::InputManager::getInstance().setKeyFocusWidget(m_SearchLine);
             m_SearchLine->setCaption("");
@@ -197,7 +195,6 @@ void CLASS::EventKeyButtonPressed_Main(MyGUI::WidgetPtr _sender, MyGUI::KeyCode 
         else
             newitem++;
 
-
         //Annd fixed :3
         if (iid == 0 && _key == MyGUI::KeyCode::ArrowUp)
         {
@@ -207,7 +204,6 @@ void CLASS::EventKeyButtonPressed_Main(MyGUI::WidgetPtr _sender, MyGUI::KeyCode 
         {
             newitem = 0;
         }
-
 
         try
         {
@@ -226,7 +222,6 @@ void CLASS::EventKeyButtonPressed_Main(MyGUI::WidgetPtr _sender, MyGUI::KeyCode 
         {
             m_SearchLine->setTextCursor(m_SearchLine->getTextLength());
         }
-
     }
     else if (_key == MyGUI::KeyCode::Return)
     {
@@ -262,7 +257,8 @@ void CLASS::EventMouseButtonClickCancelButton(MyGUI::WidgetPtr _sender)
 
 void CLASS::EventComboChangePositionTypeComboBox(MyGUI::ComboBoxPtr _sender, size_t _index)
 {
-    if (!MAIN_WIDGET->getVisible()) return;
+    if (!MAIN_WIDGET->getVisible())
+        return;
     try
     {
         int categoryID = *m_Type->getItemDataAt<int>(_index);
@@ -282,9 +278,11 @@ void CLASS::EventListChangePositionModelListAccept(MyGUI::ListPtr _sender, size_
 
 void CLASS::EventListChangePositionModelList(MyGUI::ListPtr _sender, size_t _index)
 {
-    if (!MAIN_WIDGET->getVisible()) return;
+    if (!MAIN_WIDGET->getVisible())
+        return;
 
-    if (_index < 0 || _index >= m_Model->getItemCount()) return;
+    if (_index < 0 || _index >= m_Model->getItemCount())
+        return;
 
     try
     {
@@ -298,7 +296,8 @@ void CLASS::EventListChangePositionModelList(MyGUI::ListPtr _sender, size_t _ind
 
 void CLASS::EventComboAcceptConfigComboBox(MyGUI::ComboBoxPtr _sender, size_t _index)
 {
-    if (!MAIN_WIDGET->getVisible()) return;
+    if (!MAIN_WIDGET->getVisible())
+        return;
     try
     {
         m_vehicle_configs.clear();
@@ -311,19 +310,27 @@ void CLASS::EventComboAcceptConfigComboBox(MyGUI::ComboBoxPtr _sender, size_t _i
 }
 
 template <typename T1, typename T2>
-struct sort_cats {
-    bool operator ()(std::pair<int, Category_Entry> const& a, std::pair<int, Category_Entry> const& b) const {
-        if( a.second.number ==  CacheSystem::CID_All ) return true;
-        if( b.second.number ==  CacheSystem::CID_All ) return false;
-        if( a.second.number ==  CacheSystem::CID_Fresh ) return true;
-        if( b.second.number ==  CacheSystem::CID_Fresh ) return false;
+struct sort_cats
+{
+    bool operator ()(std::pair<int, Category_Entry> const& a, std::pair<int, Category_Entry> const& b) const
+    {
+        if (a.second.number == CacheSystem::CID_All)
+            return true;
+        if (b.second.number == CacheSystem::CID_All)
+            return false;
+        if (a.second.number == CacheSystem::CID_Fresh)
+            return true;
+        if (b.second.number == CacheSystem::CID_Fresh)
+            return false;
         return a.second.title < b.second.title;
     }
 };
 
 template <typename T1>
-struct sort_entries {
-    bool operator ()(CacheEntry const& a, CacheEntry const& b) const {
+struct sort_entries
+{
+    bool operator ()(CacheEntry const& a, CacheEntry const& b) const
+    {
         Ogre::String first = a.dname;
         Ogre::String second = b.dname;
         Ogre::StringUtil::toLowerCase(first);
@@ -332,8 +339,10 @@ struct sort_entries {
     }
 };
 
-struct sort_search_results {
-    bool operator ()(std::pair<CacheEntry*, size_t> const& a, std::pair<CacheEntry*, size_t> const& b) const {
+struct sort_search_results
+{
+    bool operator ()(std::pair<CacheEntry*, size_t> const& a, std::pair<CacheEntry*, size_t> const& b) const
+    {
         return a.second < b.second;
     }
 };
@@ -356,7 +365,7 @@ void CLASS::UpdateGuiData()
         m_Model->addItem(_L("Default Skin"), 0);
         {
             int i = 1;
-            for (std::vector<Skin *>::iterator it = m_current_skins.begin(); it != m_current_skins.end(); it++, i++)
+            for (std::vector<Skin *>::iterator it = m_current_skins.begin(); it != m_current_skins.end(); it++ , i++)
             {
                 m_Model->addItem((*it)->getName(), i);
             }
@@ -372,7 +381,7 @@ void CLASS::UpdateGuiData()
     }
 
     int ts = getTimeStamp();
-    std::vector<CacheEntry> *entries = RoR::App::GetCacheSystem()->getEntries();
+    std::vector<CacheEntry>* entries = RoR::App::GetCacheSystem()->getEntries();
     std::sort(entries->begin(), entries->end(), sort_entries<CacheEntry>());
     for (std::vector<CacheEntry>::iterator it = entries->begin(); it != entries->end(); it++)
     {
@@ -422,9 +431,9 @@ void CLASS::UpdateGuiData()
         m_entries.push_back(*it);
     }
     int tally_categories = 0, current_category = 0;
-    std::map<int, Category_Entry> *cats = RoR::App::GetCacheSystem()->getCategories();
+    std::map<int, Category_Entry>* cats = RoR::App::GetCacheSystem()->getCategories();
 
-    std::vector<std::pair<int, Category_Entry> > sorted_cats(cats->begin(), cats->end());
+    std::vector<std::pair<int, Category_Entry>> sorted_cats(cats->begin(), cats->end());
     std::sort(sorted_cats.begin(), sorted_cats.end(), sort_cats<int, Category_Entry>());
 
     for (std::vector<std::pair<int, Category_Entry>>::iterator itc = sorted_cats.begin(); itc != sorted_cats.end(); itc++)
@@ -461,7 +470,7 @@ void CLASS::UpdateGuiData()
     }
 }
 
-size_t CLASS::SearchCompare(Ogre::String searchString, CacheEntry *ce)
+size_t CLASS::SearchCompare(Ogre::String searchString, CacheEntry* ce)
 {
     if (searchString.find(":") == Ogre::String::npos)
     {
@@ -509,7 +518,8 @@ size_t CLASS::SearchCompare(Ogre::String searchString, CacheEntry *ce)
     else
     {
         Ogre::StringVector v = Ogre::StringUtil::split(searchString, ":");
-        if (v.size() < 2) return Ogre::String::npos; //invalid syntax
+        if (v.size() < 2)
+            return Ogre::String::npos; //invalid syntax
 
         if (v[0] == "hash")
         {
@@ -557,15 +567,14 @@ size_t CLASS::SearchCompare(Ogre::String searchString, CacheEntry *ce)
             Ogre::StringUtil::toLowerCase(fn);
             return fn.find(v[1]);
         }
-
-
     }
     return Ogre::String::npos;
 }
 
 void CLASS::OnCategorySelected(int categoryID)
 {
-    if (m_loader_type == LT_SKIN) return;
+    if (m_loader_type == LT_SKIN)
+        return;
 
     Ogre::String search_cmd = m_SearchLine->getCaption();
     Ogre::StringUtil::toLowerCase(search_cmd);
@@ -577,7 +586,7 @@ void CLASS::OnCategorySelected(int categoryID)
 
     if (categoryID == CacheSystem::CID_SearchResults)
     {
-        std::vector<std::pair<CacheEntry*, size_t> > search_results;
+        std::vector<std::pair<CacheEntry*, size_t>> search_results;
         search_results.reserve(m_entries.size());
 
         for (auto it = m_entries.begin(); it != m_entries.end(); it++)
@@ -602,7 +611,8 @@ void CLASS::OnCategorySelected(int categoryID)
                 m_Model->addItem("ENCODING ERROR", it->first->number);
             }
         }
-    } else
+    }
+    else
     {
         for (auto it = m_entries.begin(); it != m_entries.end(); it++)
         {
@@ -651,7 +661,7 @@ void CLASS::OnEntrySelected(int entryID)
             return;
         }
         entryID -= 1; // remove default skin :)
-        Skin *skin = m_current_skins[entryID];
+        Skin* skin = m_current_skins[entryID];
 
         // we assume its already loaded
         // set selected skin as current
@@ -675,8 +685,9 @@ void CLASS::OnEntrySelected(int entryID)
         }
         return;
     }
-    CacheEntry *entry = RoR::App::GetCacheSystem()->getEntry(entryID);
-    if (!entry) return;
+    CacheEntry* entry = RoR::App::GetCacheSystem()->getEntry(entryID);
+    if (!entry)
+        return;
     m_selected_entry = entry;
     this->UpdateControls(m_selected_entry);
 }
@@ -724,7 +735,7 @@ void CLASS::OnSelectionDone()
     }
 }
 
-void CLASS::UpdateControls(CacheEntry *entry)
+void CLASS::UpdateControls(CacheEntry* entry)
 {
     Ogre::String outBasename = "";
     Ogre::String outPath = "";
@@ -796,30 +807,52 @@ void CLASS::UpdateControls(CacheEntry *entry)
 
     descriptiontxt = descriptiontxt + _L("Author(s): ") + c + authors + nc + newline;
 
-
-    if (entry->version > 0)           descriptiontxt = descriptiontxt + _L("Version: ") + c + TOUTFSTRING(entry->version) + nc + newline;
-    if (entry->wheelcount > 0)        descriptiontxt = descriptiontxt + _L("Wheels: ") + c + TOUTFSTRING(entry->wheelcount) + U("x") + TOUTFSTRING(entry->propwheelcount) + nc + newline;
-    if (entry->truckmass > 0)         descriptiontxt = descriptiontxt + _L("Mass: ") + c + TOUTFSTRING((int)(entry->truckmass / 1000.0f)) + U(" ") + _L("tons") + nc + newline;
-    if (entry->loadmass > 0)          descriptiontxt = descriptiontxt + _L("Load Mass: ") + c + TOUTFSTRING((int)(entry->loadmass / 1000.0f)) + U(" ") + _L("tons") + nc + newline;
-    if (entry->nodecount > 0)         descriptiontxt = descriptiontxt + _L("Nodes: ") + c + TOUTFSTRING(entry->nodecount) + nc + newline;
-    if (entry->beamcount > 0)         descriptiontxt = descriptiontxt + _L("Beams: ") + c + TOUTFSTRING(entry->beamcount) + nc + newline;
-    if (entry->shockcount > 0)        descriptiontxt = descriptiontxt + _L("Shocks: ") + c + TOUTFSTRING(entry->shockcount) + nc + newline;
-    if (entry->hydroscount > 0)       descriptiontxt = descriptiontxt + _L("Hydros: ") + c + TOUTFSTRING(entry->hydroscount) + nc + newline;
-    if (entry->soundsourcescount > 0) descriptiontxt = descriptiontxt + _L("SoundSources: ") + c + TOUTFSTRING(entry->soundsourcescount) + nc + newline;
-    if (entry->commandscount > 0)     descriptiontxt = descriptiontxt + _L("Commands: ") + c + TOUTFSTRING(entry->commandscount) + nc + newline;
-    if (entry->rotatorscount > 0)     descriptiontxt = descriptiontxt + _L("Rotators: ") + c + TOUTFSTRING(entry->rotatorscount) + nc + newline;
-    if (entry->exhaustscount > 0)     descriptiontxt = descriptiontxt + _L("Exhausts: ") + c + TOUTFSTRING(entry->exhaustscount) + nc + newline;
-    if (entry->flarescount > 0)       descriptiontxt = descriptiontxt + _L("Flares: ") + c + TOUTFSTRING(entry->flarescount) + nc + newline;
-    if (entry->torque > 0)            descriptiontxt = descriptiontxt + _L("Torque: ") + c + TOUTFSTRING(entry->torque) + nc + newline;
-    if (entry->flexbodiescount > 0)   descriptiontxt = descriptiontxt + _L("Flexbodies: ") + c + TOUTFSTRING(entry->flexbodiescount) + nc + newline;
-    if (entry->propscount > 0)        descriptiontxt = descriptiontxt + _L("Props: ") + c + TOUTFSTRING(entry->propscount) + nc + newline;
-    if (entry->wingscount > 0)        descriptiontxt = descriptiontxt + _L("Wings: ") + c + TOUTFSTRING(entry->wingscount) + nc + newline;
-    if (entry->hasSubmeshs)           descriptiontxt = descriptiontxt + _L("Using Submeshs: ") + c + TOUTFSTRING(entry->hasSubmeshs) + nc + newline;
-    if (entry->numgears > 0)          descriptiontxt = descriptiontxt + _L("Transmission Gear Count: ") + c + TOUTFSTRING(entry->numgears) + nc + newline;
-    if (entry->minrpm > 0)            descriptiontxt = descriptiontxt + _L("Engine RPM: ") + c + TOUTFSTRING(entry->minrpm) + U(" - ") + TOUTFSTRING(entry->maxrpm) + nc + newline;
-    if (!entry->uniqueid.empty() && entry->uniqueid != "no-uid") descriptiontxt = descriptiontxt + _L("Unique ID: ") + c + entry->uniqueid + nc + newline;
-    if (!entry->guid.empty() && entry->guid != "no-guid")        descriptiontxt = descriptiontxt + _L("GUID: ") + c + entry->guid + nc + newline;
-    if (entry->usagecounter > 0)      descriptiontxt = descriptiontxt + _L("Times used: ") + c + TOUTFSTRING(entry->usagecounter) + nc + newline;
+    if (entry->version > 0)
+        descriptiontxt = descriptiontxt + _L("Version: ") + c + TOUTFSTRING(entry->version) + nc + newline;
+    if (entry->wheelcount > 0)
+        descriptiontxt = descriptiontxt + _L("Wheels: ") + c + TOUTFSTRING(entry->wheelcount) + U("x") + TOUTFSTRING(entry->propwheelcount) + nc + newline;
+    if (entry->truckmass > 0)
+        descriptiontxt = descriptiontxt + _L("Mass: ") + c + TOUTFSTRING((int)(entry->truckmass / 1000.0f)) + U(" ") + _L("tons") + nc + newline;
+    if (entry->loadmass > 0)
+        descriptiontxt = descriptiontxt + _L("Load Mass: ") + c + TOUTFSTRING((int)(entry->loadmass / 1000.0f)) + U(" ") + _L("tons") + nc + newline;
+    if (entry->nodecount > 0)
+        descriptiontxt = descriptiontxt + _L("Nodes: ") + c + TOUTFSTRING(entry->nodecount) + nc + newline;
+    if (entry->beamcount > 0)
+        descriptiontxt = descriptiontxt + _L("Beams: ") + c + TOUTFSTRING(entry->beamcount) + nc + newline;
+    if (entry->shockcount > 0)
+        descriptiontxt = descriptiontxt + _L("Shocks: ") + c + TOUTFSTRING(entry->shockcount) + nc + newline;
+    if (entry->hydroscount > 0)
+        descriptiontxt = descriptiontxt + _L("Hydros: ") + c + TOUTFSTRING(entry->hydroscount) + nc + newline;
+    if (entry->soundsourcescount > 0)
+        descriptiontxt = descriptiontxt + _L("SoundSources: ") + c + TOUTFSTRING(entry->soundsourcescount) + nc + newline;
+    if (entry->commandscount > 0)
+        descriptiontxt = descriptiontxt + _L("Commands: ") + c + TOUTFSTRING(entry->commandscount) + nc + newline;
+    if (entry->rotatorscount > 0)
+        descriptiontxt = descriptiontxt + _L("Rotators: ") + c + TOUTFSTRING(entry->rotatorscount) + nc + newline;
+    if (entry->exhaustscount > 0)
+        descriptiontxt = descriptiontxt + _L("Exhausts: ") + c + TOUTFSTRING(entry->exhaustscount) + nc + newline;
+    if (entry->flarescount > 0)
+        descriptiontxt = descriptiontxt + _L("Flares: ") + c + TOUTFSTRING(entry->flarescount) + nc + newline;
+    if (entry->torque > 0)
+        descriptiontxt = descriptiontxt + _L("Torque: ") + c + TOUTFSTRING(entry->torque) + nc + newline;
+    if (entry->flexbodiescount > 0)
+        descriptiontxt = descriptiontxt + _L("Flexbodies: ") + c + TOUTFSTRING(entry->flexbodiescount) + nc + newline;
+    if (entry->propscount > 0)
+        descriptiontxt = descriptiontxt + _L("Props: ") + c + TOUTFSTRING(entry->propscount) + nc + newline;
+    if (entry->wingscount > 0)
+        descriptiontxt = descriptiontxt + _L("Wings: ") + c + TOUTFSTRING(entry->wingscount) + nc + newline;
+    if (entry->hasSubmeshs)
+        descriptiontxt = descriptiontxt + _L("Using Submeshs: ") + c + TOUTFSTRING(entry->hasSubmeshs) + nc + newline;
+    if (entry->numgears > 0)
+        descriptiontxt = descriptiontxt + _L("Transmission Gear Count: ") + c + TOUTFSTRING(entry->numgears) + nc + newline;
+    if (entry->minrpm > 0)
+        descriptiontxt = descriptiontxt + _L("Engine RPM: ") + c + TOUTFSTRING(entry->minrpm) + U(" - ") + TOUTFSTRING(entry->maxrpm) + nc + newline;
+    if (!entry->uniqueid.empty() && entry->uniqueid != "no-uid")
+        descriptiontxt = descriptiontxt + _L("Unique ID: ") + c + entry->uniqueid + nc + newline;
+    if (!entry->guid.empty() && entry->guid != "no-guid")
+        descriptiontxt = descriptiontxt + _L("GUID: ") + c + entry->guid + nc + newline;
+    if (entry->usagecounter > 0)
+        descriptiontxt = descriptiontxt + _L("Times used: ") + c + TOUTFSTRING(entry->usagecounter) + nc + newline;
 
     if (entry->addtimestamp > 0)
     {
@@ -829,29 +862,43 @@ void CLASS::UpdateControls(CacheEntry *entry)
         descriptiontxt = descriptiontxt + _L("Date and Time installed: ") + c + Ogre::String(tmp) + nc + newline;
     }
 
-    Ogre::UTFString driveableStr[5] = { _L("Non-Driveable"), _L("Truck"), _L("Airplane"), _L("Boat"), _L("Machine") };
-    if (entry->nodecount > 0) descriptiontxt = descriptiontxt + _L("Vehicle Type: ") + c + driveableStr[entry->driveable] + nc + newline;
+    Ogre::UTFString driveableStr[5] = {_L("Non-Driveable"), _L("Truck"), _L("Airplane"), _L("Boat"), _L("Machine")};
+    if (entry->nodecount > 0)
+        descriptiontxt = descriptiontxt + _L("Vehicle Type: ") + c + driveableStr[entry->driveable] + nc + newline;
 
     descriptiontxt = descriptiontxt + "#FF0000\n"; // red colour for the props
 
-    if (entry->forwardcommands) descriptiontxt = descriptiontxt + _L("[forwards commands]") + newline;
-    if (entry->importcommands) descriptiontxt = descriptiontxt + _L("[imports commands]") + newline;
-    if (entry->rollon) descriptiontxt = descriptiontxt + _L("[is rollon]") + newline;
-    if (entry->rescuer) descriptiontxt = descriptiontxt + _L("[is rescuer]") + newline;
-    if (entry->custom_particles) descriptiontxt = descriptiontxt + _L("[uses custom particles]") + newline;
-    if (entry->fixescount > 0) descriptiontxt = descriptiontxt + _L("[has fixes]") + newline;
+    if (entry->forwardcommands)
+        descriptiontxt = descriptiontxt + _L("[forwards commands]") + newline;
+    if (entry->importcommands)
+        descriptiontxt = descriptiontxt + _L("[imports commands]") + newline;
+    if (entry->rollon)
+        descriptiontxt = descriptiontxt + _L("[is rollon]") + newline;
+    if (entry->rescuer)
+        descriptiontxt = descriptiontxt + _L("[is rescuer]") + newline;
+    if (entry->custom_particles)
+        descriptiontxt = descriptiontxt + _L("[uses custom particles]") + newline;
+    if (entry->fixescount > 0)
+        descriptiontxt = descriptiontxt + _L("[has fixes]") + newline;
     // t is the default, do not display it
     //if (entry->enginetype == 't') descriptiontxt = descriptiontxt +_L("[TRUCK ENGINE]") + newline;
-    if (entry->enginetype == 'c') descriptiontxt = descriptiontxt + _L("[car engine]") + newline;
-    if (entry->type == "Zip") descriptiontxt = descriptiontxt + _L("[zip archive]") + newline;
-    if (entry->type == "FileSystem") descriptiontxt = descriptiontxt + _L("[unpacked in directory]") + newline;
+    if (entry->enginetype == 'c')
+        descriptiontxt = descriptiontxt + _L("[car engine]") + newline;
+    if (entry->type == "Zip")
+        descriptiontxt = descriptiontxt + _L("[zip archive]") + newline;
+    if (entry->type == "FileSystem")
+        descriptiontxt = descriptiontxt + _L("[unpacked in directory]") + newline;
 
     descriptiontxt = descriptiontxt + "#66CCFF\n"; // now blue-ish color*
 
-    if (!entry->dirname.empty()) descriptiontxt = descriptiontxt + _L("Source: ") + entry->dirname + newline;
-    if (!entry->fname.empty()) descriptiontxt = descriptiontxt + _L("Filename: ") + entry->fname + newline;
-    if (!entry->hash.empty() && entry->hash != "none") descriptiontxt = descriptiontxt + _L("Hash: ") + entry->hash + newline;
-    if (!entry->hash.empty()) descriptiontxt = descriptiontxt + _L("Mod Number: ") + TOUTFSTRING(entry->number) + newline;
+    if (!entry->dirname.empty())
+        descriptiontxt = descriptiontxt + _L("Source: ") + entry->dirname + newline;
+    if (!entry->fname.empty())
+        descriptiontxt = descriptiontxt + _L("Filename: ") + entry->fname + newline;
+    if (!entry->hash.empty() && entry->hash != "none")
+        descriptiontxt = descriptiontxt + _L("Hash: ") + entry->hash + newline;
+    if (!entry->hash.empty())
+        descriptiontxt = descriptiontxt + _L("Mod Number: ") + TOUTFSTRING(entry->number) + newline;
 
     if (!entry->sectionconfigs.empty())
     {
@@ -934,7 +981,8 @@ bool CLASS::IsFinishedSelecting()
 
 void CLASS::Show(LoaderType type)
 {
-    if (!m_selection_done) return;
+    if (!m_selection_done)
+        return;
     m_selection_done = false;
 
     m_selected_skin = 0;
@@ -948,7 +996,8 @@ void CLASS::Show(LoaderType type)
 
     MAIN_WIDGET->setVisibleSmooth(true);
 
-    if (type != LT_SKIN) m_selected_entry = nullptr; // when in skin, we still need the info
+    if (type != LT_SKIN)
+        m_selected_entry = nullptr; // when in skin, we still need the info
 
     m_loader_type = type;
     UpdateGuiData();
@@ -981,9 +1030,10 @@ void CLASS::Hide(bool smooth)
     BindKeys(false);
 }
 
-void CLASS::EventSearchTextChange(MyGUI::EditBox *_sender)
+void CLASS::EventSearchTextChange(MyGUI::EditBox* _sender)
 {
-    if (!MAIN_WIDGET->getVisible()) return;
+    if (!MAIN_WIDGET->getVisible())
+        return;
     OnCategorySelected(CacheSystem::CID_SearchResults);
     if (m_SearchLine->getTextLength() > 0)
     {
@@ -993,7 +1043,8 @@ void CLASS::EventSearchTextChange(MyGUI::EditBox *_sender)
 
 void CLASS::EventSearchTextGotFocus(MyGUI::WidgetPtr _sender, MyGUI::WidgetPtr oldWidget)
 {
-    if (!MAIN_WIDGET->getVisible()) return;
+    if (!MAIN_WIDGET->getVisible())
+        return;
 
     if (m_SearchLine->getCaption() == _L("Search ..."))
     {

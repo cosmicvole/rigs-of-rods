@@ -1,22 +1,23 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
+
 #ifdef USE_MYGUI
 
 #include "SurveyMapManager.h"
@@ -38,7 +39,7 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 using namespace Ogre;
 
 SurveyMapManager::SurveyMapManager() :
-      mAlpha(1.0f)
+    mAlpha(1.0f)
     , mMapCenter(Vector2::ZERO)
     , mMapCenterThreshold(5.0f)
     , mMapEntitiesVisible(false)
@@ -60,9 +61,10 @@ SurveyMapManager::~SurveyMapManager()
 {
     gEnv->surveyMap = nullptr;
 
-    for (SurveyMapEntity *e : mMapEntities)
+    for (SurveyMapEntity* e : mMapEntities)
     {
-        if (e) delete e;
+        if (e)
+            delete e;
     }
 }
 
@@ -78,26 +80,26 @@ void SurveyMapManager::init()
     mMapCenterThreshold = FSETTING("SurveyMapCenterThreshold", 5.0f);
 }
 
-SurveyMapEntity *SurveyMapManager::createMapEntity(String type)
+SurveyMapEntity* SurveyMapManager::createMapEntity(String type)
 {
-    SurveyMapEntity *entity = new SurveyMapEntity(this, type, mMapTexture);
+    SurveyMapEntity* entity = new SurveyMapEntity(this, type, mMapTexture);
     mMapEntities.insert(entity);
     return entity;
 }
 
-SurveyMapEntity *SurveyMapManager::createNamedMapEntity(String name, String type)
+SurveyMapEntity* SurveyMapManager::createNamedMapEntity(String name, String type)
 {
-    SurveyMapEntity *entity = createMapEntity(type);
+    SurveyMapEntity* entity = createMapEntity(type);
     mNamedEntities[name] = entity;
     return entity;
 }
 
-void SurveyMapManager::deleteMapEntity(SurveyMapEntity *entity)
+void SurveyMapManager::deleteMapEntity(SurveyMapEntity* entity)
 {
     mMapEntities.erase(entity);
 }
 
-SurveyMapEntity *SurveyMapManager::getMapEntityByName(String name)
+SurveyMapEntity* SurveyMapManager::getMapEntityByName(String name)
 {
     if (mNamedEntities.find(name) != mNamedEntities.end())
     {
@@ -158,7 +160,8 @@ void SurveyMapManager::updateRenderMetrics()
 
 void SurveyMapManager::setMapZoom(Real zoomValue, bool update /*= true*/, bool permanent /*= true*/)
 {
-    if (mMapZoom == zoomValue) return;
+    if (mMapZoom == zoomValue)
+        return;
 
     Real oldZoomValue = mMapZoom;
 
@@ -184,7 +187,8 @@ void SurveyMapManager::setMapZoomRelative(Real zoomDelta, bool update /*= true*/
 
 void SurveyMapManager::setMapCenter(Vector2 position, bool update /*= true*/)
 {
-    if (mMapCenter == position) return;
+    if (mMapCenter == position)
+        return;
 
     mMapCenter = position;
 
@@ -195,7 +199,7 @@ void SurveyMapManager::setMapCenter(Vector2 position, bool update /*= true*/)
     }
 }
 
-void SurveyMapManager::setMapCenter(Ogre::Vector2 position, float maxOffset,  bool update /*= true*/)
+void SurveyMapManager::setMapCenter(Ogre::Vector2 position, float maxOffset, bool update /*= true*/)
 {
     if (mMapCenter.distance(position) > std::abs(maxOffset))
         setMapCenter(position, update);
@@ -206,7 +210,7 @@ void SurveyMapManager::setMapCenter(Vector3 position, bool update /*= true*/)
     setMapCenter(Vector2(position.x, position.z), update);
 }
 
-void SurveyMapManager::setMapCenter(Ogre::Vector3 position, float maxOffset,  bool update /*= true*/)
+void SurveyMapManager::setMapCenter(Ogre::Vector3 position, float maxOffset, bool update /*= true*/)
 {
     setMapCenter(Vector2(position.x, position.z), maxOffset, update);
 }
@@ -223,10 +227,12 @@ void SurveyMapManager::setWindowPosition(int x, int y, float size)
     if (x == -1)
     {
         realx = 0;
-    } else if (x == 0)
+    }
+    else if (x == 0)
     {
         realx = (rWinWidth - realw) / 2;
-    } else if (x == 1)
+    }
+    else if (x == 1)
     {
         realx = rWinWidth - realw;
     }
@@ -234,10 +240,12 @@ void SurveyMapManager::setWindowPosition(int x, int y, float size)
     if (y == -1)
     {
         realy = 0;
-    } else if (y == 0)
+    }
+    else if (y == 0)
     {
         realy = (rWinHeight - realh) / 2;
-    } else if (y == 1)
+    }
+    else if (y == 1)
     {
         realy = rWinHeight - realh;
     }
@@ -245,7 +253,7 @@ void SurveyMapManager::setWindowPosition(int x, int y, float size)
     mMainWidget->setCoord(realx, realy, realw, realh);
 }
 
-Ogre::String SurveyMapManager::getTypeByDriveable( int driveable )
+Ogre::String SurveyMapManager::getTypeByDriveable(int driveable)
 {
     switch (driveable)
     {
@@ -266,9 +274,10 @@ Ogre::String SurveyMapManager::getTypeByDriveable( int driveable )
 
 void SurveyMapManager::update(Ogre::Real dt)
 {
-    if ( dt == 0 ) return;
+    if (dt == 0)
+        return;
 
-    Beam *curr_truck = BeamFactory::getSingleton().getCurrentTruck();
+    Beam* curr_truck = BeamFactory::getSingleton().getCurrentTruck();
     mVelocity = 0.0f;
 
     if (curr_truck)
@@ -286,7 +295,8 @@ void SurveyMapManager::update(Ogre::Real dt)
         mMapEntitiesVisible = !mMapEntitiesVisible;
     }
 
-    if (mMapMode == SURVEY_MAP_NONE) return;
+    if (mMapMode == SURVEY_MAP_NONE)
+        return;
 
     switch (mMapMode)
     {
@@ -308,11 +318,13 @@ void SurveyMapManager::update(Ogre::Real dt)
             if (curr_truck)
             {
                 setMapCenter(curr_truck->getPosition(), mMapCenterThreshold * (1 - mMapZoom));
-            } else
+            }
+            else
             {
                 setMapCenter(gEnv->player->getPosition(), mMapCenterThreshold * (1 - mMapZoom));
             }
-        } else
+        }
+        else
         {
             setMapCenter(Vector3(mMapSize.x / 2.0f, 0.0f, mMapSize.z / 2.0f));
         }
@@ -330,19 +342,21 @@ void SurveyMapManager::update(Ogre::Real dt)
         if (curr_truck &&
             gEnv->cameraManager &&
             gEnv->cameraManager->hasActiveBehavior() &&
-           !gEnv->cameraManager->gameControlsLocked())
+            !gEnv->cameraManager->gameControlsLocked())
         {
             if (mVelocity > 5.0f || gEnv->cameraManager->getCurrentBehavior() == CameraManager::CAMERA_BEHAVIOR_VEHICLE_CINECAM)
             {
                 setWindowPosition(1, -1, 0.3f);
                 //setAlpha(mAlpha);
                 mMapMode = SURVEY_MAP_SMALL;
-            } else
+            }
+            else
             {
                 // Soft cross-fade into small map
                 //setAlpha(1.0f / sqrt(std::max(1.0f, mVelocity - 1.0f)), false);
             }
-        } else
+        }
+        else
         {
             if (getAlpha() != mAlpha)
             {
@@ -368,7 +382,7 @@ void SurveyMapManager::toggleMapView()
     mMapMode = (mMapMode + 1) % SURVEY_MAP_END;
 
     if (mMapMode == SURVEY_MAP_BIG && (mVelocity > 5.0f ||
-        (gEnv->cameraManager &&
+    (gEnv->cameraManager &&
         gEnv->cameraManager->hasActiveBehavior() &&
         gEnv->cameraManager->getCurrentBehavior() == CameraManager::CAMERA_BEHAVIOR_VEHICLE_CINECAM)))
     {
@@ -378,12 +392,14 @@ void SurveyMapManager::toggleMapView()
     if (mMapMode == SURVEY_MAP_NONE)
     {
         setVisibility(false);
-    } else
+    }
+    else
     {
         if (mMapMode == SURVEY_MAP_SMALL)
         {
             setWindowPosition(1, -1, 0.3f);
-        } else if (mMapMode == SURVEY_MAP_BIG)
+        }
+        else if (mMapMode == SURVEY_MAP_BIG)
         {
             setWindowPosition(0, 0, 0.98f);
         }
@@ -408,12 +424,13 @@ void SurveyMapManager::toggleMapAlpha()
     }
 }
 
-void SurveyMapManager::Update(Beam ** vehicles, int num_vehicles)
-{    
-    for (int t=0; t<num_vehicles; t++)
+void SurveyMapManager::Update(Beam** vehicles, int num_vehicles)
+{
+    for (int t = 0; t < num_vehicles; t++)
     {
-        if (!vehicles[t]) continue;    
-        SurveyMapEntity *e = getMapEntityByName("Truck"+TOSTRING(vehicles[t]->trucknum));
+        if (!vehicles[t])
+            continue;
+        SurveyMapEntity* e = getMapEntityByName("Truck" + TOSTRING(vehicles[t]->trucknum));
         if (e)
         {
             e->setState(SIMULATED);

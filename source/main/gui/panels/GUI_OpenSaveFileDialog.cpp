@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2014 Petr Ohlidal
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -12,24 +12,20 @@
 
     Rigs of Rods is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*
-    This file was ported from MyGUI project (MIT licensed)
-    https://github.com/MyGUI/mygui
-    http://mygui.info/
-*/
+/// This file was ported from MyGUI project (MIT licensed)
+/// https://github.com/MyGUI/mygui
+/// http://mygui.info/
 
-/*!
-    @file
-    @author        Albert Semenov
-    @date        08/2008
-*/
+/// @file
+/// @author Albert Semenov
+/// @date   08/2008
 
 #include "GUI_OpenSaveFileDialog.h"
 
@@ -119,7 +115,8 @@ void OpenSaveFileDialog::notifyListChangePosition(MyGUI::ListBox* _sender, size_
 
 void OpenSaveFileDialog::notifyListSelectAccept(MyGUI::ListBox* _sender, size_t _index)
 {
-    if (_index == MyGUI::ITEM_NONE) return;
+    if (_index == MyGUI::ITEM_NONE)
+        return;
 
     FileSystem::FileInfo info = *_sender->getItemDataAt<FileSystem::FileInfo>(_index);
     if (info.folder)
@@ -130,7 +127,7 @@ void OpenSaveFileDialog::notifyListSelectAccept(MyGUI::ListBox* _sender, size_t 
         }
         else
         {
-            mCurrentFolder = FileSystem::concatenatePath (mCurrentFolder.asWStr(), info.name);
+            mCurrentFolder = FileSystem::concatenatePath(mCurrentFolder.asWStr(), info.name);
             update();
         }
     }
@@ -154,7 +151,7 @@ void OpenSaveFileDialog::accept()
         {
             FileSystem::FileInfo info = *mListFiles->getItemDataAt<FileSystem::FileInfo>(mListFiles->getIndexSelected());
             if (!FileSystem::isParentDir(info.name.c_str()))
-                mCurrentFolder = FileSystem::concatenatePath (mCurrentFolder.asWStr(), info.name);
+                mCurrentFolder = FileSystem::concatenatePath(mCurrentFolder.asWStr(), info.name);
         }
         eventEndDialog(this, true);
     }
@@ -278,5 +275,3 @@ void OpenSaveFileDialog::notifyDirectoryComboChangePosition(MyGUI::ComboBox* _se
     if (_index != MyGUI::ITEM_NONE)
         setCurrentFolder(_sender->getItemNameAt(_index));
 }
-
-

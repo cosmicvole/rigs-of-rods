@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2014 Petr Ohlidal
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -12,14 +12,14 @@
 
     Rigs of Rods is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**    
+/**	
     @file   RigSpawner.cpp
     @brief  Vehicle spawning logic.
     @author Petr Ohlidal
@@ -640,7 +640,7 @@ void RigSpawner::FinalizeRig()
         }
 
         //base texture is not modified
-        //    mat->compile();
+        //	mat->compile();
 
 
         //parser_warning(c, "creating mesh", PARSER_INFO);
@@ -669,7 +669,7 @@ void RigSpawner::FinalizeRig()
         {
             //parser_warning(c, "loading cab", PARSER_INFO);
             ec = gEnv->sceneManager->createEntity(wnamei, wname);
-            //        ec->setRenderQueueGroup(RENDER_QUEUE_6);
+            //		ec->setRenderQueueGroup(RENDER_QUEUE_6);
             //parser_warning(c, "attaching cab", PARSER_INFO);
             if (ec)
             {
@@ -698,7 +698,7 @@ void RigSpawner::FinalizeRig()
         
     };
     //parser_warning(c, "cab ok", PARSER_INFO);
-    //    mWindow->setDebugText("Beam number:"+ TOSTRING(free_beam));
+    //	mWindow->setDebugText("Beam number:"+ TOSTRING(free_beam));
 /*
     if (c.mode == BTS_DESCRIPTION)
         parser_warning(c, "description section not closed with end_description", PARSER_ERROR);
@@ -1863,7 +1863,7 @@ void RigSpawner::ProcessProp(RigDef::Prop & def)
         return;
     }
 
-     prop_t & prop = m_rig->props[m_rig->free_prop];
+    prop_t & prop = m_rig->props[m_rig->free_prop];
     m_rig->free_prop++;
     memset(&prop, 0, sizeof(prop_t)); /* Initialize prop memory to avoid invalid pointers. */
 
@@ -2093,7 +2093,7 @@ void RigSpawner::ProcessProp(RigDef::Prop & def)
                 prop.beacon_flare_billboard_scene_node[k]->setVisible(false);
             }
         }
-    }    
+    }	
 
     /* PROCESS ANIMATIONS */
 
@@ -2705,8 +2705,8 @@ bool RigSpawner::AssignWheelToAxle(int & _out_axle_wheel, node_t *axis_node_1, n
     for (int i = 0; i < m_rig->free_wheel; i++)
     {
         wheel_t & wheel = m_rig->wheels[i];
-        if    (    (wheel.refnode0 == axis_node_1 && wheel.refnode1 == axis_node_2)
-            ||    (wheel.refnode0 == axis_node_2 && wheel.refnode1 == axis_node_1)
+        if	(	(wheel.refnode0 == axis_node_1 && wheel.refnode1 == axis_node_2)
+            ||	(wheel.refnode0 == axis_node_2 && wheel.refnode1 == axis_node_1)
             )
         {
             _out_axle_wheel = i;
@@ -3175,9 +3175,9 @@ beam_t *RigSpawner::FindBeamInRig(unsigned int node_a_index, unsigned int node_b
 
     for (unsigned int i = 0; i < static_cast<unsigned int>(m_rig->free_beam); i++)
     {
-        if    (
+        if	(
                 (GetBeam(i).p1 == node_a && GetBeam(i).p2 == node_b)
-            ||    (GetBeam(i).p2 == node_a && GetBeam(i).p1 == node_b)
+            ||	(GetBeam(i).p2 == node_a && GetBeam(i).p1 == node_b)
             )
         {
             return & GetBeam(i);
@@ -3635,7 +3635,7 @@ void RigSpawner::ProcessCommand(RigDef::Command2 & def)
         beam.centerLength = (def.max_contraction - def.max_extension) / 2 + def.max_extension;
     }
 
-    _ProcessKeyInertia(m_rig->cmdInertia, def.inertia, *def.inertia_defaults, def.contract_key, def.extend_key);    
+    _ProcessKeyInertia(m_rig->cmdInertia, def.inertia, *def.inertia_defaults, def.contract_key, def.extend_key);	
 
     /* Add keys */
     command_t* contract_command = &m_rig->commandkey[def.contract_key];
@@ -3708,7 +3708,7 @@ void RigSpawner::ProcessAnimator(RigDef::Animator & def)
     if (BITMASK_IS_1(def.flags, RigDef::Animator::OPTION_AIR_BRAKE)) {
         BITMASK_SET_1(anim_flags, ANIM_FLAG_AIRBRAKE);
     }
-    if (BITMASK_IS_1(def.flags, RigDef::Animator::OPTION_ROLL))    {
+    if (BITMASK_IS_1(def.flags, RigDef::Animator::OPTION_ROLL))	{
         BITMASK_SET_1(anim_flags, ANIM_FLAG_ROLL);
     }
     if (BITMASK_IS_1(def.flags, RigDef::Animator::OPTION_PITCH)) {
@@ -3748,7 +3748,7 @@ void RigSpawner::ProcessAnimator(RigDef::Animator & def)
         BITMASK_SET_1(anim_flags, ANIM_FLAG_SHIFTER);
         anim_option = 1.f;
     }
-    if (BITMASK_IS_1(def.flags, RigDef::Animator::OPTION_SHIFT_BACK_FORTH))    {
+    if (BITMASK_IS_1(def.flags, RigDef::Animator::OPTION_SHIFT_BACK_FORTH))	{
         BITMASK_SET_1(anim_flags, ANIM_FLAG_SHIFTER);
         anim_option = 2.f;
     }
@@ -3937,7 +3937,7 @@ void RigSpawner::ProcessHydro(RigDef::Hydro & def)
         }
     }
 
-    _ProcessKeyInertia(m_rig->hydroInertia, def.inertia, *def.inertia_defaults, m_rig->free_hydro, m_rig->free_hydro);    
+    _ProcessKeyInertia(m_rig->hydroInertia, def.inertia, *def.inertia_defaults, m_rig->free_hydro, m_rig->free_hydro);	
 
     node_t & node_1 = GetNode(def.nodes[0]);
     node_t & node_2 = GetNode(def.nodes[1]);
@@ -4140,11 +4140,11 @@ void RigSpawner::FetchAxisNodes(
         node_t *swap = axis_node_1;
         axis_node_1 = axis_node_2;
         axis_node_2 = swap;
-    }    
+    }	
 }
 
 void RigSpawner::ProcessFlexBodyWheel(RigDef::FlexBodyWheel & def)
-{    
+{	
     SPAWNER_PROFILE_SCOPED();
 
     /* Check capacities */
@@ -4316,7 +4316,7 @@ void RigSpawner::ProcessFlexBodyWheel(RigDef::FlexBodyWheel & def)
         AddWheelBeam(next_rim_node, & m_rig->nodes[tyre_node_index],     tyre_spring/2.f, tyre_damp, def.beam_defaults);
         AddWheelBeam(next_rim_node, & m_rig->nodes[tyre_node_index + 1], tyre_spring/2.f, tyre_damp, def.beam_defaults);
 
-        {    
+        {	
             int index = (i == 0) ? tyre_node_index + (def.num_rays * 2) - 1 : tyre_node_index - 1;
             node_t * tyre_node = & m_rig->nodes[index];
             AddWheelBeam(next_rim_node, tyre_node, tyre_spring/2.f, tyre_damp, def.beam_defaults);
@@ -4530,7 +4530,7 @@ void RigSpawner::ProcessMeshWheel2(RigDef::MeshWheel & def)
         node_t *swap = axis_node_1;
         axis_node_1 = axis_node_2;
         axis_node_2 = swap;
-    }    
+    }	
 
     unsigned int wheel_index = BuildWheelObjectAndNodes(
         def.num_rays,
@@ -4633,13 +4633,13 @@ void RigSpawner::BuildMeshWheelVisuals(
             m_rig->materialFunctionMapper->replaceMeshMaterials(ec);
         }
         if (m_rig->materialReplacer != nullptr) 
-        {    
+        {	
             m_rig->materialReplacer->replaceMeshMaterials(ec);
         }
         if (m_rig->usedSkin != nullptr)
         {
             m_rig->usedSkin->replaceMeshMaterials(ec);
-        }        
+        }		
     } 
     catch(...)
     {
@@ -4956,7 +4956,7 @@ unsigned int RigSpawner::AddWheel(RigDef::Wheel & wheel_def)
         node_t *swap = axis_node_1;
         axis_node_1 = axis_node_2;
         axis_node_2 = swap;
-    }    
+    }	
 
     unsigned int wheel_index = BuildWheelObjectAndNodes(
         wheel_def.num_rays,
@@ -5154,7 +5154,7 @@ unsigned int RigSpawner::AddWheel2(RigDef::Wheel2 & wheel_2_def)
         node_t *swap = axis_node_1;
         axis_node_1 = axis_node_2;
         axis_node_2 = swap;
-    }    
+    }	
 
     /* Rigidity node */
     node_t *axis_node_closest_to_rigidity_node = nullptr;
@@ -5785,7 +5785,7 @@ void RigSpawner::ProcessHelp()
     {
         std::stringstream msg;
         msg << "Multiple (" << material_count << ") 'help' sections found. Using the last one...";
-        AddMessage(Message::TYPE_WARNING, msg.str());    
+        AddMessage(Message::TYPE_WARNING, msg.str());	
     }
 
     SetCurrentKeyword(RigDef::File::KEYWORD_INVALID);
@@ -5822,7 +5822,7 @@ void RigSpawner::ProcessAuthors()
             author.id = author_itor->forum_account_id;
         }
         m_rig->authors.push_back(author);
-    }    
+    }	
 
     SetCurrentKeyword(RigDef::File::KEYWORD_INVALID);
 };
@@ -6130,7 +6130,7 @@ void RigSpawner::InitBeam(beam_t & beam, node_t *node_1, node_t *node_2)
     CalculateBeamLength(beam);
 }
 
-void RigSpawner::AddMessage(RigSpawner::Message::Type type,    Ogre::String const & text)
+void RigSpawner::AddMessage(RigSpawner::Message::Type type,	Ogre::String const & text)
 {
     SPAWNER_PROFILE_SCOPED();
 
@@ -6731,7 +6731,7 @@ bool RigSpawner::CheckAxleLimit(unsigned int count)
 }
 
 bool RigSpawner::CheckPropLimit(unsigned int count)
-{    
+{	
     SPAWNER_PROFILE_SCOPED();
 
     if ((m_rig->free_prop + count) > MAX_PROPS)

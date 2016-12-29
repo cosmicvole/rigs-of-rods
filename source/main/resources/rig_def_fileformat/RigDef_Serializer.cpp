@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2015 Petr Ohlidal
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -19,11 +19,9 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
-    @file   RigDef_Serializer.cpp
-    @author Petr Ohlidal
-    @date   10/2014
-*/
+/// @file
+/// @author Petr Ohlidal
+/// @date   10/2014
 
 #include "RigDef_Serializer.h"
 
@@ -555,8 +553,8 @@ void Serializer::ProcessSubmesh(File::Module* module)
                 CAB_PRINT_OPTION_FLAG(cab_itor->options, OPTION_u_INVULNERABLE      , 'u')
                 CAB_PRINT_OPTION_FLAG(cab_itor->options, OPTION_s_BUOYANT_NO_DRAG   , 's')
                 CAB_PRINT_OPTION_FLAG(cab_itor->options, OPTION_r_BUOYANT_ONLY_DRAG , 'r')
-                CAB_PRINT_OPTION_FUNC(cab_itor, GetOption_D_ContactBuoyant            , 'D')
-                CAB_PRINT_OPTION_FUNC(cab_itor, GetOption_F_10xTougherBuoyant        , 'F')
+                CAB_PRINT_OPTION_FUNC(cab_itor, GetOption_D_ContactBuoyant		    , 'D')
+                CAB_PRINT_OPTION_FUNC(cab_itor, GetOption_F_10xTougherBuoyant	    , 'F')
                 CAB_PRINT_OPTION_FUNC(cab_itor, GetOption_S_UnpenetrableBuoyant     , 'S')
             }
         }
@@ -1348,8 +1346,8 @@ void Serializer::ProcessRotators(File::Module* module)
         m_stream 
             << def.inertia.start_delay_factor << ", "
             << def.inertia.stop_delay_factor  << ", "
-            << def.inertia.start_function      << ", "
-            << def.inertia.stop_function      << ", "
+            << def.inertia.start_function	  << ", "
+            << def.inertia.stop_function	  << ", "
             << def.engine_coupling            << ", "
             << (def.needs_engine ? "true" : "false");
     }
@@ -1391,15 +1389,15 @@ void Serializer::ProcessRotators2(File::Module* module)
             << def.spin_left_key   << ", " 
             << def.spin_right_key  << ", "
             << def.rotating_force  << ", "
-            << def.tolerance       << ", "
-            << def.description       << ", ";
+            << def.tolerance	   << ", "
+            << def.description	   << ", ";
 
         // Inertia
         m_stream 
             << def.inertia.start_delay_factor << ", "
             << def.inertia.stop_delay_factor  << ", "
-            << def.inertia.start_function      << ", "
-            << def.inertia.stop_function      << ", "
+            << def.inertia.start_function	  << ", "
+            << def.inertia.stop_function	  << ", "
             << def.engine_coupling            << ", "
             << (def.needs_engine ? "true" : "false");
     }
@@ -1512,7 +1510,7 @@ void Serializer::ProcessEngine(File::Module* module)
         << setw(11)   << module->engine->reverse_gear_ratio            << ", "
         << setw(11)   << module->engine->neutral_gear_ratio;
     
-    auto itor = module->engine->gear_ratios.begin();    
+    auto itor = module->engine->gear_ratios.begin();	
     auto end  = module->engine->gear_ratios.end();
     for (; itor != end; ++itor)
     {

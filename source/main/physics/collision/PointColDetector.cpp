@@ -1,21 +1,23 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2009 Lefteris Stamatogiannakis
+    This source file is part of Rigs of Rods
 
-For more information, see http://www.rigsofrods.org/
+    Copyright 2009 Lefteris Stamatogiannakis
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
+
 #include "PointColDetector.h"
 
 #include "Beam.h"
@@ -35,7 +37,7 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 using namespace Ogre;
 
 PointColDetector::PointColDetector()
-       : object_list_size(-1)
+    : object_list_size(-1)
 {
 }
 

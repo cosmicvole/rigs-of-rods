@@ -1,22 +1,23 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
+
 #include "ShadowManager.h"
 
 #include <Ogre.h>
@@ -66,18 +67,18 @@ int ShadowManager::updateShadowTechnique()
             OverlayManager& mgr = Ogre::OverlayManager::getSingleton();
             Overlay* overlay = mgr.create("DebugOverlay");
 
-            for (int i = 0; i < PSSM_Shadows.ShadowsTextureNum; ++i) {
+            for (int i = 0; i < PSSM_Shadows.ShadowsTextureNum; ++i)
+            {
                 TexturePtr tex = gEnv->sceneManager->getShadowTexture(i);
-
 
                 // Set up a debug panel to display the shadow
                 MaterialPtr debugMat = MaterialManager::getSingleton().create("Ogre/DebugTexture" + StringConverter::toString(i), ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
                 debugMat->getTechnique(0)->getPass(0)->setLightingEnabled(false);
-                TextureUnitState *t = debugMat->getTechnique(0)->getPass(0)->createTextureUnitState(tex->getName());
+                TextureUnitState* t = debugMat->getTechnique(0)->getPass(0)->createTextureUnitState(tex->getName());
                 t->setTextureAddressingMode(TextureUnitState::TAM_CLAMP);
 
                 OverlayContainer* debugPanel = (OverlayContainer*)(OverlayManager::getSingleton().createOverlayElement("Panel", "Ogre/DebugTexPanel" + StringConverter::toString(i)));
-                debugPanel->_setPosition(0.8, i*0.25);
+                debugPanel->_setPosition(0.8, i * 0.25);
                 debugPanel->_setDimensions(0.2, 0.24);
                 debugPanel->setMaterialName(debugMat->getName());
                 debugPanel->setEnabled(true);
@@ -110,7 +111,6 @@ void ShadowManager::processPSSM()
     //Caster is set via materials
     gEnv->sceneManager->setShadowTextureCasterMaterial("Ogre/shadow/depth/caster");
 
-
     if (PSSM_Shadows.Quality == 3)
     {
         gEnv->sceneManager->setShadowTextureConfig(0, 4096, 4096, PF_FLOAT32_R);
@@ -125,18 +125,18 @@ void ShadowManager::processPSSM()
         gEnv->sceneManager->setShadowTextureConfig(2, 2048, 2048, PF_FLOAT32_R);
         PSSM_Shadows.lambda = 0.97f;
     }
-    else if(PSSM_Shadows.Quality == 1)
+    else if (PSSM_Shadows.Quality == 1)
     {
         gEnv->sceneManager->setShadowTextureConfig(0, 2048, 2048, PF_FLOAT32_R);
         gEnv->sceneManager->setShadowTextureConfig(1, 1024, 1024, PF_FLOAT32_R);
         gEnv->sceneManager->setShadowTextureConfig(2, 1024, 1024, PF_FLOAT32_R);
         PSSM_Shadows.lambda = 0.975f;
     }
-    else 
+    else
     {
         gEnv->sceneManager->setShadowTextureConfig(0, 1024, 1024, PF_FLOAT32_R);
         gEnv->sceneManager->setShadowTextureConfig(1, 1024, 1024, PF_FLOAT32_R);
-        gEnv->sceneManager->setShadowTextureConfig(2,  512,  512, PF_FLOAT32_R);
+        gEnv->sceneManager->setShadowTextureConfig(2, 512, 512, PF_FLOAT32_R);
         PSSM_Shadows.lambda = 0.98f;
     }
 
@@ -153,18 +153,17 @@ void ShadowManager::processPSSM()
         pssmSetup->setOptimalAdjustFactor(2, -1);
 
         PSSM_Shadows.mPSSMSetup.bind(pssmSetup);
-        
+
         //Send split info to managed materials
         setManagedMaterialSplitPoints(pssmSetup->getSplitPoints());
     }
     gEnv->sceneManager->setShadowCameraSetup(PSSM_Shadows.mPSSMSetup);
-
-
 }
 
 void ShadowManager::updatePSSM()
 {
-    if (!PSSM_Shadows.mPSSMSetup.get())  return;
+    if (!PSSM_Shadows.mPSSMSetup.get())
+        return;
     //Ugh what here?
 }
 

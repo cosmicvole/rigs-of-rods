@@ -1,21 +1,21 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "VideoCamera.h"
@@ -37,8 +37,8 @@ using namespace RoR;
 
 int VideoCamera::counter = 0;
 
-VideoCamera::VideoCamera(rig_t *truck) :
-      truck(truck)
+VideoCamera::VideoCamera(rig_t* truck) :
+    truck(truck)
     , debugMode(false)
     , debugNode(0)
     , mVidCam()
@@ -79,20 +79,21 @@ void VideoCamera::init()
             , Ogre::TU_RENDERTARGET);
         rttTex = rttTexPtr->getBuffer()->getRenderTarget();
         rttTex->setAutoUpdated(false);
-    } else
+    }
+    else
     {
         NameValuePairList misc;
         if (!SSETTING("VideoCameraFSAA", "").empty())
             misc["FSAA"] = SSETTING("VideoCameraFSAA", "");
-        
+
         if (!SSETTING("VideoCameraColourDepth", "").empty())
             misc["colourDepth"] = SSETTING("VideoCameraColourDepth", "");
         else
             misc["colourDepth"] = "32";
-        
+
         if (ISETTING("VideoCameraLeft_" + TOSTRING(counter), 0) > 0)
             misc["left"] = SSETTING("VideoCameraLeft_" + TOSTRING(counter), "");
-        
+
         if (ISETTING("VideoCameraTop_" + TOSTRING(counter), 0) > 0)
             misc["top"] = SSETTING("VideoCameraTop_" + TOSTRING(counter), "");
         if (!SSETTING("VideoCameraWindowBorder", "").empty())
@@ -106,31 +107,31 @@ void VideoCamera::init()
             int monitor = ISETTING("VideoCameraMonitor_" + TOSTRING(counter), 0);
             misc["monitorIndex"] = TOSTRING(monitor);
         }
-        
-        rwMirror =  Ogre::Root::getSingleton().createRenderWindow(vidCamName, mirrorSize.x, mirrorSize.y, fullscreen, &misc);
+
+        rwMirror = Ogre::Root::getSingleton().createRenderWindow(vidCamName, mirrorSize.x, mirrorSize.y, fullscreen, &misc);
         if (ISETTING("VideoCameraLeft_" + TOSTRING(counter), 0) > 0)
             rwMirror->reposition(ISETTING("VideoCameraLeft_" + TOSTRING(counter), 0), ISETTING("VideoCameraTop_" + TOSTRING(counter), 0));
 
         if (ISETTING("VideoCameraWidth_" + TOSTRING(counter), 0) > 0)
             rwMirror->resize(ISETTING("VideoCameraWidth_" + TOSTRING(counter), 0), ISETTING("VideoCameraHeight_" + TOSTRING(counter), 0));
-        
+
         rwMirror->setAutoUpdated(false);
         fixRenderWindowIcon(rwMirror);
         rwMirror->setDeactivateOnFocusChange(false);
         // TODO: disable texture mirrors
     }
-        
+
     mVidCam->setNearClipDistance(minclip);
     mVidCam->setFarClipDistance(maxclip);
     mVidCam->setFOVy(Ogre::Degree(fov));
-    mVidCam->setAspectRatio((float)mirrorSize.x/(float)mirrorSize.y);
+    mVidCam->setAspectRatio((float)mirrorSize.x / (float)mirrorSize.y);
 
     disabledTexture = mat->getTechnique(0)->getPass(0)->getTextureUnitState(0)->getTextureName();
     mat->getTechnique(0)->getPass(0)->setLightingEnabled(false);
 
     if (rttTex)
     {
-        Ogre::Viewport *vp = rttTex->addViewport(mVidCam);
+        Ogre::Viewport* vp = rttTex->addViewport(mVidCam);
         vp->setClearEveryFrame(true);
         vp->setBackgroundColour(gEnv->mainCamera->getViewport()->getBackgroundColour());
         vp->setVisibilityMask(~HIDE_MIRROR);
@@ -141,12 +142,12 @@ void VideoCamera::init()
 
         // this is a mirror, flip the image left<>right to have a mirror and not a cameraimage
         if (camRole == 1)
-            mat->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setTextureUScale (-1);
+            mat->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setTextureUScale(-1);
     }
 
     if (rwMirror)
     {
-        Ogre::Viewport *vp = rwMirror->addViewport(mVidCam);
+        Ogre::Viewport* vp = rwMirror->addViewport(mVidCam);
         vp->setClearEveryFrame(true);
         vp->setBackgroundColour(gEnv->mainCamera->getViewport()->getBackgroundColour());
         vp->setVisibilityMask(~HIDE_MIRROR);
@@ -154,14 +155,14 @@ void VideoCamera::init()
         vp->setOverlaysEnabled(false);
         mat->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setTextureName(disabledTexture);
     }
-    
+
     if (debugMode)
     {
-        Entity *ent = gEnv->sceneManager->createEntity("debug-camera.mesh");
+        Entity* ent = gEnv->sceneManager->createEntity("debug-camera.mesh");
         debugNode = gEnv->sceneManager->getRootSceneNode()->createChildSceneNode();
         ent->setMaterialName("ror-camera");
         debugNode->attachObject(ent);
-        debugNode->setScale(0.1,0.1,0.1);
+        debugNode->setScale(0.1, 0.1, 0.1);
     }
 }
 
@@ -175,8 +176,9 @@ void VideoCamera::setActive(bool state)
         else
             mat->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setTextureName(disabledTexture);
     }
-    
-    if (rwMirror) rwMirror->setActive(state);
+
+    if (rwMirror)
+        rwMirror->setActive(state);
 }
 
 void VideoCamera::update(float dt)
@@ -189,16 +191,18 @@ void VideoCamera::update(float dt)
     {
         gEnv->sky->notifyCameraChanged(mVidCam);
     }
-        
+
 #endif // USE_CAELUM
 
     // update the texture now, otherwise shuttering
-    if (rttTex) rttTex->update();
+    if (rttTex)
+        rttTex->update();
 
-    if (rwMirror) rwMirror->update();
+    if (rwMirror)
+        rwMirror->update();
 
     // get the normal of the camera plane now
-    Vector3 normal=(-(truck->nodes[nref].AbsPosition - truck->nodes[nz].AbsPosition)).crossProduct(-(truck->nodes[nref].AbsPosition - truck->nodes[ny].AbsPosition));
+    Vector3 normal = (-(truck->nodes[nref].AbsPosition - truck->nodes[nz].AbsPosition)).crossProduct(-(truck->nodes[nref].AbsPosition - truck->nodes[ny].AbsPosition));
     normal.normalise();
 
     // add user set offset
@@ -221,7 +225,8 @@ void VideoCamera::update(float dt)
         normal = rotation * normal;
         // merge camera direction and reflect it on our plane
         mVidCam->setDirection((pos - gEnv->mainCamera->getPosition()).reflect(normal));
-    } else
+    }
+    else
     {
         // this is a videocamera
         if (camRole == -1)
@@ -233,7 +238,8 @@ void VideoCamera::update(float dt)
             refy.normalise();
             Quaternion rot = Quaternion(-refx, -refy, -normal);
             mVidCam->setOrientation(rot * rotation); // rotate the camera orientation towards the calculated cam direction plus user rotation
-        } else
+        }
+        else
         {
             // we assume this is a tracking videocamera
             normal = truck->nodes[lookat].AbsPosition - pos;
@@ -245,7 +251,7 @@ void VideoCamera::update(float dt)
             Vector3 refy = refx.crossProduct(normal);
             refy.normalise();
             Quaternion rot = Quaternion(-refx, -refy, -normal);
-            mVidCam->setOrientation(rot*rotation); // rotate the camera orientation towards the calculated cam direction plus user rotation
+            mVidCam->setOrientation(rot * rotation); // rotate the camera orientation towards the calculated cam direction plus user rotation
         }
     }
 
@@ -259,7 +265,7 @@ void VideoCamera::update(float dt)
     mVidCam->setPosition(pos);
 }
 
-VideoCamera *VideoCamera::Setup(RigSpawner *rig_spawner, RigDef::VideoCamera & def)
+VideoCamera* VideoCamera::Setup(RigSpawner* rig_spawner, RigDef::VideoCamera& def)
 {
     try
     {
@@ -272,7 +278,7 @@ VideoCamera *VideoCamera::Setup(RigSpawner *rig_spawner, RigDef::VideoCamera & d
             return nullptr;
         }
 
-        Beam *rig = rig_spawner->GetRig();
+        Beam* rig = rig_spawner->GetRig();
 
         // clone the material to stay unique
         std::stringstream mat_clone_name;
@@ -286,17 +292,17 @@ VideoCamera *VideoCamera::Setup(RigSpawner *rig_spawner, RigDef::VideoCamera & d
             rig->materialReplacer->addMaterialReplace(mat->getName(), mat_clone_name.str());
         }
 
-        VideoCamera *v  = new VideoCamera(rig);
-        v->fov          = def.field_of_view;
-        v->minclip      = def.min_clip_distance;
-        v->maxclip      = def.max_clip_distance;
-        v->nz           = rig_spawner->GetNodeIndexOrThrow(def.left_node);
-        v->ny           = rig_spawner->GetNodeIndexOrThrow(def.bottom_node);
-        v->nref         = rig_spawner->GetNodeIndexOrThrow(def.reference_node);
-        v->offset       = def.offset;
-        v->switchoff    = def.camera_mode; // add performance switch off  ->meeds fix, only "always on" supported yet
+        VideoCamera* v = new VideoCamera(rig);
+        v->fov = def.field_of_view;
+        v->minclip = def.min_clip_distance;
+        v->maxclip = def.max_clip_distance;
+        v->nz = rig_spawner->GetNodeIndexOrThrow(def.left_node);
+        v->ny = rig_spawner->GetNodeIndexOrThrow(def.bottom_node);
+        v->nref = rig_spawner->GetNodeIndexOrThrow(def.reference_node);
+        v->offset = def.offset;
+        v->switchoff = def.camera_mode; // add performance switch off  ->meeds fix, only "always on" supported yet
         v->materialName = mat_clone_name.str();
-        v->mirrorSize   = Vector2(def.texture_width, def.texture_height);
+        v->mirrorSize = Vector2(def.texture_width, def.texture_height);
 
         /* camera name */
         if (! def.camera_name.empty())
@@ -310,15 +316,15 @@ VideoCamera *VideoCamera::Setup(RigSpawner *rig_spawner, RigDef::VideoCamera & d
 
         //rotate camera picture 180�, skip for mirrors
         float rotation_z = (def.camera_role != 1) ? def.rotation.z + 180 : def.rotation.z;
-        v->rotation 
-            = Ogre::Quaternion(Ogre::Degree(rotation_z), Ogre::Vector3::UNIT_Z) 
-            * Ogre::Quaternion(Ogre::Degree(def.rotation.y), Ogre::Vector3::UNIT_Y) 
+        v->rotation
+            = Ogre::Quaternion(Ogre::Degree(rotation_z), Ogre::Vector3::UNIT_Z)
+            * Ogre::Quaternion(Ogre::Degree(def.rotation.y), Ogre::Vector3::UNIT_Y)
             * Ogre::Quaternion(Ogre::Degree(def.rotation.x), Ogre::Vector3::UNIT_X);
 
         // set alternative camposition (optional)
         v->camNode = rig_spawner->GetNodeIndexOrThrow(def.alt_reference_node.IsValidAnyState() ? def.alt_reference_node : def.reference_node);
 
-         // set alternative lookat position (optional)
+        // set alternative lookat position (optional)
         int camera_role = def.camera_role;
         if (def.alt_orientation_node.IsValidAnyState())
         {
@@ -332,13 +338,11 @@ VideoCamera *VideoCamera::Setup(RigSpawner *rig_spawner, RigDef::VideoCamera & d
         v->camRole = camera_role; // -1= camera, 0 = trackcam, 1 = mirror
 
         v->init();
-        
+
         return v;
     }
-    catch(...)
+    catch (...)
     {
         return nullptr;
     }
 }
-
-

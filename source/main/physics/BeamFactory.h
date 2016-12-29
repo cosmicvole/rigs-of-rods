@@ -1,28 +1,28 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-// created by Thomas Fischer thomas{AT}thomasfischer{DOT}biz, 24th of August 2009
+/// @file
+/// @author Thomas Fischer (thomas{AT}thomasfischer{DOT}biz)
+/// @date   24th of August 2009
 
 #pragma once
-#ifndef __BeamFactory_H_
-#define __BeamFactory_H_
 
 #include "RoRPrerequisites.h"
 
@@ -38,7 +38,7 @@ class ThreadPool;
 /**
 * Builds and manages vehicles; Manages multithreading.
 */
-class BeamFactory : public RoRSingleton< BeamFactory >, public ZeroedMemoryAllocator
+class BeamFactory : public RoRSingleton<BeamFactory>, public ZeroedMemoryAllocator
 {
 public:
 
@@ -49,18 +49,18 @@ public:
     * @param cache_entry_number Needed for flexbody caching. Pass -1 if unavailable (flexbody caching will be disabled)
     */
     Beam* CreateLocalRigInstance(
-        Ogre::Vector3 pos, 
-        Ogre::Quaternion rot, 
+        Ogre::Vector3 pos,
+        Ogre::Quaternion rot,
         Ogre::String fname,
-        int cache_entry_number = -1, 
-        collision_box_t *spawnbox = NULL, 
-        bool ismachine = false, 
-        const std::vector<Ogre::String> *truckconfig = nullptr, 
-        Skin *skin = nullptr, 
+        int cache_entry_number = -1,
+        collision_box_t* spawnbox = NULL,
+        bool ismachine = false,
+        const std::vector<Ogre::String>* truckconfig = nullptr,
+        Skin* skin = nullptr,
         bool freePosition = false,
         bool preloaded_with_terrain = false
-        );
-    
+    );
+
     void update(float dt);
 
 #ifdef USE_SOCKETW
@@ -71,11 +71,11 @@ public:
 
     int getNumCpuCores() { return m_num_cpu_cores; };
 
-    Beam *getBeam(int source_id, int stream_id); // used by character
+    Beam* getBeam(int source_id, int stream_id); // used by character
 
-    Beam *getCurrentTruck();
-    Beam *getTruck(int number);
-    Beam **getTrucks() { return m_trucks; };
+    Beam* getCurrentTruck();
+    Beam* getTruck(int number);
+    Beam** getTrucks() { return m_trucks; };
     int getPreviousTruckNumber() { return m_previous_truck; };
     int getCurrentTruckNumber() { return m_current_truck; };
     int getTruckCount() { return m_free_truck; };
@@ -89,14 +89,14 @@ public:
 
     void removeCurrentTruck();
     void removeAllTrucks();
-    void removeTruck(Collisions *collisions, const Ogre::String &inst, const Ogre::String &box);
+    void removeTruck(Collisions* collisions, const Ogre::String& inst, const Ogre::String& box);
     void removeTruck(int truck);
-    
+
     void MuteAllTrucks();
     void UnmuteAllTrucks();
 
     bool enterRescueTruck();
-    void repairTruck(Collisions *collisions, const Ogre::String &inst, const Ogre::String &box, bool keepPosition=false);
+    void repairTruck(Collisions* collisions, const Ogre::String& inst, const Ogre::String& box, bool keepPosition = false);
 
     /**
     * TIGHT-LOOP; Logic: display, particles, sound; 
@@ -130,8 +130,13 @@ public:
 
 #ifdef USE_ANGELSCRIPT
     // we have to add this to be able to use the class as reference inside scripts
-    void addRef(){};
-    void release(){};
+    void addRef()
+    {
+    };
+
+    void release()
+    {
+    };
 #endif
 
     void SyncWithSimThread();
@@ -168,7 +173,7 @@ protected:
     */
     bool predictTruckIntersectionCollAABB(int a, int b, float scale = 1.0f);
 
-    int CreateRemoteInstance(stream_register_trucks_t *reg);
+    int CreateRemoteInstance(stream_register_trucks_t* reg);
     void RemoveStreamSource(int sourceid);
 
     // A list of streams without a corresponding truck in the truck array for each stream source
@@ -176,10 +181,10 @@ protected:
 
     std::unique_ptr<ThreadPool> m_sim_thread_pool;
     std::shared_ptr<Task> m_sim_task;
-    
+
     int m_num_cpu_cores;
 
-    Beam *m_trucks[MAX_TRUCKS];
+    Beam* m_trucks[MAX_TRUCKS];
     int m_free_truck;
     int m_previous_truck;
     int m_current_truck;
@@ -200,15 +205,13 @@ protected:
     void LogParserMessages();
     void LogSpawnerMessages();
 
-    void RecursiveActivation(int j, std::bitset<MAX_TRUCKS> &visited);
+    void RecursiveActivation(int j, std::bitset<MAX_TRUCKS>& visited);
     void UpdateSleepingState(float dt);
 
     int GetMostRecentTruckSlot();
 
     int GetFreeTruckSlot();
-    int FindTruckInsideBox(Collisions *collisions, const Ogre::String &inst, const Ogre::String &box);
+    int FindTruckInsideBox(Collisions* collisions, const Ogre::String& inst, const Ogre::String& box);
 
-    void DeleteTruck(Beam *b);
+    void DeleteTruck(Beam* b);
 };
-
-#endif // __BeamFactory_H_

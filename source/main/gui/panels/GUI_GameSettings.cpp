@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2016 Petr Ohlidal & contributors
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -19,11 +19,9 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
-    @file
-    @author Moncef Ben Slimane
-    @date   11/2014
-*/
+/// @file
+/// @author Moncef Ben Slimane
+/// @date   11/2014
 
 #include "GUI_GameSettings.h"
 
@@ -47,15 +45,15 @@
 #include <MyGUI.h>
 
 #ifdef USE_OPENAL
-  #ifdef __APPLE__
+#ifdef __APPLE__
     #include <OpenAL/al.h>
     #include <OpenAL/alc.h>
     #include <OpenAL/MacOSX_OALExtensions.h>
-  #else
-    #include <AL/al.h>
-    #include <AL/alc.h>
-    #include <AL/alext.h>
-  #endif // __APPLE__
+#else
+#include <AL/al.h>
+#include <AL/alc.h>
+#include <AL/alext.h>
+#endif // __APPLE__
 #endif // USE_OPENAL
 
 using namespace RoR;
@@ -65,14 +63,14 @@ using namespace GUI;
 #define MAIN_WIDGET  ((MyGUI::Window*)mMainWidget)
 
 #ifdef _WIN32
-    #define strncasecmp _strnicmp
+#define strncasecmp _strnicmp
 #endif
 
-static const char* OGRECFG_RENDERSYS  = "Render System";
+static const char* OGRECFG_RENDERSYS = "Render System";
 static const char* OGRECFG_FULLSCREEN = "Full Screen";
-static const char* OGRECFG_VSYNC      = "VSync";
+static const char* OGRECFG_VSYNC = "VSync";
 static const char* OGRECFG_VIDEO_MODE = "Video Mode";
-static const char* OGRECFG_FSAA       = "FSAA";
+static const char* OGRECFG_FSAA = "FSAA";
 
 #define INIT_CHECKBOX(_VAR_)        _VAR_->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::OnCheckboxPlain);
 #define INIT_CHECKBOX_NOTICE(_VAR_) _VAR_->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::OnCheckboxRestartNotice);
@@ -83,7 +81,6 @@ CLASS::CLASS():
     isFrameActivated(false),
     ShowRestartNotice(false)
 {
-
     MyGUI::WindowPtr win = dynamic_cast<MyGUI::WindowPtr>(mMainWidget);
     win->eventWindowButtonPressed += MyGUI::newDelegate(this, &CLASS::notifyWindowButtonPressed); //The "X" button thing
     m_key_mapping_window->eventWindowButtonPressed += MyGUI::newDelegate(this, &CLASS::notifyWindowButtonPressed); //The "X" button thing
@@ -97,31 +94,31 @@ CLASS::CLASS():
     INIT_CHECKBOX_NOTICE(m_disable_multithreading)
     INIT_CHECKBOX_NOTICE(m_fullscreen)
 
-    INIT_CHECKBOX(m_arc_mode               )
-    INIT_CHECKBOX(m_d_cam_pitch            )
-    INIT_CHECKBOX(m_d_creak_sound          )
-    INIT_CHECKBOX(m_vsync                  )
-    INIT_CHECKBOX(m_sh_pf_opti             )
-    INIT_CHECKBOX(m_e_waves                )
-    INIT_CHECKBOX(m_psystem                )
-    INIT_CHECKBOX(m_heathaze               )
-    INIT_CHECKBOX(m_mirrors                )
-    INIT_CHECKBOX(m_mblur                  )
-    INIT_CHECKBOX(m_hq_ref                 )
-    INIT_CHECKBOX(m_hdr                    )
-    INIT_CHECKBOX(m_dof                    )
-    INIT_CHECKBOX(m_skidmarks              )
-    INIT_CHECKBOX(m_glow                   )
-    INIT_CHECKBOX(m_sunburn                )
+    INIT_CHECKBOX(m_arc_mode )
+    INIT_CHECKBOX(m_d_cam_pitch )
+    INIT_CHECKBOX(m_d_creak_sound )
+    INIT_CHECKBOX(m_vsync )
+    INIT_CHECKBOX(m_sh_pf_opti )
+    INIT_CHECKBOX(m_e_waves )
+    INIT_CHECKBOX(m_psystem )
+    INIT_CHECKBOX(m_heathaze )
+    INIT_CHECKBOX(m_mirrors )
+    INIT_CHECKBOX(m_mblur )
+    INIT_CHECKBOX(m_hq_ref )
+    INIT_CHECKBOX(m_hdr )
+    INIT_CHECKBOX(m_dof )
+    INIT_CHECKBOX(m_skidmarks )
+    INIT_CHECKBOX(m_glow )
+    INIT_CHECKBOX(m_sunburn )
     INIT_CHECKBOX(m_disable_inter_collsion )
     INIT_CHECKBOX(m_disable_intra_collision)
-    INIT_CHECKBOX(m_digital_speedo         )
-    INIT_CHECKBOX(m_enable_replay          )
-    INIT_CHECKBOX(m_hq_screenshots         )
-    INIT_CHECKBOX(m_autohide_chatbox       )
-    INIT_CHECKBOX(m_flexbodies_lods        )
-    INIT_CHECKBOX(m_flexbody_cache_system  )
-    INIT_CHECKBOX(m_main_menu_music        )
+    INIT_CHECKBOX(m_digital_speedo )
+    INIT_CHECKBOX(m_enable_replay )
+    INIT_CHECKBOX(m_hq_screenshots )
+    INIT_CHECKBOX(m_autohide_chatbox )
+    INIT_CHECKBOX(m_flexbodies_lods )
+    INIT_CHECKBOX(m_flexbody_cache_system )
+    INIT_CHECKBOX(m_main_menu_music )
 
     // Key mapping
     m_tabCtrl->eventTabChangeSelect += MyGUI::newDelegate(this, &CLASS::OnTabChange);
@@ -135,7 +132,7 @@ CLASS::CLASS():
     m_sightrange->eventScrollChangePosition += MyGUI::newDelegate(this, &CLASS::OnSightRangeSlider);
 
     MyGUI::IntSize gui_area = MyGUI::RenderManager::getInstance().getViewSize();
-    mMainWidget->setPosition(gui_area.width/2 - mMainWidget->getWidth()/2, gui_area.height/2 - mMainWidget->getHeight()/2);
+    mMainWidget->setPosition(gui_area.width / 2 - mMainWidget->getWidth() / 2, gui_area.height / 2 - mMainWidget->getHeight() / 2);
     m_key_mapping_window->setPosition(gui_area.width / 2 - m_key_mapping_window->getWidth() / 2, gui_area.height / 2 - m_key_mapping_window->getHeight() / 2);
 
     MAIN_WIDGET->setVisible(false);
@@ -143,7 +140,6 @@ CLASS::CLASS():
 
 CLASS::~CLASS()
 {
-
 }
 
 void CLASS::Show()
@@ -205,18 +201,18 @@ void CLASS::CheckAndInit()
     // Delete input mapping tab (tabs cannot be hidden: http://www.ogre3d.org/addonforums/viewtopic.php?f=17&t=13475)
     m_tabCtrl->removeItem(m_inputmap_tab);
 
-    m_lang        ->setVisible(false);
-    m_lang_label  ->setVisible(false);
+    m_lang->setVisible(false);
+    m_lang_label->setVisible(false);
 
-    m_mirrors           ->setVisible(false); // Checkbox
-    m_autohide_chatbox  ->setVisible(false); // Checkbox
+    m_mirrors->setVisible(false); // Checkbox
+    m_autohide_chatbox->setVisible(false); // Checkbox
 
     // #### Init game UI entries ####
 
-    m_gearbox_mode->addItem(CONF_GEARBOX_AUTO      ); // Automatic shift
-    m_gearbox_mode->addItem(CONF_GEARBOX_SEMIAUTO  ); // Manual shift - Auto clutch
-    m_gearbox_mode->addItem(CONF_GEARBOX_MANUAL    ); // Fully Manual: sequential shift
-    m_gearbox_mode->addItem(CONF_GEARBOX_MAN_STICK ); // Fully Manual: stick shift
+    m_gearbox_mode->addItem(CONF_GEARBOX_AUTO); // Automatic shift
+    m_gearbox_mode->addItem(CONF_GEARBOX_SEMIAUTO); // Manual shift - Auto clutch
+    m_gearbox_mode->addItem(CONF_GEARBOX_MANUAL); // Fully Manual: sequential shift
+    m_gearbox_mode->addItem(CONF_GEARBOX_MAN_STICK); // Fully Manual: stick shift
     m_gearbox_mode->addItem(CONF_GEARBOX_MAN_RANGES); // Fully Manual: stick shift with ranges
 
     m_water_type->addItem("Hydrax");
@@ -225,14 +221,14 @@ void CLASS::CheckAndInit()
     if (!BSETTING("DevMode", false))
     {
         m_heathaze->setEnabled(false);
-        m_glow    ->setEnabled(false);
-        m_sunburn ->setEnabled(false);
+        m_glow->setEnabled(false);
+        m_sunburn->setEnabled(false);
     }
 
     // Sliders
-    m_volume_slider      ->setScrollRange(101);
-    m_fps_limiter_slider ->setScrollRange(200);
-    m_sightrange         ->setScrollRange(5000);
+    m_volume_slider->setScrollRange(101);
+    m_fps_limiter_slider->setScrollRange(200);
+    m_sightrange->setScrollRange(5000);
 
     // Things that aren't ready to be used yet.
     if (BSETTING("DevMode", false))
@@ -246,7 +242,7 @@ void CLASS::CheckAndInit()
 
     // Audio Devices
     int audio_selection = 0;
-    char *devices = (char *)alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
+    char* devices = (char *)alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
     while (devices && *devices != 0)
     {
         m_audio_dev->addItem(Ogre::String(devices));
@@ -261,8 +257,8 @@ void CLASS::CheckAndInit()
     // #### Init OGRE UI entries ####
 
     Ogre::RenderSystem* rs_active = Ogre::Root::getSingleton().getRenderSystem();
-    const std::string   rs_name   = rs_active->getName();
-    const auto          rs_list   = Ogre::Root::getSingleton().getAvailableRenderers();
+    const std::string rs_name = rs_active->getName();
+    const auto rs_list = Ogre::Root::getSingleton().getAvailableRenderers();
 
     int rs_index = 0;
     for (auto itor = rs_list.begin(); itor != rs_list.end(); ++itor)
@@ -277,14 +273,14 @@ void CLASS::CheckAndInit()
     }
 
     auto render_itor = rs_active->getConfigOptions().begin();
-    auto render_end  = rs_active->getConfigOptions().end();
+    auto render_end = rs_active->getConfigOptions().end();
     for (; render_itor != render_end; ++render_itor)
     {
         if (render_itor->first == OGRECFG_VIDEO_MODE)
         {
             // Fill 'Video mode' listbox & select active entry
             auto vid_modes = render_itor->second;
-            int  sel_index = 0;
+            int sel_index = 0;
             for (auto itor = vid_modes.possibleValues.begin(); itor != vid_modes.possibleValues.end(); ++itor)
             {
                 m_resolution->addItem(*itor);
@@ -299,7 +295,7 @@ void CLASS::CheckAndInit()
         {
             // Fill 'FSAA' listbox & select active entry
             auto fsaa_modes = render_itor->second;
-            int  sel_index  = 0;
+            int sel_index = 0;
             for (auto itor = fsaa_modes.possibleValues.begin(); itor != fsaa_modes.possibleValues.end(); ++itor)
             {
                 m_fsaa->addItem(*itor);
@@ -317,14 +313,14 @@ void CLASS::CheckAndInit()
     m_is_initialized = true;
 }
 
-static const char* CONF_SHADOWS_FAST      = "Shadow optimizations";
-static const char* CONF_GFX_DOF           = "DOF";
-static const char* CONF_GFX_MBLUR         = "Motion blur";
-static const char* CONF_DIGI_SPEEDO       = "DigitalSpeedo";
-static const char* CONF_NO_COLLISION      = "DisableCollisions";
+static const char* CONF_SHADOWS_FAST = "Shadow optimizations";
+static const char* CONF_GFX_DOF = "DOF";
+static const char* CONF_GFX_MBLUR = "Motion blur";
+static const char* CONF_DIGI_SPEEDO = "DigitalSpeedo";
+static const char* CONF_NO_COLLISION = "DisableCollisions";
 static const char* CONF_NO_SELF_COLLISION = "DisableSelfCollisions";
-static const char* CONF_FLEXBODY_LOD      = "Flexbody_EnableLODs";
-static const char* CONF_FLEXBODY_CACHE    = "Flexbody_UseCache";
+static const char* CONF_FLEXBODY_LOD = "Flexbody_EnableLODs";
+static const char* CONF_FLEXBODY_CACHE = "Flexbody_UseCache";
 
 void CLASS::UpdateControls()
 {
@@ -333,11 +329,16 @@ void CLASS::UpdateControls()
     // Gearbox listbox
     switch (App::GetSimGearboxMode())
     {
-    case App::SIM_GEARBOX_AUTO         : m_gearbox_mode->setIndexSelected(0); break;
-    case App::SIM_GEARBOX_SEMI_AUTO    : m_gearbox_mode->setIndexSelected(1); break;
-    case App::SIM_GEARBOX_MANUAL       : m_gearbox_mode->setIndexSelected(2); break;
-    case App::SIM_GEARBOX_MANUAL_STICK : m_gearbox_mode->setIndexSelected(3); break;
-    case App::SIM_GEARBOX_MANUAL_RANGES: m_gearbox_mode->setIndexSelected(4); break;
+    case App::SIM_GEARBOX_AUTO: m_gearbox_mode->setIndexSelected(0);
+        break;
+    case App::SIM_GEARBOX_SEMI_AUTO: m_gearbox_mode->setIndexSelected(1);
+        break;
+    case App::SIM_GEARBOX_MANUAL: m_gearbox_mode->setIndexSelected(2);
+        break;
+    case App::SIM_GEARBOX_MANUAL_STICK: m_gearbox_mode->setIndexSelected(3);
+        break;
+    case App::SIM_GEARBOX_MANUAL_RANGES: m_gearbox_mode->setIndexSelected(4);
+        break;
     }
 
     // Arcade controls checkbox
@@ -356,55 +357,79 @@ void CLASS::UpdateControls()
     // ogre.cfg
     std::string rs_name = Ogre::Root::getSingleton().getRenderSystem()->getName();
     m_fullscreen->setStateCheck(m_ogre_cfg.GetBool(OGRECFG_FULLSCREEN, rs_name, false));
-    m_vsync     ->setStateCheck(m_ogre_cfg.GetBool(OGRECFG_VSYNC     , rs_name, false));
+    m_vsync->setStateCheck(m_ogre_cfg.GetBool(OGRECFG_VSYNC, rs_name, false));
 
     // Texture Filtering
     switch (App::GetGfxTexFiltering())
     {
-    case App::GFX_TEXFILTER_NONE       : m_tex_filter->setIndexSelected(0); break;
-    case App::GFX_TEXFILTER_BILINEAR   : m_tex_filter->setIndexSelected(1); break;
-    case App::GFX_TEXFILTER_TRILINEAR  : m_tex_filter->setIndexSelected(2); break;
-    case App::GFX_TEXFILTER_ANISOTROPIC: m_tex_filter->setIndexSelected(3); break;
+    case App::GFX_TEXFILTER_NONE: m_tex_filter->setIndexSelected(0);
+        break;
+    case App::GFX_TEXFILTER_BILINEAR: m_tex_filter->setIndexSelected(1);
+        break;
+    case App::GFX_TEXFILTER_TRILINEAR: m_tex_filter->setIndexSelected(2);
+        break;
+    case App::GFX_TEXFILTER_ANISOTROPIC: m_tex_filter->setIndexSelected(3);
+        break;
     }
 
     switch (App::GetGfxSkyMode())
     {
-    case App::GFX_SKY_SANDSTORM: m_sky_type->setIndexSelected(0); break; // Sandstorm
-    case App::GFX_SKY_CAELUM   : m_sky_type->setIndexSelected(1); break; // Caelum
-    case App::GFX_SKY_SKYX     : m_sky_type->setIndexSelected(BSETTING("DevMode", false) ? 2 : 0); break; // SkyX, experimental
+    case App::GFX_SKY_SANDSTORM: m_sky_type->setIndexSelected(0);
+        break; // Sandstorm
+    case App::GFX_SKY_CAELUM: m_sky_type->setIndexSelected(1);
+        break; // Caelum
+    case App::GFX_SKY_SKYX: m_sky_type->setIndexSelected(BSETTING("DevMode", false) ? 2 : 0);
+        break; // SkyX, experimental
     }
 
     switch (App::GetGfxShadowType())
     {
-    case App::GFX_SHADOW_TYPE_NONE   : m_shadow_type->setIndexSelected(0); break;
-    case App::GFX_SHADOW_TYPE_TEXTURE: m_shadow_type->setIndexSelected(1); break;
-    case App::GFX_SHADOW_TYPE_PSSM   : m_shadow_type->setIndexSelected(2); break;
+    case App::GFX_SHADOW_TYPE_NONE: m_shadow_type->setIndexSelected(0);
+        break;
+    case App::GFX_SHADOW_TYPE_TEXTURE: m_shadow_type->setIndexSelected(1);
+        break;
+    case App::GFX_SHADOW_TYPE_PSSM: m_shadow_type->setIndexSelected(2);
+        break;
     }
 
     switch (App::GetGfxWaterMode())
     {
-    case App::GFX_WATER_BASIC    : m_water_type->setIndexSelected(0); break;
-    case App::GFX_WATER_REFLECT  : m_water_type->setIndexSelected(1); break;
-    case App::GFX_WATER_FULL_FAST: m_water_type->setIndexSelected(2); break;
-    case App::GFX_WATER_FULL_HQ  : m_water_type->setIndexSelected(3); break;
-    case App::GFX_WATER_HYDRAX   : m_water_type->setIndexSelected(4); break;
+    case App::GFX_WATER_BASIC: m_water_type->setIndexSelected(0);
+        break;
+    case App::GFX_WATER_REFLECT: m_water_type->setIndexSelected(1);
+        break;
+    case App::GFX_WATER_FULL_FAST: m_water_type->setIndexSelected(2);
+        break;
+    case App::GFX_WATER_FULL_HQ: m_water_type->setIndexSelected(3);
+        break;
+    case App::GFX_WATER_HYDRAX: m_water_type->setIndexSelected(4);
+        break;
     }
 
     switch (App::GetGfxVegetationMode())
     {
-    case App::GFX_VEGETATION_NONE  : m_vegetation->setIndexSelected(0); break;
-    case App::GFX_VEGETATION_20PERC: m_vegetation->setIndexSelected(1); break;
-    case App::GFX_VEGETATION_50PERC: m_vegetation->setIndexSelected(2); break;
-    case App::GFX_VEGETATION_FULL  : m_vegetation->setIndexSelected(3); break;
+    case App::GFX_VEGETATION_NONE: m_vegetation->setIndexSelected(0);
+        break;
+    case App::GFX_VEGETATION_20PERC: m_vegetation->setIndexSelected(1);
+        break;
+    case App::GFX_VEGETATION_50PERC: m_vegetation->setIndexSelected(2);
+        break;
+    case App::GFX_VEGETATION_FULL: m_vegetation->setIndexSelected(3);
+        break;
     }
 
     switch (App::GetGfxFlaresMode())
     {
-    case App::GFX_FLARES_NONE                   : m_light_source_effects->setIndexSelected(0); break;
-    case App::GFX_FLARES_NO_LIGHTSOURCES        : m_light_source_effects->setIndexSelected(1); break;
-    case App::GFX_FLARES_CURR_VEHICLE_HEAD_ONLY : m_light_source_effects->setIndexSelected(2); break;
-    case App::GFX_FLARES_ALL_VEHICLES_HEAD_ONLY : m_light_source_effects->setIndexSelected(3); break;
-    case App::GFX_FLARES_ALL_VEHICLES_ALL_LIGHTS: m_light_source_effects->setIndexSelected(4); break;
+    case App::GFX_FLARES_NONE: m_light_source_effects->setIndexSelected(0);
+        break;
+    case App::GFX_FLARES_NO_LIGHTSOURCES: m_light_source_effects->setIndexSelected(1);
+        break;
+    case App::GFX_FLARES_CURR_VEHICLE_HEAD_ONLY: m_light_source_effects->setIndexSelected(2);
+        break;
+    case App::GFX_FLARES_ALL_VEHICLES_HEAD_ONLY: m_light_source_effects->setIndexSelected(3);
+        break;
+    case App::GFX_FLARES_ALL_VEHICLES_ALL_LIGHTS: m_light_source_effects->setIndexSelected(4);
+        break;
     }
 
     // Speed units
@@ -414,31 +439,31 @@ void CLASS::UpdateControls()
         m_speed_unit->setIndexSelected(0);
 
     // Other
-    m_psystem                  ->setStateCheck( App::GetGfxParticlesMode() == 1);
-    m_heathaze                 ->setStateCheck( App::GetGfxUseHeathaze());
-    m_sunburn                  ->setStateCheck( App::GetGfxEnableSunburn());
-    m_hdr                      ->setStateCheck( App::GetGfxEnableHdr());
-    m_skidmarks                ->setStateCheck( App::GetGfxSkidmarksMode() == 1);
-    m_hq_ref                   ->setStateCheck( App::GetGfxEnvmapEnabled());
-    m_glow                     ->setStateCheck( App::GetGfxEnableGlow());
-    m_e_waves                  ->setStateCheck( App::GetGfxWaterUseWaves());
-    m_disable_multithreading   ->setStateCheck(!App::GetAppMultithread());
-    m_enable_replay            ->setStateCheck( App::GetSimReplayEnabled());
-    m_hq_screenshots           ->setStateCheck( App::GetAppScreenshotFormat() == "png");
-    m_main_menu_music          ->setStateCheck( App::GetAudioMenuMusic());
+    m_psystem->setStateCheck(App::GetGfxParticlesMode() == 1);
+    m_heathaze->setStateCheck(App::GetGfxUseHeathaze());
+    m_sunburn->setStateCheck(App::GetGfxEnableSunburn());
+    m_hdr->setStateCheck(App::GetGfxEnableHdr());
+    m_skidmarks->setStateCheck(App::GetGfxSkidmarksMode() == 1);
+    m_hq_ref->setStateCheck(App::GetGfxEnvmapEnabled());
+    m_glow->setStateCheck(App::GetGfxEnableGlow());
+    m_e_waves->setStateCheck(App::GetGfxWaterUseWaves());
+    m_disable_multithreading->setStateCheck(!App::GetAppMultithread());
+    m_enable_replay->setStateCheck(App::GetSimReplayEnabled());
+    m_hq_screenshots->setStateCheck(App::GetAppScreenshotFormat() == "png");
+    m_main_menu_music->setStateCheck(App::GetAudioMenuMusic());
 
-    m_sh_pf_opti               ->setStateCheck(BSETTING("Shadow optimizations", true ));
-    m_dof                      ->setStateCheck(BSETTING("DOF",                  false));
-    m_mblur                    ->setStateCheck(BSETTING("Motion blur",          false));
-    m_digital_speedo           ->setStateCheck(BSETTING("DigitalSpeedo",        false));
-    m_disable_inter_collsion   ->setStateCheck(BSETTING("DisableCollisions",    false));
-    m_disable_intra_collision  ->setStateCheck(BSETTING("DisableSelfCollisions",false));
-    m_flexbodies_lods          ->setStateCheck(BSETTING("Flexbody_EnableLODs",  true ));
-    m_flexbody_cache_system    ->setStateCheck(BSETTING("Flexbody_UseCache",    false));
+    m_sh_pf_opti->setStateCheck(BSETTING("Shadow optimizations", true ));
+    m_dof->setStateCheck(BSETTING("DOF", false));
+    m_mblur->setStateCheck(BSETTING("Motion blur", false));
+    m_digital_speedo->setStateCheck(BSETTING("DigitalSpeedo", false));
+    m_disable_inter_collsion->setStateCheck(BSETTING("DisableCollisions", false));
+    m_disable_intra_collision->setStateCheck(BSETTING("DisableSelfCollisions",false));
+    m_flexbodies_lods->setStateCheck(BSETTING("Flexbody_EnableLODs", true ));
+    m_flexbody_cache_system->setStateCheck(BSETTING("Flexbody_UseCache", false));
 
     // Volume slider
     float sound_volume = App::GetAudioMasterVolume();
-    m_volume_slider->setScrollPosition(sound_volume -1);
+    m_volume_slider->setScrollPosition(sound_volume - 1);
     if (m_volume_slider->getScrollPosition() >= 100)
         m_volume_indicator->setCaption("100%");
     else
@@ -453,7 +478,7 @@ void CLASS::UpdateControls()
 
     // SightRange slider
     int sight_range = static_cast<int>(App::GetGfxSightRange());
-    m_sightrange->setScrollPosition(sight_range -1);
+    m_sightrange->setScrollPosition(sight_range - 1);
     if (sight_range >= TerrainManager::UNLIMITED_SIGHTRANGE)
         m_sightrange_indicator->setCaption("Unlimited");
     else
@@ -463,7 +488,6 @@ void CLASS::UpdateControls()
         m_skidmarks_quality->setIndexSelected(1);
     else
         m_skidmarks_quality->setIndexSelected(0);
-
 }
 
 // ====================================
@@ -519,64 +543,67 @@ void CLASS::OnSightRangeSlider(MyGUI::ScrollBar* _sender, size_t _position)
 void CLASS::SaveSettings()
 {
     // Setting which need restart
-    if (m_audio_dev->getCaption()                != App::GetAudioDeviceName()          ) { ShowRestartNotice = true; }
-    if (m_ogre_cfg.GetString(OGRECFG_RENDERSYS ) != m_render_sys->getCaption().asUTF8()) { ShowRestartNotice = true; }
+    if (m_audio_dev->getCaption() != App::GetAudioDeviceName()) { ShowRestartNotice = true; }
+    if (m_ogre_cfg.GetString(OGRECFG_RENDERSYS) != m_render_sys->getCaption().asUTF8()) { ShowRestartNotice = true; }
     if (m_ogre_cfg.GetString(OGRECFG_VIDEO_MODE) != m_resolution->getCaption().asUTF8()) { ShowRestartNotice = true; }
-    if (m_ogre_cfg.GetString(OGRECFG_FSAA      ) != m_fsaa      ->getCaption().asUTF8()) { ShowRestartNotice = true; }
+    if (m_ogre_cfg.GetString(OGRECFG_FSAA) != m_fsaa->getCaption().asUTF8()) { ShowRestartNotice = true; }
 
     // Combo boxes
-    App__SetSimGearboxMode   (_(m_gearbox_mode         ->getCaption()));
-    App::SetGfxFovExternal   (F(m_fovexternal          ->getCaption()));
-    App::SetGfxFovInternal   (F(m_fovinternal          ->getCaption()));
-    App__SetTexFiltering     (_(m_tex_filter           ->getCaption()));
-    App__SetGfxSkyMode       (_(m_sky_type             ->getCaption()));
-    App__SetShadowTech       (_(m_shadow_type          ->getCaption()));
-    App__SetGfxWaterMode     (_(m_water_type           ->getCaption()));
-    App__SetVegetationMode   (_(m_vegetation           ->getCaption()));
-    App__SetGfxFlaresMode    (_(m_light_source_effects ->getCaption()));
-    App::SetAudioDeviceName  (_(m_audio_dev            ->getCaption()));
+    App__SetSimGearboxMode(_(m_gearbox_mode ->getCaption()));
+    App::SetGfxFovExternal(F(m_fovexternal ->getCaption()));
+    App::SetGfxFovInternal(F(m_fovinternal ->getCaption()));
+    App__SetTexFiltering(_(m_tex_filter ->getCaption()));
+    App__SetGfxSkyMode(_(m_sky_type ->getCaption()));
+    App__SetShadowTech(_(m_shadow_type ->getCaption()));
+    App__SetGfxWaterMode(_(m_water_type ->getCaption()));
+    App__SetVegetationMode(_(m_vegetation ->getCaption()));
+    App__SetGfxFlaresMode(_(m_light_source_effects ->getCaption()));
+    App::SetAudioDeviceName(_(m_audio_dev ->getCaption()));
 
     App::GetSettings().setSetting("SpeedUnit", m_speed_unit->getCaption());
+    App::SetAudioMasterVolume(m_volume_slider->getScrollPosition());
 
     // Checkboxes
-    App::SetGfxParticlesMode((int)m_psystem                ->getStateCheck());
-    App::SetGfxUseHeathaze       (m_heathaze               ->getStateCheck());
-    App::SetGfxEnableSunburn     (m_sunburn                ->getStateCheck());
-    App::SetGfxEnableHdr         (m_hdr                    ->getStateCheck());
-    App::SetGfxSkidmarksMode((int)m_skidmarks              ->getStateCheck());
-    App::SetGfxEnvmapEnabled     (m_hq_ref                 ->getStateCheck());
-    App::SetGfxEnableGlow        (m_glow                   ->getStateCheck());
-    App::SetGfxWaterUseWaves     (m_e_waves                ->getStateCheck());
-    App::SetAppMultithread       (m_disable_multithreading ->getStateCheck());
-    App::SetSimReplayEnabled     (m_enable_replay          ->getStateCheck());
-    App::SetAppScreenshotFormat  (m_hq_screenshots         ->getStateCheck() ? "png" : "jpg");
-    App::SetAudioMenuMusic       (m_main_menu_music        ->getStateCheck());
-    App::SetIoArcadeControls     (m_arc_mode               ->getStateCheck());
-    App::SetGfxExternCamMode     (m_d_cam_pitch            ->getStateCheck() ? App::GFX_EXTCAM_MODE_PITCHING : App::GFX_EXTCAM_MODE_STATIC);
-    App::SetAudioEnableCreak     (m_d_creak_sound          ->getStateCheck());
+    App::SetGfxParticlesMode((int)m_psystem->getStateCheck());
+    App::SetGfxUseHeathaze(m_heathaze->getStateCheck());
+    App::SetGfxEnableSunburn(m_sunburn->getStateCheck());
+    App::SetGfxEnableHdr(m_hdr->getStateCheck());
+    App::SetGfxSkidmarksMode((int)m_skidmarks->getStateCheck());
+    App::SetGfxEnvmapEnabled(m_hq_ref->getStateCheck());
+    App::SetGfxEnableGlow(m_glow->getStateCheck());
+    App::SetGfxWaterUseWaves(m_e_waves->getStateCheck());
+    App::SetAppMultithread(m_disable_multithreading->getStateCheck());
+    App::SetSimReplayEnabled(m_enable_replay->getStateCheck());
+    App::SetAppScreenshotFormat(m_hq_screenshots->getStateCheck() ? "png" : "jpg");
+    App::SetAudioMenuMusic(m_main_menu_music->getStateCheck());
+    App::SetIoArcadeControls(m_arc_mode->getStateCheck());
+    App::SetGfxExternCamMode(m_d_cam_pitch->getStateCheck() ? App::GFX_EXTCAM_MODE_PITCHING : App::GFX_EXTCAM_MODE_STATIC);
+    App::SetAudioEnableCreak(m_d_creak_sound->getStateCheck());
 
-    CONF_SET_BOOL(CONF_SHADOWS_FAST     , m_sh_pf_opti              ->getStateCheck());
-    CONF_SET_BOOL(CONF_GFX_DOF          , m_dof                     ->getStateCheck());
-    CONF_SET_BOOL(CONF_GFX_MBLUR        , m_mblur                   ->getStateCheck());
-    CONF_SET_BOOL(CONF_DIGI_SPEEDO      , m_digital_speedo          ->getStateCheck());
-    CONF_SET_BOOL(CONF_NO_COLLISION     , m_disable_inter_collsion  ->getStateCheck());
+    CONF_SET_BOOL(CONF_SHADOWS_FAST , m_sh_pf_opti ->getStateCheck());
+    CONF_SET_BOOL(CONF_GFX_DOF , m_dof ->getStateCheck());
+    CONF_SET_BOOL(CONF_GFX_MBLUR , m_mblur ->getStateCheck());
+    CONF_SET_BOOL(CONF_DIGI_SPEEDO , m_digital_speedo ->getStateCheck());
+    CONF_SET_BOOL(CONF_NO_COLLISION , m_disable_inter_collsion ->getStateCheck());
     CONF_SET_BOOL(CONF_NO_SELF_COLLISION, m_disable_intra_collision ->getStateCheck());
-    CONF_SET_BOOL(CONF_FLEXBODY_LOD     , m_flexbodies_lods         ->getStateCheck());
-    CONF_SET_BOOL(CONF_FLEXBODY_CACHE   , m_flexbody_cache_system   ->getStateCheck());
+    CONF_SET_BOOL(CONF_FLEXBODY_LOD , m_flexbodies_lods ->getStateCheck());
+    CONF_SET_BOOL(CONF_FLEXBODY_CACHE , m_flexbody_cache_system ->getStateCheck());
 
     // Ogre.cfg values
-    m_ogre_cfg.SetString(OGRECFG_RENDERSYS , m_render_sys->getCaption());
+    m_ogre_cfg.SetString(OGRECFG_RENDERSYS, m_render_sys->getCaption());
     m_ogre_cfg.SetString(OGRECFG_VIDEO_MODE, m_resolution->getCaption());
-    m_ogre_cfg.SetString(OGRECFG_FSAA      , m_fsaa      ->getCaption());
-    m_ogre_cfg.SetString(OGRECFG_VSYNC     , m_vsync->getStateCheck() ? "Yes" : "No");
+    m_ogre_cfg.SetString(OGRECFG_FSAA, m_fsaa->getCaption());
+    m_ogre_cfg.SetString(OGRECFG_VSYNC, m_vsync->getStateCheck() ? "Yes" : "No");
 
     // Adjustments
     if (App::GetGfxWaterMode() == App::GFX_WATER_HYDRAX) { App::SetGfxSightRange(5000.f); }
 
+    /* @only-a-ptr Wut?
     if (m_skidmarks_quality->getCaption() == "Normal")
         App::GetSettings().setSetting("SpeedUnit", "0");
     else
         App::GetSettings().setSetting("SpeedUnit", "5");
+    */
 
     if (m_is_keymap_loaded)
     {
@@ -641,8 +668,7 @@ void CLASS::SaveSettings()
             ShowRestartNotice = false;
         }
     }*/
-
-} 
+}
 
 #undef _
 #undef S
@@ -658,11 +684,12 @@ void CLASS::eventMouseButtonClickRegenCache(MyGUI::WidgetPtr _sender)
 void CLASS::OnTabChange(MyGUI::TabControl* _sender, size_t _index)
 {
     MyGUI::TabItemPtr tab = _sender->getItemAt(_index);
-    if (!tab) return;
+    if (!tab)
+        return;
 
     //## Disabled until keymapping is fixed
     //if (_index == 6)
-    //    LoadKeyMap();
+    //	LoadKeyMap();
 }
 
 void CLASS::LoadKeyMap()
@@ -676,13 +703,13 @@ void CLASS::LoadKeyMap()
 
     int counter = 0;
     char curGroup[128] = "";
-    std::map<int, std::vector<event_trigger_t> >::iterator mapIt;
+    std::map<int, std::vector<event_trigger_t>>::iterator mapIt;
     std::vector<event_trigger_t>::iterator vecIt;
     for (mapIt = KeyMap.begin(); mapIt != KeyMap.end(); mapIt++)
     {
         std::vector<event_trigger_t> vec = mapIt->second;
 
-        for (vecIt = vec.begin(); vecIt != vec.end(); vecIt++, counter++)
+        for (vecIt = vec.begin(); vecIt != vec.end(); vecIt++ , counter++)
         {
             if (strcmp(vecIt->group, curGroup))
             {
@@ -698,7 +725,7 @@ void CLASS::LoadKeyMap()
             if (strncasecmp(App::GetInputEngine()->eventIDToName(mapIt->first).c_str(), prefix.c_str(), prefix.length()))
             {
                 m_keymapping->addItem(App::GetInputEngine()->eventIDToName(mapIt->first).c_str());
-                m_keymapping->setSubItemNameAt(1, m_keymapping->getItemCount() -1, vecIt->configline);
+                m_keymapping->setSubItemNameAt(1, m_keymapping->getItemCount() - 1, vecIt->configline);
             }
 
             //m_key_name->
@@ -728,13 +755,13 @@ void CLASS::OnKeymapTypeChange(MyGUI::ComboBox* _sender, size_t _index)
     std::map<int, std::vector<event_trigger_t>>::iterator it;
 
     int counter = 0;
-    std::map<int, std::vector<event_trigger_t> >::iterator mapIt;
+    std::map<int, std::vector<event_trigger_t>>::iterator mapIt;
     std::vector<event_trigger_t>::iterator vecIt;
     for (mapIt = KeyMap.begin(); mapIt != KeyMap.end(); mapIt++)
     {
         std::vector<event_trigger_t> vec = mapIt->second;
 
-        for (vecIt = vec.begin(); vecIt != vec.end(); vecIt++, counter++)
+        for (vecIt = vec.begin(); vecIt != vec.end(); vecIt++ , counter++)
         {
             std::string prefix = _sender->getItemNameAt(_index);
             if (strncasecmp(App::GetInputEngine()->eventIDToName(mapIt->first).c_str(), prefix.c_str(), prefix.length()))
@@ -756,34 +783,34 @@ void CLASS::eventMouseButtonClickClearCache(MyGUI::WidgetPtr _sender)
     RoR::FileSystem::getSystemFileList(cache_files, cache_dir_wstr, L"*.*");
 
     // Remove files
-    std::for_each(cache_files.begin(), cache_files.end(), [cache_dir_wstr](RoR::FileSystem::FileInfo& file_info) {
-        MyGUI::UString path_to_delete = RoR::FileSystem::concatenatePath(cache_dir_wstr, file_info.name);
-        std::remove(path_to_delete.asUTF8_c_str());
-    });
+    std::for_each(cache_files.begin(), cache_files.end(), [cache_dir_wstr](RoR::FileSystem::FileInfo& file_info)
+        {
+            MyGUI::UString path_to_delete = RoR::FileSystem::concatenatePath(cache_dir_wstr, file_info.name);
+            std::remove(path_to_delete.asUTF8_c_str());
+        });
 
     ShowRestartNotice = true;
     RoR::App::GetGuiManager()->ShowMessageBox("Cache cleared", "Cache cleared succesfully, you need to restart the game for the changes to apply.", true, "Ok", true, false, "");
-
 }
 
 /* FIXME
 void CLASS::OnReMapPress(MyGUI::WidgetPtr _sender)
 {
-        Ogre::String str_text = "";
-        str_text += "Press any button/Move your joystick axis to map it to this event. \nYou can also close this window to cancel the mapping. \n\n";
-        str_text += "#66FF33 Event: #FFFFFF" + m_keymapping->getSubItemNameAt(0, m_keymapping->getItemIndexSelected()) + "\n";
-        str_text += "#66FF33 Current Key: #FFFFFF" + m_keymapping->getSubItemNameAt(1, m_keymapping->getItemIndexSelected());
-        m_key_mapping_window->setCaptionWithReplacing("Assign new key");
-        m_key_mapping_window_text->setCaptionWithReplacing(str_text);
-        m_key_mapping_window->setVisibleSmooth(true);
+		Ogre::String str_text = "";
+		str_text += "Press any button/Move your joystick axis to map it to this event. \nYou can also close this window to cancel the mapping. \n\n";
+		str_text += "#66FF33 Event: #FFFFFF" + m_keymapping->getSubItemNameAt(0, m_keymapping->getItemIndexSelected()) + "\n";
+		str_text += "#66FF33 Current Key: #FFFFFF" + m_keymapping->getSubItemNameAt(1, m_keymapping->getItemIndexSelected());
+		m_key_mapping_window->setCaptionWithReplacing("Assign new key");
+		m_key_mapping_window_text->setCaptionWithReplacing(str_text);
+		m_key_mapping_window->setVisibleSmooth(true);
 
-        MyGUI::Gui::getInstance().eventFrameStart += MyGUI::newDelegate(this, &CLASS::FrameEntered);
-        isFrameActivated = true;
+		MyGUI::Gui::getInstance().eventFrameStart += MyGUI::newDelegate(this, &CLASS::FrameEntered);
+		isFrameActivated = true;
 
-        m_key_mapping_window_info->setCaptionWithReplacing("");
-        mMainWidget->setEnabledSilent(true);
+		m_key_mapping_window_info->setCaptionWithReplacing("");
+		mMainWidget->setEnabledSilent(true);
 
-        str_text = "";
+		str_text = "";
 }
 */
 
@@ -814,7 +841,7 @@ void CLASS::FrameEntered(float dt)
         str_text += "#66FF33 Current Key: #FFFFFF" + m_keymapping->getSubItemNameAt(1, m_keymapping->getItemIndexSelected()) + "\n";
         str_text += "#66FF33 New Key: #FFFFFF" + LastKeyCombo;
         m_key_mapping_window_text->setCaptionWithReplacing(str_text);
-        
+
         str_text = "";
     }
 
@@ -836,8 +863,12 @@ void CLASS::FrameEntered(float dt)
             return;
         }
     }
-
 }
 
-void CLASS::SetVisible(bool v) { if (v) { this->Show(); } else { this->Hide(); } }
-bool CLASS::IsVisible()        { return MAIN_WIDGET->getVisible(); }
+void CLASS::SetVisible(bool v)
+{
+    if (v) { this->Show(); }
+    else { this->Hide(); }
+}
+
+bool CLASS::IsVisible() { return MAIN_WIDGET->getVisible(); }

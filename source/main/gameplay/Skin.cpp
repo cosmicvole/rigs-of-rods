@@ -1,21 +1,21 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "Skin.h"
@@ -27,7 +27,6 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 using namespace Ogre;
 
 int Skin::counter = 0;
-
 
 Skin::Skin(ResourceManager* creator, const String& name, ResourceHandle handle, const String& group, bool isManual, ManualResourceLoader* loader) :
     Ogre::Resource(creator, name, handle, group, isManual, loader)
@@ -81,7 +80,8 @@ int Skin::hasReplacementForTexture(Ogre::String texture)
 Ogre::String Skin::getReplacementForTexture(Ogre::String texture)
 {
     String res = replaceTextures[texture];
-    if (res.empty()) res = texture;
+    if (res.empty())
+        res = texture;
     return res;
 }
 
@@ -89,14 +89,16 @@ Ogre::String Skin::stripMaterialNameUniqueNess(Ogre::String matName)
 {
     // MORE MAGIC
     size_t pos = matName.find("_#UNIQUESKINMATERIAL#_");
-    if (pos == matName.npos) return matName;
+    if (pos == matName.npos)
+        return matName;
     return matName.substr(0, pos);
 }
 
 Ogre::String Skin::getReplacementForMaterial(Ogre::String material)
 {
     String res = replaceMaterials[stripMaterialNameUniqueNess(material)];
-    if (res.empty()) res = material;
+    if (res.empty())
+        res = material;
     return res;
 }
 
@@ -107,20 +109,23 @@ void Skin::replaceMaterialTextures(Ogre::String materialName)
     {
         for (int t = 0; t < mat->getNumTechniques(); t++)
         {
-            Technique *tech = mat->getTechnique(0);
-            if (!tech) continue;
-            for (int p=0; p < tech->getNumPasses(); p++)
+            Technique* tech = mat->getTechnique(0);
+            if (!tech)
+                continue;
+            for (int p = 0; p < tech->getNumPasses(); p++)
             {
-                Pass *pass = tech->getPass(p);
-                if (!pass) continue;
+                Pass* pass = tech->getPass(p);
+                if (!pass)
+                    continue;
                 for (int tu = 0; tu < pass->getNumTextureUnitStates(); tu++)
                 {
-                    TextureUnitState *tus = pass->getTextureUnitState(tu);
-                    if (!tus) continue;
+                    TextureUnitState* tus = pass->getTextureUnitState(tu);
+                    if (!tus)
+                        continue;
 
                     //if (tus->getTextureType() != TEX_TYPE_2D) continue; // only replace 2d images
                     // walk the frames, usually there is only one
-                    for (unsigned int fr=0; fr<tus->getNumFrames(); fr++)
+                    for (unsigned int fr = 0; fr < tus->getNumFrames(); fr++)
                     {
                         String textureName = tus->getFrameTextureName(fr);
                         std::map<Ogre::String, Ogre::String>::iterator it = replaceTextures.find(textureName);
@@ -136,24 +141,26 @@ void Skin::replaceMaterialTextures(Ogre::String materialName)
     }
 }
 
-void Skin::replaceMeshMaterials(Ogre::Entity *e)
+void Skin::replaceMeshMaterials(Ogre::Entity* e)
 {
-    if (!e) return;
+    if (!e)
+        return;
 
     // make it unique FIRST, otherwise we change the base material ...
     uniquifyMeshMaterials(e);
 
     // then walk the entity and look for replacements
-    for (int n=0; n<(int)e->getNumSubEntities();n++)
+    for (int n = 0; n < (int)e->getNumSubEntities(); n++)
     {
-        SubEntity *subent = e->getSubEntity(n);
+        SubEntity* subent = e->getSubEntity(n);
         String materialName = subent->getMaterialName();
         std::map<Ogre::String, Ogre::String>::iterator it = replaceMaterials.find(stripMaterialNameUniqueNess(materialName));
         if (it != replaceMaterials.end())
         {
             materialName = it->second;
             subent->setMaterialName(materialName);
-        } else
+        }
+        else
         {
             // look for texture replacements
             replaceMaterialTextures(subent->getMaterialName());
@@ -161,13 +168,14 @@ void Skin::replaceMeshMaterials(Ogre::Entity *e)
     }
 }
 
-void Skin::uniquifyMeshMaterials(Ogre::Entity *e)
+void Skin::uniquifyMeshMaterials(Ogre::Entity* e)
 {
-    if (!e) return;
+    if (!e)
+        return;
 
-    for (int n=0; n<(int)e->getNumSubEntities();n++)
+    for (int n = 0; n < (int)e->getNumSubEntities(); n++)
     {
-        SubEntity *subent = e->getSubEntity(n);
+        SubEntity* subent = e->getSubEntity(n);
         String oldMaterialName = subent->getMaterialName();
         // MAGGIICCCC
         String newMaterialName = oldMaterialName + "_#UNIQUESKINMATERIAL#_" + TOSTRING(counter++);

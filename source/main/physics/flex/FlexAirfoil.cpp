@@ -1,22 +1,23 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
+
 #include "FlexAirfoil.h"
 
 #include "AeroEngine.h"
@@ -71,7 +72,7 @@ using namespace Ogre;
 
 FlexAirfoil::FlexAirfoil(Ogre::String const & name, node_t *nds, int pnfld, int pnfrd, int pnflu, int pnfru, int pnbld, int pnbrd, int pnblu, int pnbru, char* texband, Vector2 texlf, Vector2 texrf, Vector2 texlb, Vector2 texrb, char mtype, float controlratio, float mind, float maxd, Ogre::String const & afname, float lift_coef, AeroEngine** tps, bool break_able)
 {
-//        innan=0;
+//		innan=0;
     liftcoef=lift_coef;
     breakable=break_able;
     broken=false;
@@ -229,7 +230,7 @@ FlexAirfoil::FlexAirfoil(Ogre::String const & name, node_t *nds, int pnfld, int 
             bandfaces[i*12+22]=v+3;
             bandfaces[i*12+23]=v+7;
         }
-/*            if (i==4)
+/*			if (i==4)
         {
             bandfaces[i*12+20]=v+4;
             bandfaces[i*12+21]=v+4;
@@ -255,8 +256,8 @@ FlexAirfoil::FlexAirfoil(Ogre::String const & name, node_t *nds, int pnfld, int 
         facefaces[i*12+11]=30+v+3;
         if (i==4)
         {
-//                facefaces[i*12+5]=20+v+4;
-//                facefaces[i*12+10]=20+v+5;
+//				facefaces[i*12+5]=20+v+4;
+//				facefaces[i*12+10]=20+v+5;
             facefaces[i*12]=30+0;
             facefaces[i*12+1]=30+v+2;
             facefaces[i*12+2]=30+v;
@@ -505,7 +506,7 @@ Vector3 FlexAirfoil::updateVertices()
         v2=covertices[bandfaces[i*3+2]].vertex-covertices[bandfaces[i*3]].vertex;
         v1=v1.crossProduct(v2);
         v1.normalise();
-//        v1/=3.0;
+//		v1/=3.0;
         covertices[bandfaces[i*3]].normal+=v1;
         covertices[bandfaces[i*3+1]].normal+=v1;
         covertices[bandfaces[i*3+2]].normal+=v1;
@@ -517,7 +518,7 @@ Vector3 FlexAirfoil::updateVertices()
         v2=covertices[cupfaces[i*3+2]].vertex-covertices[cupfaces[i*3]].vertex;
         v1=v1.crossProduct(v2);
         v1.normalise();
-//        v1/=3.0;
+//		v1/=3.0;
         covertices[cupfaces[i*3]].normal+=v1;
         covertices[cupfaces[i*3+1]].normal+=v1;
         covertices[cupfaces[i*3+2]].normal+=v1;
@@ -529,7 +530,7 @@ Vector3 FlexAirfoil::updateVertices()
         v2=covertices[cdnfaces[i*3+2]].vertex-covertices[cdnfaces[i*3]].vertex;
         v1=v1.crossProduct(v2);
         v1.normalise();
-//        v1/=3.0;
+//		v1/=3.0;
         covertices[cdnfaces[i*3]].normal+=v1;
         covertices[cdnfaces[i*3+1]].normal+=v1;
         covertices[cdnfaces[i*3+2]].normal+=v1;
@@ -646,7 +647,7 @@ Vector3 FlexAirfoil::updateShadowVertices()
         v2=coshadowposvertices[bandfaces[i*3+2]].vertex-coshadowposvertices[bandfaces[i*3]].vertex;
         v1=v1.crossProduct(v2);
         v1.normalise();
-//        v1/=3.0;
+//		v1/=3.0;
         coshadownorvertices[bandfaces[i*3]].normal+=v1;
         coshadownorvertices[bandfaces[i*3+1]].normal+=v1;
         coshadownorvertices[bandfaces[i*3+2]].normal+=v1;
@@ -658,7 +659,7 @@ Vector3 FlexAirfoil::updateShadowVertices()
         v2=coshadowposvertices[cupfaces[i*3+2]].vertex-coshadowposvertices[cupfaces[i*3]].vertex;
         v1=v1.crossProduct(v2);
         v1.normalise();
-//        v1/=3.0;
+//		v1/=3.0;
         coshadownorvertices[cupfaces[i*3]].normal+=v1;
         coshadownorvertices[cupfaces[i*3+1]].normal+=v1;
         coshadownorvertices[cupfaces[i*3+2]].normal+=v1;
@@ -670,7 +671,11 @@ Vector3 FlexAirfoil::updateShadowVertices()
         v2=coshadowposvertices[cdnfaces[i*3+2]].vertex-coshadowposvertices[cdnfaces[i*3]].vertex;
         v1=v1.crossProduct(v2);
         v1.normalise();
+<<<<<<< HEAD
 //        v1/=3.0;
+=======
+//		v1/=3.0;
+>>>>>>> upstream/master
         coshadownorvertices[cdnfaces[i*3]].normal+=v1;
         coshadownorvertices[cdnfaces[i*3+1]].normal+=v1;
         coshadownorvertices[cdnfaces[i*3+2]].normal+=v1;
@@ -729,7 +734,7 @@ void FlexAirfoil::updateForces()
 {
     if (!airfoil) return;
     if (broken) return;
-//    if (innan) {LOG("STEP "+TOSTRING(innan)+" "+TOSTRING(nblu));innan++;}
+//	if (innan) {LOG("STEP "+TOSTRING(innan)+" "+TOSTRING(nblu));innan++;}
     //evaluate wind direction
     Vector3 wind=-(nodes[nfld].Velocity+nodes[nfrd].Velocity)/2.0;
     //add wash
@@ -842,7 +847,7 @@ void FlexAirfoil::updateForces()
 
 
 
-//    sprintf(debug, "wind %i kts, aoa %i, cz %f, vf %f ", (int)(wspeed*1.9438), (int)aoa, cz, normv.y);
+//	sprintf(debug, "wind %i kts, aoa %i, cz %f, vf %f ", (int)(wspeed*1.9438), (int)aoa, cz, normv.y);
 
 }
 

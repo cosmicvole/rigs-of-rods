@@ -19,10 +19,8 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** 
-    @file   GUIManager.h
-    @author based on the basemanager code from mygui common
-*/
+/// @file
+/// @author based on the basemanager code from mygui common
 
 #pragma once
 
@@ -39,12 +37,11 @@ namespace RoR {
 namespace GUI { class SimUtils; class TopMenubar; }
 
 class GUIManager :
-      public GUIInputManager
+    public GUIInputManager
     , public Ogre::FrameListener
     , public Ogre::WindowEventListener
     , public ZeroedMemoryAllocator
 {
-
 public:
 
     GUIManager();
@@ -113,7 +110,7 @@ public:
     void AdjustPauseMenuPosition();
     void AdjustMainMenuPosition();
 
-    void UpdateSimUtils(float dt, Beam *truck);
+    void UpdateSimUtils(float dt, Beam* truck);
     void framestep(float dt);
 
     int getMessageBoxResult(); //TODO
@@ -132,7 +129,7 @@ public:
     void ShutdownMyGUI();
     void ReflectGameState();
 
-    virtual void AddRigLoadingReport(std::string const & vehicle_name, std::string const & text, int num_errors, int num_warnings, int num_other);
+    virtual void AddRigLoadingReport(std::string const& vehicle_name, std::string const& text, int num_errors, int num_warnings, int num_other);
 
     static Ogre::String getRandomWallpaperImage();
 
@@ -147,8 +144,7 @@ private:
     void eventRequestTag(const MyGUI::UString& _tag, MyGUI::UString& _result);
 
     GuiManagerImpl* m_impl;
-    bool            m_renderwindow_closed;
+    bool m_renderwindow_closed;
 };
 
 } // namespace RoR
-

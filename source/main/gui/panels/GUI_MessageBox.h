@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2014 Petr Ohlidal
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -12,37 +12,31 @@
 
     Rigs of Rods is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
+
+/// @file
+/// @author Moncef Ben Slimane
+/// @date   12/2014
 
 #pragma once
-
-/** 
-    @file   GUI_MessageBox.h
-    @author Moncef Ben Slimane
-    @date   12/2014
-*/
 
 #include "ForwardDeclarations.h"
 #include "GUI_MessageBoxLayout.h"
 
-namespace RoR
-{
-
-namespace GUI
-{
+namespace RoR {
+namespace GUI {
 
 class gMessageBox : public MessageBoxLayout //Used gMessageBox to not make interference with MessageBox function
 {
-
 public:
     gMessageBox();
     ~gMessageBox();
-    
+
     void ShowMessageBox(Ogre::String mTitle, Ogre::String mText, bool button1, Ogre::String mButton1, bool AllowClose, bool button2, Ogre::String mButton2);
     void UpdateMessageBox(Ogre::String mTitle, Ogre::String mText, bool button1, Ogre::String mButton1, bool AllowClose, bool button2, Ogre::String mButton2, bool IsVisible);
     // return 0: no button pressed, should not happen, use AllowClose to enable.
@@ -65,5 +59,4 @@ private:
 };
 
 } // namespace GUI
-
 } // namespace RoR

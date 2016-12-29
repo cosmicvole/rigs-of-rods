@@ -1,22 +1,23 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
+
 #include "FlexMesh.h"
 
 #include <Ogre.h>
@@ -89,10 +90,10 @@ FlexMesh::FlexMesh(
         }
     }
     //color fix to remove
-//        for (i=0; i<(int)nVertices; i++)
-//        {
-//            covertices[i].color=Vector3(0.0, 0.0, 0.0);
-//        };
+//		for (i=0; i<(int)nVertices; i++)
+//		{
+//			covertices[i].color=Vector3(0.0, 0.0, 0.0);
+//		};
     //textures coordinates
     covertices[0].texcoord=Vector2(0.5, 0.5);
     covertices[1].texcoord=Vector2(0.5, 0.5);
@@ -137,8 +138,8 @@ FlexMesh::FlexMesh(
             facefaces[3*(i*4+3+2*nrays)]=2+4*nrays+i*2+1; facefaces[3*(i*4+3+2*nrays)+2]=2+4*nrays+((i+1)%nrays)*2+1; facefaces[3*(i*4+3+2*nrays)+1]=2+((i+1)%nrays)*2+1;
         }
         //wheel band
-//            bandfaces[3*(i*2)]=2+2*nrays+i*2; bandfaces[3*(i*2)+1]=2+2*nrays+i*2+1; bandfaces[3*(i*2)+2]=2+2*nrays+((i+1)%nrays)*2+1;
-//            bandfaces[3*(i*2+1)]=2+2*nrays+((i+1)%nrays)*2+1; bandfaces[3*(i*2+1)+2]=2+2*nrays+i*2; bandfaces[3*(i*2+1)+1]=2+2*nrays+((i+1)%nrays)*2;
+//			bandfaces[3*(i*2)]=2+2*nrays+i*2; bandfaces[3*(i*2)+1]=2+2*nrays+i*2+1; bandfaces[3*(i*2)+2]=2+2*nrays+((i+1)%nrays)*2+1;
+//			bandfaces[3*(i*2+1)]=2+2*nrays+((i+1)%nrays)*2+1; bandfaces[3*(i*2+1)+2]=2+2*nrays+i*2; bandfaces[3*(i*2+1)+1]=2+2*nrays+((i+1)%nrays)*2;
         bandfaces[3*(i*2)]=2+2*nrays+i*2; bandfaces[3*(i*2)+1]=2+2*nrays+i*2+1; bandfaces[3*(i*2)+2]=2+2*nrays+((i+1)%nrays)*2;
         bandfaces[3*(i*2+1)]=2+2*nrays+((i+1)%nrays)*2; bandfaces[3*(i*2+1)+2]=2+2*nrays+((i+1)%nrays)*2+1; bandfaces[3*(i*2+1)+1]=2+2*nrays+i*2+1;
     }
@@ -368,43 +369,6 @@ Vector3 FlexMesh::updateShadowVertices()
 
     return center;
 }
-
-/*
-Vector3 FlexMesh::updateShadowVertices()
-{
-        int i;
-    Vector3 center;
-    center=(nodes[nodeIDs[0]].Position+nodes[nodeIDs[1]].Position)/2.0;
-
-    coshadowposvertices[0].vertex=nodes[nodeIDs[0]].Position-center;
-        //normals
-    coshadownorvertices[0].normal=coshadowposvertices[0].vertex;
-    coshadownorvertices[0].normal.normalise();
-
-    coshadowposvertices[1].vertex=nodes[nodeIDs[1]].Position-center;
-        //normals
-    coshadownorvertices[1].normal=coshadowposvertices[1].vertex;
-    coshadownorvertices[1].normal.normalise();
-    //texcoords
-    coshadownorvertices[0].texcoord=covertices[0].texcoord;
-    coshadownorvertices[1].texcoord=covertices[1].texcoord;
-    for (i=0; i<nbrays*2; i++)
-    {
-        coshadowposvertices[2+i].vertex=nodes[nodeIDs[2+i]].Position-center;
-        //normals
-        coshadownorvertices[2+i].normal=coshadowposvertices[2+i].vertex;
-        coshadownorvertices[2+i].normal.normalise();
-        //optimization
-        coshadowposvertices[2+2*nbrays+i].vertex=coshadowposvertices[2+i].vertex;
-        coshadownorvertices[2+2*nbrays+i].normal=coshadownorvertices[2+i].normal;
-
-        //texcoords
-        coshadownorvertices[2+i].texcoord=covertices[2+i].texcoord;
-        coshadownorvertices[2+2*nbrays+i].texcoord=covertices[2+2*nbrays+i].texcoord;
-    }
-    return center;
-}
-*/
 
 void FlexMesh::setVisible(bool visible)
 {

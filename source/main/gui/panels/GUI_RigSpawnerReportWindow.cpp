@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2015 Petr Ohlidal
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -19,11 +19,9 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** 
-    @file   
-    @author Petr Ohlidal
-    @date   02/2015
-*/
+/// @file
+/// @author Petr Ohlidal
+/// @date   02/2015
 
 #include "GUI_RigSpawnerReportWindow.h"
 
@@ -46,7 +44,7 @@ RigSpawnerReportWindow::RigSpawnerReportWindow():
     main_window->setVisible(false);
 }
 
-void RigSpawnerReportWindow::SetRigLoadingReport(std::string const & vehicle_name, std::string const & text, int num_errors, int num_warnings, int num_other)
+void RigSpawnerReportWindow::SetRigLoadingReport(std::string const& vehicle_name, std::string const& text, int num_errors, int num_warnings, int num_other)
 {
     m_rig_spawner_report_window->setCaption("Loading report: " + vehicle_name);
 
@@ -54,7 +52,7 @@ void RigSpawnerReportWindow::SetRigLoadingReport(std::string const & vehicle_nam
     bool first = true;
     if (num_errors > 0)
     {
-        summary << num_errors <<  "#FF3300 Errors #FFFFFF";
+        summary << num_errors << "#FF3300 Errors #FFFFFF";
         first = false;
     }
     if (num_warnings > 0)

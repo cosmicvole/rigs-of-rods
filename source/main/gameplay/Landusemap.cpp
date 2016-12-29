@@ -1,22 +1,23 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
+
 #include "Landusemap.h"
 
 #include "Collisions.h"
@@ -31,26 +32,29 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace Ogre;
 
-Landusemap::Landusemap(String configFilename) : 
-      data(0)
+Landusemap::Landusemap(String configFilename) :
+    data(0)
     , mapsize(Vector3::ZERO)
 {
     mapsize = gEnv->terrainManager->getMaxTerrainSize();
     loadConfig(configFilename);
 #ifndef USE_PAGED
-    LOG("RoR was not compiled with PagedGeometry support. You cannot use Landuse maps with it.");
+	LOG("RoR was not compiled with PagedGeometry support. You cannot use Landuse maps with it.");
 #endif //USE_PAGED
 }
 
 Landusemap::~Landusemap()
 {
-    if (data != nullptr) delete[] data;
-    if (default_ground_model != nullptr) delete default_ground_model;
+    if (data != nullptr)
+        delete[] data;
+    if (default_ground_model != nullptr)
+        delete default_ground_model;
 }
 
-ground_model_t *Landusemap::getGroundModelAt(int x, int z)
+ground_model_t* Landusemap::getGroundModelAt(int x, int z)
 {
-    if (!data) return 0;
+    if (!data)
+        return 0;
     Vector3 mapsize = gEnv->terrainManager->getMaxTerrainSize();
 #ifdef USE_PAGED
     // we return the default ground model if we are not anymore in this map
@@ -59,10 +63,9 @@ ground_model_t *Landusemap::getGroundModelAt(int x, int z)
 
     return data[x + z * (int)mapsize.x];
 #else
-    return 0;
+	return 0;
 #endif // USE_PAGED
 }
-
 
 int Landusemap::loadConfig(Ogre::String filename)
 {
@@ -76,7 +79,8 @@ int Landusemap::loadConfig(Ogre::String filename)
     try
     {
         group = ResourceGroupManager::getSingleton().findGroupContainingResource(filename);
-    }catch(...)
+    }
+    catch (...)
     {
         // we wont catch anything, since the path could be absolute as well, then the group is not found
     }
@@ -89,7 +93,8 @@ int Landusemap::loadConfig(Ogre::String filename)
             cfg.loadDirect(filename);
         else
             cfg.loadFromResourceSystem(filename, group, "\x09:=", true);
-    } catch(Ogre::Exception& e)
+    }
+    catch (Ogre::Exception& e)
     {
         ErrorUtils::ShowError(_L("Error while loading landuse config"), e.getFullDescription());
         return 1;
@@ -100,7 +105,7 @@ int Landusemap::loadConfig(Ogre::String filename)
     while (seci.hasMoreElements())
     {
         secName = seci.peekNextKey();
-        Ogre::ConfigFile::SettingsMultiMap *settings = seci.getNext();
+        Ogre::ConfigFile::SettingsMultiMap* settings = seci.getNext();
         Ogre::ConfigFile::SettingsMultiMap::iterator i;
         for (i = settings->begin(); i != settings->end(); ++i)
         {
@@ -116,15 +121,15 @@ int Landusemap::loadConfig(Ogre::String filename)
                     gEnv->collisions->loadGroundModelsConfigFile(kvalue);
                 else if (kname == "defaultuse")
                     default_ground_model = gEnv->collisions->getGroundModelByString(kvalue);
-
-            } else if (secName == "use-map")
+            }
+            else if (secName == "use-map")
             {
                 if (kname.size() != 10)
                 {
                     LOG("invalid color in landuse line in " + filename);
                     continue;
                 }
-                char *ptr; //not used
+                char* ptr; //not used
                 unsigned int color = strtoul(kname.c_str(), &ptr, 16);
                 usemap[color] = kvalue;
             }
@@ -135,7 +140,7 @@ int Landusemap::loadConfig(Ogre::String filename)
     // process the config data and load the buffers finally
     try
     {
-        Forests::ColorMap *colourMap = Forests::ColorMap::load(textureFilename, Forests::CHANNEL_COLOR);
+        Forests::ColorMap* colourMap = Forests::ColorMap::load(textureFilename, Forests::CHANNEL_COLOR);
         colourMap->setFilter(Forests::MAPFILTER_NONE);
 
         /*
@@ -153,11 +158,11 @@ int Landusemap::loadConfig(Ogre::String filename)
 
         // now allocate the data buffer to hold pointers to ground models
         data = new ground_model_t*[(int)(mapsize.x * mapsize.z)];
-        ground_model_t **ptr = data;
+        ground_model_t** ptr = data;
         //std::map < String, int > counters;
-        for (int z=0; z<mapsize.z; z++)
+        for (int z = 0; z < mapsize.z; z++)
         {
-            for (int x=0; x<mapsize.x; x++)
+            for (int x = 0; x < mapsize.x; x++)
             {
                 unsigned int col = colourMap->getColorAt(x, z, bounds);
                 if (bgr)
@@ -170,17 +175,18 @@ int Landusemap::loadConfig(Ogre::String filename)
                 }
                 String use = usemap[col];
                 //if (use!="")
-                //    counters[use]++;
+                //	counters[use]++;
 
                 // store the pointer to the ground model in the data slot
                 *ptr = gEnv->collisions->getGroundModelByString(use);
                 ptr++;
             }
         }
-    } catch (...)
+    }
+    catch (...)
     {
         Log("Landuse: Failed to load texture: " + textureFilename);
-    }    
+    }
 #endif // USE_PAGED
 
     return 0;

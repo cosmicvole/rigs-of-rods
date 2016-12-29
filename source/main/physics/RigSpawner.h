@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2014 Petr Ohlidal
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -12,19 +12,18 @@
 
     Rigs of Rods is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**    
-    @file   RigSpawner.h
-    @brief  Vehicle spawning logic.
-    @author Petr Ohlidal
-    @date   12/2013
-*/
+/// @file   RigSpawner.h
+/// @brief  Vehicle spawning logic.
+/// @author Petr Ohlidal
+/// @date   12/2013
+
 
 #pragma once
 
@@ -76,7 +75,7 @@ public:
             type(type),
             text(text),
             keyword(keyword)
-        {}        
+        {}		
 
         Ogre::String text;
         Type type;
@@ -852,7 +851,7 @@ protected:
     */
     void CheckSectionSingleModule(
         Ogre::String const & section_name,
-        std::list<std::shared_ptr<RigDef::File::Module>> & found_items    
+        std::list<std::shared_ptr<RigDef::File::Module>> & found_items	
     );
 
     /**
@@ -953,7 +952,7 @@ protected:
         Ogre::String mesh_name,
         Ogre::String material_name,
         float rim_radius,
-        bool rim_reverse    
+        bool rim_reverse	
     );
 
     /**

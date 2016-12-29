@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2015 Petr Ohlidal
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -37,24 +37,24 @@ class FlexMeshWheel: public Flexable
 public:
 
     FlexMeshWheel(
-        Ogre::String const & name,
-        node_t *nds, 
-        int axis_node_1_index, 
-        int axis_node_2_index, 
-        int nstart, 
-        int nrays, 
-        Ogre::String const & mesh_name,
-        Ogre::String const & material_name,
-        float rimradius, 
-        bool rimreverse, 
-        MaterialFunctionMapper *material_function_mapper,
-        Skin *used_skin,
-        MaterialReplacer *material_replacer
+        Ogre::String const& name,
+        node_t* nds,
+        int axis_node_1_index,
+        int axis_node_2_index,
+        int nstart,
+        int nrays,
+        Ogre::String const& mesh_name,
+        Ogre::String const& material_name,
+        float rimradius,
+        bool rimreverse,
+        MaterialFunctionMapper* material_function_mapper,
+        Skin* used_skin,
+        MaterialReplacer* material_replacer
     );
 
     ~FlexMeshWheel();
 
-    Ogre::Entity *getRimEntity() { return rimEnt; };
+    Ogre::Entity* getRimEntity() { return rimEnt; };
 
     Ogre::Vector3 updateVertices();
     Ogre::Vector3 updateShadowVertices();
@@ -70,8 +70,8 @@ private:
 
     Ogre::Vector3 flexit_center;
 
-    MaterialReplacer *mr;
-    
+    MaterialReplacer* mr;
+
     struct CoVertice_t
     {
         Ogre::Vector3 vertex;
@@ -88,7 +88,6 @@ private:
     struct norVertice_t
     {
         Ogre::Vector3 normal;
-        //Ogre::Vector3 color;
         Ogre::Vector2 texcoord;
     };
 
@@ -103,18 +102,20 @@ private:
     //shadow
     union
     {
-        float *shadowposvertices;
-        posVertice_t *coshadowposvertices;
+        float* shadowposvertices;
+        posVertice_t* coshadowposvertices;
     };
+
     union
     {
-        float *shadownorvertices;
-        norVertice_t *coshadownorvertices;
+        float* shadownorvertices;
+        norVertice_t* coshadownorvertices;
     };
+
     union
     {
-        float *vertices;
-        CoVertice_t *covertices;
+        float* vertices;
+        CoVertice_t* covertices;
     };
 
     //nodes
@@ -124,12 +125,12 @@ private:
     int idstart;
 
     size_t ibufCount;
-    unsigned short *faces;
-    node_t *nodes;
+    unsigned short* faces;
+    node_t* nodes;
     int nbrays;
     float rim_radius;
-    Ogre::SceneNode *rnode;
+    Ogre::SceneNode* rnode;
     float normy;
     bool revrim;
-    Ogre::Entity *rimEnt;
+    Ogre::Entity* rimEnt;
 };

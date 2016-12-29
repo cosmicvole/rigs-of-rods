@@ -19,29 +19,22 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*
-    This file was ported from MyGUI project (MIT licensed)
-    https://github.com/MyGUI/mygui
-    http://mygui.info/
-*/
+// This file was ported from MyGUI project (MIT licensed)
+// https://github.com/MyGUI/mygui
+// http://mygui.info/
 
-/*!
-    @file
-    @author        Albert Semenov
-    @date        09/2008
-*/
+/// @file
+/// @author Albert Semenov
+/// @date   09/2008
 
 #pragma once
 
 #include <MyGUI.h>
 #include "BaseLayout.h"
 
-namespace RoR
-{
+namespace RoR {
+namespace GUI {
 
-namespace GUI
-{
-    
 class Dialog :
     public wraps::BaseLayout
 {
@@ -55,6 +48,7 @@ public:
 
     void doModal();
     void endModal();
+
     bool isModal()
     {
         return mModal;
@@ -63,14 +57,17 @@ public:
     EventHandle_Result eventEndDialog;
 
 protected:
-    virtual void onDoModal() { }
-    virtual void onEndModal() { }
+    virtual void onDoModal()
+    {
+    }
+
+    virtual void onEndModal()
+    {
+    }
 
 private:
     bool mModal;
 };
 
 } // namespace GUI
-
 } // namespace RoR
-

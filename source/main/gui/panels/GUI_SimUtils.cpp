@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2014 Petr Ohlidal
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -19,18 +19,14 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
-    @file   GUI_SimUtils.cpp
-    @author Moncef Ben Slimane
-    @date   12/2014
-*/
+/// @file
+/// @author Moncef Ben Slimane
+/// @date   12/2014
 
-/*
-    Notice:
-    This GUI is a little bit different from the others, so don't take as example.
+//  Notice:
+//  This GUI is a little bit different from the others, so don't take as example.
+//  This GUI class is a set of small independent info boxes. The main widget is invisible and un-clickable.
 
-    This GUI class is a set of small independent info boxes. The main widget is invisible and un-clickable.
-*/
 #include "GUI_SimUtils.h"
 
 #include <MyGUI.h>
@@ -117,8 +113,10 @@ void CLASS::SetTruckInfoBoxVisible(bool v)
 
 void CLASS::PushNotification(Ogre::String Title, Ogre::String text)
 {
-    if (!MAIN_WIDGET->getVisible()) return;
-    if (m_notifications_disabled) return;
+    if (!MAIN_WIDGET->getVisible())
+        return;
+    if (m_notifications_disabled)
+        return;
 
     m_not_title->setCaption(Title);
     m_not_text->setCaption(text);
@@ -138,7 +136,8 @@ void CLASS::DisableNotifications(bool disabled)
 
 void CLASS::framestep(float dt)
 {
-    if (!MAIN_WIDGET->getVisible()) return;
+    if (!MAIN_WIDGET->getVisible())
+        return;
 
     unsigned long ot = Ogre::Root::getSingleton().getTimer()->getMilliseconds();
     if (m_notification->getVisible())
@@ -161,9 +160,10 @@ void CLASS::framestep(float dt)
     }
 }
 
-void CLASS::UpdateStats(float dt, Beam *truck)
+void CLASS::UpdateStats(float dt, Beam* truck)
 {
-    if (!MAIN_WIDGET->getVisible()) return;
+    if (!MAIN_WIDGET->getVisible())
+        return;
 
     if (b_fpsbox)
     {
@@ -188,7 +188,7 @@ void CLASS::UpdateStats(float dt, Beam *truck)
         truckstats = "\n"; //always reset on each frame + space
 
         //taken from TruckHUD.cpp, needs cleanup
-        beam_t *beam = truck->getBeams();
+        beam_t* beam = truck->getBeams();
         float average_deformation = 0.0f;
         float beamstress = 0.0f;
         float current_deformation = 0.0f;
@@ -197,7 +197,7 @@ void CLASS::UpdateStats(float dt, Beam *truck)
         int beambroken = 0;
         int beamdeformed = 0;
 
-        for (int i = 0; i < beamCount; i++, beam++)
+        for (int i = 0; i < beamCount; i++ , beam++)
         {
             if (beam->broken != 0)
             {
@@ -211,7 +211,6 @@ void CLASS::UpdateStats(float dt, Beam *truck)
             }
             average_deformation += current_deformation;
         }
-
 
         float health = ((float)beambroken / (float)beamCount) * 10.0f + ((float)beamdeformed / (float)beamCount);
         if (health < 1.0f)
@@ -256,11 +255,11 @@ void CLASS::UpdateStats(float dt, Beam *truck)
             else
                 truckstats = truckstats + MainThemeColor + _L("Engine RPM: ") + WhiteColor + TOUTFSTRING(Round(truck->engine->getRPM())) + U(" / ") + TOUTFSTRING(Round(truck->engine->getMaxRPM())) + "\n";
 
-            float currentKw = (((truck->engine->getRPM() * (truck->engine->getEngineTorque() + ((truck->engine->getTurboPSI() * 6.8) * truck->engine->getEngineTorque()) / 100) *(3.14159265358979323846 /* pi.. */ / 30)) / 1000));
+            float currentKw = (((truck->engine->getRPM() * (truck->engine->getEngineTorque() + ((truck->engine->getTurboPSI() * 6.8) * truck->engine->getEngineTorque()) / 100) * (3.14159265358979323846 /* pi.. */ / 30)) / 1000));
 
             truckstats = truckstats + MainThemeColor + _L("Current power: ") + WhiteColor + TOUTFSTRING(Round(currentKw *1.34102209)) + U(" hp / ") + TOUTFSTRING(Round(currentKw)) + U(" Kw") + "\n";
 
-            float velocityKMH = truck->WheelSpeed* 3.6f;
+            float velocityKMH = truck->WheelSpeed * 3.6f;
             float velocityMPH = truck->WheelSpeed * 2.23693629f;
             float carSpeedKPH = truck->nodes[0].Velocity.length() * 3.6f;
             float carSpeedMPH = truck->nodes[0].Velocity.length() * 2.23693629f;
@@ -304,7 +303,7 @@ void CLASS::UpdateStats(float dt, Beam *truck)
                         truckstats = truckstats + MainThemeColor + engmsg + TOUTFSTRING(i + 1 /*not to start with 0, players wont like it i guess*/) + " : " + WhiteColor + TOUTFSTRING(Round(truck->aeroengines[i]->getRPM())) + " RPM" + "\n";
                 }
             }
-            else if(truck->driveable == BOAT)
+            else if (truck->driveable == BOAT)
             {
                 for (int i = 0; i < 8; i++)
                 {
@@ -312,7 +311,6 @@ void CLASS::UpdateStats(float dt, Beam *truck)
                         truckstats = truckstats + MainThemeColor + engmsg + TOUTFSTRING(i + 1 /*not to start with 0, players wont like it i guess*/) + " : " + WhiteColor + TOUTFSTRING(Round(truck->screwprops[i]->getThrottle() *100 )) + "%" + "\n";
                 }
             }
-
         }
 
         /*
@@ -325,8 +323,10 @@ void CLASS::UpdateStats(float dt, Beam *truck)
         wchar_t geesstr[256];
         Ogre::Vector3 gees = truck->getGForces();
         // apply deadzones ==> no flickering +/-
-        if (fabs(gees.y) < 0.01) gees.y = 0.0f;
-        if (fabs(gees.z) < 0.01) gees.z = 0.0f;
+        if (fabs(gees.y) < 0.01)
+            gees.y = 0.0f;
+        if (fabs(gees.z) < 0.01)
+            gees.z = 0.0f;
         Ogre::UTFString tmp = _L("Vertical: % 1.2fg\nSagittal: % 1.2fg\nLateral:  % 1.2fg");
         swprintf(geesstr, 256, tmp.asWStr_c_str(), gees.x, gees.y, gees.z);
         truckstats = truckstats + MainThemeColor + _L("G-Forces:\n") + WhiteColor + Ogre::UTFString(geesstr) + "\n";
@@ -356,7 +356,7 @@ void CLASS::UpdateStats(float dt, Beam *truck)
                 maxNegSagG[truck->driveable],
                 maxPosLatG[truck->driveable],
                 maxNegLatG[truck->driveable]
-                );
+            );
             truckstats = truckstats + MainThemeColor + _L("G-Forces: Maximum - Minimum:\n") + WhiteColor + Ogre::UTFString(geesstr) + "\n";
         }
 
@@ -364,5 +364,4 @@ void CLASS::UpdateStats(float dt, Beam *truck)
     }
     else
         m_truckinfo_box->setVisible(false);
-
 }

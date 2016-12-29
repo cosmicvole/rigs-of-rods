@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2015 Petr Ohlidal
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -35,18 +35,18 @@ class FlexObj : public ZeroedMemoryAllocator
 public:
 
     FlexObj(
-        node_t *nds, 
-        int numtexcoords, 
-        Ogre::Vector3* texcoords, 
-        int numtriangles, 
-        int* triangles, 
-        int numsubmeshes, 
-        int* subtexindex, 
-        int* subtriindex, 
-        char* texname, 
-        char* name, 
-        int* subisback, 
-        char* backtexname, 
+        node_t* nds,
+        int numtexcoords,
+        Ogre::Vector3* texcoords,
+        int numtriangles,
+        int* triangles,
+        int numsubmeshes,
+        int* subtexindex,
+        int* subtriindex,
+        char* texname,
+        char* name,
+        int* subisback,
+        char* backtexname,
         char* transtexname);
 
     ~FlexObj();
@@ -89,31 +89,34 @@ private:
 
     size_t nVertices;
     size_t vbufCount;
+
     //shadow
     union
     {
-        float *shadowposvertices;
-        posVertice_t *coshadowposvertices;
-    };
-    union
-    {
-        float *shadownorvertices;
-        norVertice_t *coshadownorvertices;
+        float* shadowposvertices;
+        posVertice_t* coshadowposvertices;
     };
 
     union
     {
-        float *vertices;
-        CoVertice_t *covertices;
+        float* shadownorvertices;
+        norVertice_t* coshadownorvertices;
     };
+
+    union
+    {
+        float* vertices;
+        CoVertice_t* covertices;
+    };
+
     //nodes
-    int *nodeIDs;
+    int* nodeIDs;
 
     size_t ibufCount;
-    unsigned short *faces;
-    node_t *nodes;
+    unsigned short* faces;
+    node_t* nodes;
     int nbrays;
 
-    float *sref;
+    float* sref;
     int triangleCount;
 };

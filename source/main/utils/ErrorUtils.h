@@ -31,7 +31,6 @@
 
 struct ErrorUtils
 {
-
     /**
      * shows a simple error message box
      * @param title very short summar of the error
@@ -56,5 +55,4 @@ struct ErrorUtils
      * @return 0 on success, everything else on error
      */
     static int ShowMsgBox(Ogre::UTFString title, Ogre::UTFString err, int type);
-
 };

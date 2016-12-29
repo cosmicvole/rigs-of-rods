@@ -1,26 +1,24 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #pragma once
-#ifndef __TruckHUD_H_
-#define __TruckHUD_H_
 
 #include "RoRPrerequisites.h"
 
@@ -35,14 +33,14 @@ public:
 
     TruckHUD();
 
-    bool update(float dt, Beam *truck, bool visible=true);
+    bool update(float dt, Beam* truck, bool visible = true);
     void show(bool value);
     bool isVisible();
     void initTorqueOverlay();
 
 protected:
 
-    Ogre::Overlay *truckHUD;
+    Ogre::Overlay* truckHUD;
     float updatetime;
     int width, border;
 
@@ -63,7 +61,4 @@ protected:
 
     Ogre::String lastTorqueModel; //!< name of the last used torque model, needed to detect a change in the model
     Ogre::Real lastTorqueRatio; //!< last RPM ratio, used to clear the last torque peak
-
 };
-
-#endif // __TruckHUD_H_

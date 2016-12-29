@@ -1,22 +1,24 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
+    Copyright 2013+     Petr Ohlidal & contributors
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
+
 #include "Collisions.h"
 
 #include "Application.h"
@@ -325,7 +327,7 @@ void Collisions::parseGroundConfig(Ogre::ConfigFile *cfg, String groundModel)
 }
 
 Ogre::Vector3 Collisions::calcCollidedSide(const Ogre::Vector3& pos, const Ogre::Vector3& lo, const Ogre::Vector3& hi)
-{    
+{	
     Ogre::Real min = pos.x - lo.x;
     Ogre::Vector3 newPos = Ogre::Vector3(lo.x, pos.y, pos.z);
     
@@ -633,7 +635,7 @@ int Collisions::addCollisionBox(SceneNode *tenode, bool rotating, bool virt, Vec
         coll_box.hi = pos + coll_box.rehi;
         Vector3 d = (coll_box.rehi - coll_box.relo);
         cube_points[0] = coll_box.relo;
-        cube_points[1] = coll_box.relo;    cube_points[1].x += d.x;
+        cube_points[1] = coll_box.relo;	cube_points[1].x += d.x;
         cube_points[2] = coll_box.relo;                          cube_points[2].y += d.y;
         cube_points[3] = coll_box.relo; cube_points[3].x += d.x; cube_points[3].y += d.y;
         cube_points[4] = coll_box.relo;                                                   cube_points[4].z += d.z;

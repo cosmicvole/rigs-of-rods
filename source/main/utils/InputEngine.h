@@ -12,7 +12,7 @@
 
     Rigs of Rods is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
@@ -383,7 +383,6 @@ enum events
     EV_TRUCKEDIT_RELOAD,
     EV_TOGGLESHADERS,
 
-
     // the end, DO NOT MODIFY
     EV_MODE_BEFORELAST,
     EV_MODE_LAST
@@ -418,11 +417,10 @@ struct event_trigger_t
     int joystickAxisNumber;
     float joystickAxisDeadzone;
     float joystickAxisLinearity;
-    int  joystickAxisRegion;
+    int joystickAxisRegion;
     bool joystickAxisReverse;
     bool joystickAxisHalf;
     bool joystickAxisUseDigital;
-
 
     // POVs
     int joystickPovNumber;
@@ -454,44 +452,50 @@ public:
 
     void Capture();
 
-    enum {ET_ANY, ET_DIGITAL, ET_ANALOG};
+    enum
+    {
+        ET_ANY,
+        ET_DIGITAL,
+        ET_ANALOG
+    };
+
     //valueSource: ET_ANY=digital and analog devices, ET_DIGITAL=only digital, ET_ANALOG=only analog
     float getEventValue(int eventID, bool pure = false, int valueSource = ET_ANY);
 
     bool getEventBoolValue(int eventID);
     bool isEventAnalog(int eventID);
-    bool getEventBoolValueBounce(int eventID, float time=0.2f);
+    bool getEventBoolValueBounce(int eventID, float time = 0.2f);
     float getEventBounceTime(int eventID);
     // we need to use hwnd here, as we are also using this in the configurator
-    bool setup(Ogre::String hwnd, bool capture=false, bool capturemouse=false, bool captureKbd=true);
+    bool setup(Ogre::String hwnd, bool capture = false, bool capturemouse = false, bool captureKbd = true);
     Ogre::String getKeyForCommand(int eventID);
     bool isKeyDown(OIS::KeyCode mod);
-    bool isKeyDownValueBounce(OIS::KeyCode mod, float time=0.2f);
+    bool isKeyDownValueBounce(OIS::KeyCode mod, float time = 0.2f);
 
-    std::map<int, std::vector<event_trigger_t> > &getEvents() { return events; };
+    std::map<int, std::vector<event_trigger_t>>& getEvents() { return events; };
 
     Ogre::String getDeviceName(event_trigger_t evt);
     std::string getEventTypeName(int type);
 
-    int getCurrentKeyCombo(std::string *combo);
-    int getCurrentJoyButton(int &joystickNumber, int &button);
-    int getCurrentPovValue(int &joystickNumber, int &pov, int &povdir);
+    int getCurrentKeyCombo(std::string* combo);
+    int getCurrentJoyButton(int& joystickNumber, int& button);
+    int getCurrentPovValue(int& joystickNumber, int& pov, int& povdir);
     std::string getKeyNameForKeyCode(OIS::KeyCode keycode);
     void resetKeys();
-    OIS::JoyStickState *getCurrentJoyState(int joystickNumber);
+    OIS::JoyStickState* getCurrentJoyState(int joystickNumber);
     int getJoyComponentCount(OIS::ComponentType type, int joystickNumber);
     std::string getJoyVendor(int joystickNumber);
-    void smoothValue(float &ref, float value, float rate);
-    bool saveMapping(std::string outfile=CONFIGFILENAME, Ogre::String hwnd=0, int joyNum=-10);
-    bool appendLineToConfig(std::string line, std::string outfile=CONFIGFILENAME);
-    bool loadMapping(std::string outfile=CONFIGFILENAME, bool append=false, int deviceID=-1);
+    void smoothValue(float& ref, float value, float rate);
+    bool saveMapping(std::string outfile = CONFIGFILENAME, Ogre::String hwnd = 0, int joyNum = -10);
+    bool appendLineToConfig(std::string line, std::string outfile = CONFIGFILENAME);
+    bool loadMapping(std::string outfile = CONFIGFILENAME, bool append = false, int deviceID = -1);
 
     void destroy();
 
     Ogre::String getEventCommand(int eventID);
     static int resolveEventName(Ogre::String eventName);
     static Ogre::String eventIDToName(int eventID);
-    event_trigger_t *getEventBySUID(int suid);
+    event_trigger_t* getEventBySUID(int suid);
 
     void setupDefault(Ogre::String inputhwnd = "");
 
@@ -505,19 +509,19 @@ public:
     // some custom methods
     void windowResized(Ogre::RenderWindow* rw);
 
-    bool reloadConfig(std::string outfile=CONFIGFILENAME);
-    bool updateConfigline(event_trigger_t *t);
+    bool reloadConfig(std::string outfile = CONFIGFILENAME);
+    bool updateConfigline(event_trigger_t* t);
 
     void grabMouse(bool enable);
     void hideMouse(bool visible);
-    void setMousePosition(int x, int y, bool padding=true);
+    void setMousePosition(int x, int y, bool padding = true);
 
     int getKeboardKeyForCommand(int eventID);
 
     void updateKeyBounces(float dt);
     void completeMissingEvents();
     int getNumJoysticks() { return free_joysticks; };
-    OIS::ForceFeedback* getForceFeedbackDevice() {return mForceFeedback;};
+    OIS::ForceFeedback* getForceFeedbackDevice() { return mForceFeedback; };
 
     void SetKeyboardListener(OIS::KeyListener* keyboard_listener);
 
@@ -539,11 +543,11 @@ public:
 
 protected:
 
-    InputEngine& operator= (const InputEngine&);
+    InputEngine& operator=(const InputEngine&);
 
     //OIS Input devices
     OIS::InputManager* mInputManager;
-    OIS::Mouse*    mMouse;
+    OIS::Mouse* mMouse;
     OIS::Keyboard* mKeyboard;
     OIS::JoyStick* mJoy[MAX_JOYSTICKS];
     int free_joysticks;
@@ -551,20 +555,20 @@ protected:
     int uniqueCounter;
 
     // JoyStickListener
-    bool buttonPressed( const OIS::JoyStickEvent &arg, int button );
-    bool buttonReleased( const OIS::JoyStickEvent &arg, int button );
-    bool axisMoved( const OIS::JoyStickEvent &arg, int axis );
-    bool sliderMoved( const OIS::JoyStickEvent &, int );
-    bool povMoved( const OIS::JoyStickEvent &, int );
+    bool buttonPressed(const OIS::JoyStickEvent& arg, int button);
+    bool buttonReleased(const OIS::JoyStickEvent& arg, int button);
+    bool axisMoved(const OIS::JoyStickEvent& arg, int axis);
+    bool sliderMoved(const OIS::JoyStickEvent&, int);
+    bool povMoved(const OIS::JoyStickEvent&, int);
 
     // KeyListener
-    bool keyPressed( const OIS::KeyEvent &arg );
-    bool keyReleased( const OIS::KeyEvent &arg );
+    bool keyPressed(const OIS::KeyEvent& arg);
+    bool keyReleased(const OIS::KeyEvent& arg);
 
     // MouseListener
-    bool mouseMoved( const OIS::MouseEvent &arg );
-    bool mousePressed( const OIS::MouseEvent &arg, OIS::MouseButtonID id );
-    bool mouseReleased( const OIS::MouseEvent &arg, OIS::MouseButtonID id );
+    bool mouseMoved(const OIS::MouseEvent& arg);
+    bool mousePressed(const OIS::MouseEvent& arg, OIS::MouseButtonID id);
+    bool mouseReleased(const OIS::MouseEvent& arg, OIS::MouseButtonID id);
 
     // this stores the key/button/axis values
     std::map<int, bool> keyState;
@@ -572,11 +576,10 @@ protected:
     OIS::MouseState mouseState;
 
     // define event aliases
-    std::map<int, std::vector<event_trigger_t> > events;
-    std::map<int, float > event_times;
+    std::map<int, std::vector<event_trigger_t>> events;
+    std::map<int, float> event_times;
 
-
-    bool processLine(char *line, int deviceID = -1);
+    bool processLine(char* line, int deviceID = -1);
     bool captureMode;
 
     //RoRFrameListener *mefl;

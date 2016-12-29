@@ -19,11 +19,9 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** 
-    @file   
-    @author Petr Ohlidal
-    @date   12/2014
-*/
+/// @file
+/// @author Petr Ohlidal
+/// @date   12/2014
 
 #pragma once
 

@@ -11,12 +11,9 @@
 #include "ForwardDeclarations.h"
 #include "BaseLayout.h"
 
-namespace RoR
-{
+namespace RoR {
+namespace GUI {
 
-namespace GUI
-{
-    
 ATTRIBUTE_CLASS_LAYOUT(SimUtilsLayout, "Utils.layout");
 class SimUtilsLayout : public wraps::BaseLayout
 {
@@ -72,6 +69,5 @@ protected:
 };
 
 } // namespace GUI
-
 } // namespace RoR
 

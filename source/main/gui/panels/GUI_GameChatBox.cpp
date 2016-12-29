@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2014 Petr Ohlidal
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -19,11 +19,9 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** 
-    @file   GUI_GameChatBox.cpp
-    @author Moncef Ben Slimane
-    @date   2/2015
-*/
+/// @file
+/// @author Moncef Ben Slimane
+/// @date   2/2015
 
 #include "GUI_GameChatBox.h"
 
@@ -47,7 +45,7 @@ using namespace GUI;
 #define MAIN_WIDGET  ((MyGUI::Window*)mMainWidget)
 
 CLASS::CLASS() :
-      alpha(1.0f)
+    alpha(1.0f)
     , newMsg(false)
 {
     MyGUI::Gui::getInstance().eventFrameStart += MyGUI::newDelegate(this, &CLASS::Update);
@@ -58,7 +56,7 @@ CLASS::CLASS() :
     MAIN_WIDGET->setPosition(
         2, // left
         viewport->getActualHeight() - MAIN_WIDGET->getHeight() - margin // top
-        );
+    );
 
     m_Chatbox_TextBox->eventEditSelectAccept += MyGUI::newDelegate(this, &CLASS::eventCommandAccept);
     autoHide = BSETTING("ChatAutoHide", true);
@@ -141,7 +139,8 @@ void CLASS::Update(float dt)
     {
         MAIN_WIDGET->setVisible(false);
         return;
-    } else if (!autoHide)
+    }
+    else if (!autoHide)
     {
         MAIN_WIDGET->setVisible(true);
         return;
@@ -164,17 +163,21 @@ void CLASS::Update(float dt)
         if (ot < startTime)
         {
             alpha = 1.0f;
-        } else
+        }
+        else
         {
             alpha = 1 - ((ot - startTime) / 1000.0f);
         }
         if (alpha <= 0.0f)
         {
             MAIN_WIDGET->setVisible(false);
-        } else {
+        }
+        else
+        {
             MAIN_WIDGET->setAlpha(alpha);
         }
-    } else if (MAIN_WIDGET->getVisible())
+    }
+    else if (MAIN_WIDGET->getVisible())
     {
         pushTime = Ogre::Root::getSingleton().getTimer()->getMilliseconds();
         m_Chatbox_TextBox->setEnabled(true);
@@ -186,7 +189,6 @@ void CLASS::SetVisible(bool value)
 {
     if (value)
         this->Show();
-    else 
+    else
         this->Hide();
 }
-

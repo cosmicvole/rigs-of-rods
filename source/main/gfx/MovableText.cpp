@@ -1,30 +1,27 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
-/**
-* File: MovableText.cpp
-*
-* description: This create create a billboarding object that display a text.
-*
-* @author  2003 by cTh see gavocanov@rambler.ru
-* @update  2006 by barraq see nospam@barraquand.com
-*/
+
+/// @file This creates a billboarding object that displays a text.
+///
+/// @author  2003 by cTh see gavocanov@rambler.ru
+/// @update  2006 by barraq see nospam@barraquand.com
 
 #include "MovableText.h"
 
@@ -36,23 +33,23 @@ using namespace Ogre;
 #define POS_TEX_BINDING    0
 #define COLOUR_BINDING     1
 
-MovableText::MovableText(const UTFString &name, const UTFString &caption, const UTFString &fontName, Real charHeight, const ColourValue &color)
-: mpCam(NULL)
-, mpWin(NULL)
-, mpFont(NULL)
-, mName(name)
-, mCaption(caption)
-, mFontName(fontName)
-, mCharHeight(charHeight)
-, mColor(color)
-, mType("MovableText")
-, mTimeUntilNextToggle(0)
-, mSpaceWidth(0)
-, mUpdateColors(true)
-, mOnTop(false)
-, mHorizontalAlignment(H_LEFT)
-, mVerticalAlignment(V_BELOW)
-, mAdditionalHeight(0.0)
+MovableText::MovableText(const UTFString& name, const UTFString& caption, const UTFString& fontName, Real charHeight, const ColourValue& color)
+    : mpCam(NULL)
+    , mpWin(NULL)
+    , mpFont(NULL)
+    , mName(name)
+    , mCaption(caption)
+    , mFontName(fontName)
+    , mCharHeight(charHeight)
+    , mColor(color)
+    , mType("MovableText")
+    , mTimeUntilNextToggle(0)
+    , mSpaceWidth(0)
+    , mUpdateColors(true)
+    , mOnTop(false)
+    , mHorizontalAlignment(H_LEFT)
+    , mVerticalAlignment(V_BELOW)
+    , mAdditionalHeight(0.0)
 {
     if (name == "")
         throw Exception(Exception::ERR_INVALIDPARAMS, "Trying to create MovableText without name", "MovableText::MovableText");
@@ -72,7 +69,7 @@ MovableText::~MovableText()
         delete mRenderOp.vertexData;
 }
 
-void MovableText::setFontName(const UTFString &fontName)
+void MovableText::setFontName(const UTFString& fontName)
 {
     if ((Ogre::MaterialManager::getSingletonPtr()->resourceExists(mName + "Material")))
     {
@@ -85,7 +82,7 @@ void MovableText::setFontName(const UTFString &fontName)
 #ifdef ROR_USE_OGRE_1_9
         mpFont = (Font *)FontManager::getSingleton().getResourceByName(mFontName).getPointer();
 #else
-        mpFont = (Font *)FontManager::getSingleton().getByName(mFontName).getPointer();
+		mpFont = (Font *)FontManager::getSingleton().getByName(mFontName).getPointer();
 #endif
         if (!mpFont)
             throw Exception(Exception::ERR_ITEM_NOT_FOUND, "Could not find font " + fontName, "MovableText::setFontName");
@@ -102,7 +99,7 @@ void MovableText::setFontName(const UTFString &fontName)
             mpMaterial->load();
 
         mpMaterial->setDepthCheckEnabled(!mOnTop);
-        mpMaterial->setDepthBias(1.0,1.0);
+        mpMaterial->setDepthBias(1.0, 1.0);
         mpMaterial->setFog(true);
         mpMaterial->setDepthWriteEnabled(mOnTop);
         mpMaterial->setLightingEnabled(false);
@@ -110,7 +107,7 @@ void MovableText::setFontName(const UTFString &fontName)
     }
 }
 
-void MovableText::setCaption(const UTFString &caption)
+void MovableText::setCaption(const UTFString& caption)
 {
     if (caption != mCaption)
     {
@@ -119,7 +116,7 @@ void MovableText::setCaption(const UTFString &caption)
     }
 }
 
-void MovableText::setColor(const ColourValue &color)
+void MovableText::setColor(const ColourValue& color)
 {
     if (color != mColor)
     {
@@ -160,7 +157,7 @@ void MovableText::setTextAlignment(const HorizontalAlignment& horizontalAlignmen
     }
 }
 
-void MovableText::setAdditionalHeight( Real height )
+void MovableText::setAdditionalHeight(Real height)
 {
     if (fabs(mAdditionalHeight - height) > 0.00001f)
     {
@@ -171,10 +168,10 @@ void MovableText::setAdditionalHeight( Real height )
 
 void MovableText::showOnTop(bool show)
 {
-    if ( mOnTop != show && !mpMaterial.isNull() )
+    if (mOnTop != show && !mpMaterial.isNull())
     {
         mOnTop = show;
-        mpMaterial->setDepthBias(1.0,1.0);
+        mpMaterial->setDepthBias(1.0, 1.0);
         mpMaterial->setDepthCheckEnabled(!mOnTop);
         mpMaterial->setDepthWriteEnabled(mOnTop);
     }
@@ -209,8 +206,8 @@ void MovableText::_setupGeometry()
     mRenderOp.operationType = RenderOperation::OT_TRIANGLE_LIST;
     mRenderOp.useIndexes = false;
 
-    VertexDeclaration  *decl = mRenderOp.vertexData->vertexDeclaration;
-    VertexBufferBinding   *bind = mRenderOp.vertexData->vertexBufferBinding;
+    VertexDeclaration* decl = mRenderOp.vertexData->vertexDeclaration;
+    VertexBufferBinding* bind = mRenderOp.vertexData->vertexBufferBinding;
     size_t offset = 0;
 
     // create/bind positions/tex.ccord. buffer
@@ -237,8 +234,8 @@ void MovableText::_setupGeometry()
     bind->setBinding(COLOUR_BINDING, cbuf);
 
     //Real *pPCBuff = static_cast<Real*>(ptbuf->lock(HardwareBuffer::HBL_NORMAL));
-    Real *pPCBuff=(Real*)malloc(ptbuf->getSizeInBytes());
-    Real *oPCBuff=pPCBuff;
+    Real* pPCBuff = (Real*)malloc(ptbuf->getSizeInBytes());
+    Real* oPCBuff = pPCBuff;
 
     float largestWidth = 0;
     float left = 0 * 2.0 - 1.0;
@@ -249,7 +246,7 @@ void MovableText::_setupGeometry()
         mSpaceWidth = mpFont->getGlyphAspectRatio('A') * mCharHeight * 2.0;
 
     // for calculation of AABB
-    Ogre::Vector3 min=Ogre::Vector3::ZERO, max=Ogre::Vector3::ZERO, currPos=Ogre::Vector3::ZERO;
+    Ogre::Vector3 min = Ogre::Vector3::ZERO, max = Ogre::Vector3::ZERO, currPos = Ogre::Vector3::ZERO;
     Ogre::Real maxSquaredRadius = 0.0f;
     bool first = true;
 
@@ -406,7 +403,7 @@ void MovableText::_setupGeometry()
         maxSquaredRadius = std::max(maxSquaredRadius, currPos.squaredLength());
 
         top -= mCharHeight * 2.0;
-        left -= horiz_height  * mCharHeight * 2.0;
+        left -= horiz_height * mCharHeight * 2.0;
 
         // Bottom left (again)
         if (mHorizontalAlignment == MovableText::H_LEFT)
@@ -423,7 +420,7 @@ void MovableText::_setupGeometry()
         max.makeCeil(currPos);
         maxSquaredRadius = std::max(maxSquaredRadius, currPos.squaredLength());
 
-        left += horiz_height  * mCharHeight * 2.0;
+        left += horiz_height * mCharHeight * 2.0;
 
         // Bottom right
         if (mHorizontalAlignment == MovableText::H_LEFT)
@@ -444,7 +441,7 @@ void MovableText::_setupGeometry()
         // Go back up with top
         top += mCharHeight * 2.0;
 
-        float currentWidth = (left + 1)/2 - 0;
+        float currentWidth = (left + 1) / 2 - 0;
         if (currentWidth > largestWidth)
             largestWidth = currentWidth;
     }
@@ -453,7 +450,6 @@ void MovableText::_setupGeometry()
     //ptbuf->unlock();
     ptbuf->writeData(0, ptbuf->getSizeInBytes(), oPCBuff, true);
     free(oPCBuff);
-
 
     // update AABB/Sphere radius
     mAABB = Ogre::AxisAlignedBox(min, max);
@@ -475,8 +471,8 @@ void MovableText::_updateColors(void)
     Root::getSingleton().convertColourValue(mColor, &color);
     HardwareVertexBufferSharedPtr vbuf = mRenderOp.vertexData->vertexBufferBinding->getBuffer(COLOUR_BINDING);
     //RGBA *pDest = static_cast<RGBA*>(vbuf->lock(HardwareBuffer::HBL_NORMAL));
-    RGBA* pDest=(RGBA*)malloc(vbuf->getSizeInBytes());
-    RGBA* oDest=pDest;
+    RGBA* pDest = (RGBA*)malloc(vbuf->getSizeInBytes());
+    RGBA* oDest = pDest;
     for (uint i = 0; i < mRenderOp.vertexData->vertexCount; ++i)
         *pDest++ = color;
     //vbuf->unlock();
@@ -493,9 +489,10 @@ const Quaternion& MovableText::getWorldOrientation(void) const
 
 // Add to build on Shoggoth:
 #if OGRE_VERSION>0x010602
-void MovableText::visitRenderables(Ogre::Renderable::Visitor* visitor, bool debugRenderables) {};
+void MovableText::visitRenderables(Ogre::Renderable::Visitor* visitor, bool debugRenderables)
+{
+};
 #endif //OGRE_VERSION
-
 
 const Vector3& MovableText::getWorldPosition(void) const
 {
@@ -503,7 +500,7 @@ const Vector3& MovableText::getWorldPosition(void) const
     return mParentNode->_getDerivedPosition();
 }
 
-void MovableText::getWorldTransforms(Matrix4 *xform) const
+void MovableText::getWorldTransforms(Matrix4* xform) const
 {
     if (this->isVisible() && mpCam)
     {
@@ -513,7 +510,7 @@ void MovableText::getWorldTransforms(Matrix4 *xform) const
         mpCam->getDerivedOrientation().ToRotationMatrix(rot3x3);
 
         // parent node position
-        Vector3 ppos = mParentNode->_getDerivedPosition() + Vector3::UNIT_Y*mAdditionalHeight;
+        Vector3 ppos = mParentNode->_getDerivedPosition() + Vector3::UNIT_Y * mAdditionalHeight;
 
         // apply scale
         scale3x3[0][0] = mParentNode->_getDerivedScale().x / 2;
@@ -526,7 +523,7 @@ void MovableText::getWorldTransforms(Matrix4 *xform) const
     }
 }
 
-void MovableText::getRenderOperation(RenderOperation &op)
+void MovableText::getRenderOperation(RenderOperation& op)
 {
     if (this->isVisible())
     {
@@ -538,7 +535,7 @@ void MovableText::getRenderOperation(RenderOperation &op)
     }
 }
 
-void MovableText::_notifyCurrentCamera(Camera *cam)
+void MovableText::_notifyCurrentCamera(Camera* cam)
 {
     mpCam = cam;
 }

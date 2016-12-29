@@ -11,12 +11,9 @@
 #include "ForwardDeclarations.h"
 #include "BaseLayout.h"
 
-namespace RoR
-{
+namespace RoR {
+namespace GUI {
 
-namespace GUI
-{
-    
 ATTRIBUTE_CLASS_LAYOUT(GameSettingsLayout, "settings.layout");
 class GameSettingsLayout : public wraps::BaseLayout
 {
@@ -224,6 +221,5 @@ protected:
 };
 
 } // namespace GUI
-
 } // namespace RoR
 

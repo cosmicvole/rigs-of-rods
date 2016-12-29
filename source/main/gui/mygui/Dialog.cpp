@@ -19,17 +19,13 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*
-    This file was ported from MyGUI project (MIT licensed)
-    https://github.com/MyGUI/mygui
-    http://mygui.info/
-*/
+// This file was ported from MyGUI project (MIT licensed)
+// https://github.com/MyGUI/mygui
+// http://mygui.info/
 
-/*!
-    @file
-    @author        Albert Semenov
-    @date        08/2008
-*/
+/// @file
+/// @author Albert Semenov
+/// @date   09/2008
 
 #include "Dialog.h"
 

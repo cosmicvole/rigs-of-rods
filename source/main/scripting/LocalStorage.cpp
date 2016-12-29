@@ -1,23 +1,23 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
+    Copyright 2013+     Petr Ohlidal & contributors
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
-// Created on 18th May 2011.
 
 #include "LocalStorage.h"
 
@@ -55,7 +55,7 @@ LocalStorage::LocalStorage(AngelScript::asIScriptEngine *engine_in)
     this->engine = engine_in;
     refCount++;
 
-    engine->NotifyGarbageCollectorOfNewObject(this, engine->GetTypeIdByDecl("LocalStorage"));    
+    engine->NotifyGarbageCollectorOfNewObject(this, engine->GetTypeIdByDecl("LocalStorage"));	
     saved = true;
 }
 
@@ -296,7 +296,7 @@ bool LocalStorage::exists(std::string &key)
 
 void scriptLocalStorageFactory_Generic(AngelScript::asIScriptGeneric *gen)
 {
-    std::string filename    = **(std::string**)gen->GetAddressOfArg(0);
+    std::string filename	= **(std::string**)gen->GetAddressOfArg(0);
     std::string sectionname = **(std::string**)gen->GetAddressOfArg(1);
     
     *(LocalStorage**)gen->GetAddressOfReturnLocation() = new LocalStorage(gen->GetEngine(), filename, sectionname);
@@ -304,12 +304,12 @@ void scriptLocalStorageFactory_Generic(AngelScript::asIScriptGeneric *gen)
 
 void scriptLocalStorageFactory2_Generic(AngelScript::asIScriptGeneric *gen)
 {
-    std::string filename    = **(std::string**)gen->GetAddressOfArg(0);    
+    std::string filename	= **(std::string**)gen->GetAddressOfArg(0);	
     *(LocalStorage**)gen->GetAddressOfReturnLocation() = new LocalStorage(gen->GetEngine(), filename, "common");
 }
 
 void scriptLocalStorageFactory3_Generic(AngelScript::asIScriptGeneric *gen)
-{    
+{	
     *(LocalStorage**)gen->GetAddressOfReturnLocation() = new LocalStorage(gen->GetEngine());
 }
 

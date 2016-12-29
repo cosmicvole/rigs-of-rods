@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2014 Petr Ohlidal
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -12,11 +12,11 @@
 
     Rigs of Rods is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
 /** 
@@ -35,8 +35,7 @@
 
 class GameScript;
 
-namespace RoR
-{
+namespace RoR {
 
 class MainThread
 {
@@ -45,13 +44,13 @@ class MainThread
 public:
 
     MainThread();
-    
+
     void Go();
 
     void Exit();
 
-    static void ChangedCurrentVehicle(Beam *previous_vehicle, Beam *current_vehicle);
-    
+    static void ChangedCurrentVehicle(Beam* previous_vehicle, Beam* current_vehicle);
+
     void RegenCache();
 
     void JoinMultiplayerServer();
@@ -78,12 +77,12 @@ protected:
 
     void ShowSurveyMap(bool hide);
 
-    bool               m_no_rendering;
-    bool               m_restart_requested;
-    unsigned long      m_start_time;
-    bool               m_base_resource_loaded;
-    bool               m_is_mumble_created;
-    RoRFrameListener*  m_frame_listener;
+    bool              m_no_rendering;
+    bool              m_restart_requested;
+    unsigned long     m_start_time;
+    bool              m_base_resource_loaded;
+    bool              m_is_mumble_created;
+    RoRFrameListener* m_frame_listener;
 
     std::map<std::string, bool> isLoadedMap;
 };

@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2014 Petr Ohlidal
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -12,15 +12,15 @@
 
     Rigs of Rods is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
-/*
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
+*/
 
-/*    
-    @file   
+/*
+    @file
     @brief  Implements part of RigSpawner class. Code separated for easier debugging.
     @author Petr Ohlidal
     @date   12/2013
@@ -293,7 +293,7 @@ rig_t *RigSpawner::SpawnRig()
     PROCESS_SECTION_IN_ALL_MODULES(RigDef::File::KEYWORD_CAMERAS, cameras, ProcessCamera);
 
     // Section 'hooks'
-    PROCESS_SECTION_IN_ALL_MODULES(RigDef::File::KEYWORD_HOOKS, hooks, ProcessHook);    
+    PROCESS_SECTION_IN_ALL_MODULES(RigDef::File::KEYWORD_HOOKS, hooks, ProcessHook);	
 
     // Section 'ties'
     PROCESS_SECTION_IN_ALL_MODULES(RigDef::File::KEYWORD_TIES, ties, ProcessTie);
@@ -363,7 +363,7 @@ rig_t *RigSpawner::SpawnRig()
     PROCESS_SECTION_IN_ANY_MODULE(RigDef::File::KEYWORD_EXTCAMERA, ext_camera, ProcessExtCamera);
 
     // Section 'camerarail'
-    PROCESS_SECTION_IN_ALL_MODULES(RigDef::File::KEYWORD_CAMERARAIL, camera_rails, ProcessCameraRail);    
+    PROCESS_SECTION_IN_ALL_MODULES(RigDef::File::KEYWORD_CAMERARAIL, camera_rails, ProcessCameraRail);
 
     // Section 'pistonprops'
     PROCESS_SECTION_IN_ALL_MODULES(RigDef::File::KEYWORD_PISTONPROPS, pistonprops, ProcessPistonprop);

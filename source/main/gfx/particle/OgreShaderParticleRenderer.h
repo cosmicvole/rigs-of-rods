@@ -18,10 +18,10 @@ namespace Ogre {
     {
     protected:
         /// rendering data
-        MaterialPtr            mMaterial;                ///< material for this renderable
-        VertexData*            mVertexData;
-        IndexData*            mIndexData;
-        uint8                mRenderQueueID;
+        MaterialPtr			mMaterial;				///< material for this renderable
+        VertexData*			mVertexData;
+        IndexData*			mIndexData;
+        uint8				mRenderQueueID;
 
         /// vertex format for particles
         /// * position will be always present in vertex format (don't need to specify) - float4 - w component is vertex index (0-3)
@@ -30,28 +30,28 @@ namespace Ogre {
         ///     mVertexFormatTTL + mVertexFormatTotalTTL + mVertexFormatTimeFragment + mVertexFormatTimeFragmentInv = float4
         /// * mVertexFormatColour will be set as diffuse colour in vertex declaration
         /// * last tex coord is custom particle parameters defined by emitters (always float4)
-        bool                mVertexFormatColour;            ///< particle colour (float4)
-        bool                mVertexFormatTexture;            ///< true if particles use texture (float2)
-        bool                mVertexFormatSize;                ///< particle size (width and height - float2)
-        bool                mVertexFormatRotation;            ///< particle rotation (radians - float1)
-        bool                mVertexFormatRotationSpeed;        ///< particle rotation speed (radians/s - float1)
-        bool                mVertexFormatDirection;            ///< particle direction (float3)
-        bool                mVertexFormatTTL;                ///< particle ttl (float1)
-        bool                mVertexFormatTotalTTL;            ///< particle total ttl (float1)
-        bool                mVertexFormatTimeFragment;        ///< particle time fragment (ttl / total ttl) (float1) (value 0.0f - 1.0f)
-        bool                mVertexFormatTimeFragmentInv;    ///< particle inverse time fragment (1.0f - ttl / total ttl) (float1) (value 0.0f - 1.0f)
-        size_t                mVertexSize;
-        Vector2                mTexCoordTable[4];                ///< default texture coordinates
+        bool				mVertexFormatColour;			///< particle colour (float4)
+        bool				mVertexFormatTexture;			///< true if particles use texture (float2)
+        bool				mVertexFormatSize;				///< particle size (width and height - float2)
+        bool				mVertexFormatRotation;			///< particle rotation (radians - float1)
+        bool				mVertexFormatRotationSpeed;		///< particle rotation speed (radians/s - float1)
+        bool				mVertexFormatDirection;			///< particle direction (float3)
+        bool				mVertexFormatTTL;				///< particle ttl (float1)
+        bool				mVertexFormatTotalTTL;			///< particle total ttl (float1)
+        bool				mVertexFormatTimeFragment;		///< particle time fragment (ttl / total ttl) (float1) (value 0.0f - 1.0f)
+        bool				mVertexFormatTimeFragmentInv;	///< particle inverse time fragment (1.0f - ttl / total ttl) (float1) (value 0.0f - 1.0f)
+        size_t				mVertexSize;
+        Vector2				mTexCoordTable[4];				///< default texture coordinates
 
         /// other informations
-        Vector2                mDefaultParticleSize;    ///< default particle size
-        Node*                mParentNode;            ///< parent node for particle system - used for world transformation
-        SortMode            mSortMode;                ///< particle sorting
-        mutable LightList    mLightList;                ///< light list for renderable
-        mutable ulong        mLightListUpdated;        ///< indicator if we need update light list
-        Real                mRadius;                ///< maximum distance between particles and parent node
-        bool                mParentIsTagPoint;        ///< true if parent node is tag point
-        bool                mKeepInLocalSpace;        ///< control transformation matrix for particles
+        Vector2				mDefaultParticleSize;	///< default particle size
+        Node*				mParentNode;			///< parent node for particle system - used for world transformation
+        SortMode			mSortMode;				///< particle sorting
+        mutable LightList	mLightList;				///< light list for renderable
+        mutable ulong		mLightListUpdated;		///< indicator if we need update light list
+        Real				mRadius;				///< maximum distance between particles and parent node
+        bool				mParentIsTagPoint;		///< true if parent node is tag point
+        bool				mKeepInLocalSpace;		///< control transformation matrix for particles
 
     public:
         ShaderParticleRenderer();
@@ -229,16 +229,16 @@ namespace Ogre {
         void addParticle(uint8* pDataVB, const Particle& particle) const;
         void setRenderQueueGroupAndPriority(Ogre::uint8,Ogre::ushort);
     protected:
-        static CmdVertexFormatColour        msVertexFmtColour;
-        static CmdVertexFormatTexture        msVertexFmtTexture;
-        static CmdVertexFormatSize            msVertexFmtSize;
-        static CmdVertexFormatRotation        msVertexFmtRotation;
-        static CmdVertexFormatRotationSpeed    msVertexFmtRotationSpeed;
-        static CmdVertexFormatDirection        msVertexFmtDirection;
-        static CmdVertexFormatTTL            msVertexFmtTTL;
-        static CmdVertexFormatTotalTTL        msVertexFmtTotalTTL;
-        static CmdVertexFormatTimeFrag        msVertexFmtTimeFrag;
-        static CmdVertexFormatTimeFragInv    msVertexFmtTimeFragInv;
+        static CmdVertexFormatColour		msVertexFmtColour;
+        static CmdVertexFormatTexture		msVertexFmtTexture;
+        static CmdVertexFormatSize			msVertexFmtSize;
+        static CmdVertexFormatRotation		msVertexFmtRotation;
+        static CmdVertexFormatRotationSpeed	msVertexFmtRotationSpeed;
+        static CmdVertexFormatDirection		msVertexFmtDirection;
+        static CmdVertexFormatTTL			msVertexFmtTTL;
+        static CmdVertexFormatTotalTTL		msVertexFmtTotalTTL;
+        static CmdVertexFormatTimeFrag		msVertexFmtTimeFrag;
+        static CmdVertexFormatTimeFragInv	msVertexFmtTimeFragInv;
     };
 
     /// Factory class for ShaderParticleRenderer

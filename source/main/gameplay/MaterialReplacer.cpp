@@ -1,19 +1,21 @@
-// This source file is part of Rigs of Rods
-// Copyright 2005-2015 Rigs of Rods contributors
+/*
+    This source file is part of Rigs of Rods
+    Copyright 2005-2015 Rigs of Rods contributors
 
-// For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-// Rigs of Rods is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License version 3, as
-// published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-// Rigs of Rods is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-// You should have received a copy of the GNU General Public License
-// along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #include "MaterialReplacer.h"
 
@@ -21,14 +23,14 @@
 
 using namespace Ogre;
 
-void MaterialReplacer::replaceMeshMaterials(Ogre::Entity *e)
+void MaterialReplacer::replaceMeshMaterials(Ogre::Entity* e)
 {
     MeshPtr m = e->getMesh();
     if (!m.isNull())
     {
-        for (int n=0; n<(int)m->getNumSubMeshes();n++)
+        for (int n = 0; n < (int)m->getNumSubMeshes(); n++)
         {
-            SubMesh *sm = m->getSubMesh(n);
+            SubMesh* sm = m->getSubMesh(n);
             if (this->hasReplacementForMaterial(sm->getMaterialName()))
             {
                 String newMat = this->getReplacementForMaterial(sm->getMaterialName());
@@ -37,9 +39,9 @@ void MaterialReplacer::replaceMeshMaterials(Ogre::Entity *e)
         }
     }
 
-    for (int n=0; n<(int)e->getNumSubEntities();n++)
+    for (int n = 0; n < (int)e->getNumSubEntities(); n++)
     {
-        SubEntity *subent = e->getSubEntity(n);
+        SubEntity* subent = e->getSubEntity(n);
         if (this->hasReplacementForMaterial(subent->getMaterialName()))
         {
             String newMat = this->getReplacementForMaterial(subent->getMaterialName());

@@ -35,8 +35,8 @@ void ForceFeedback::Setup()
     using namespace Ogre;
     m_device = App::GetInputEngine()->getForceFeedbackDevice();
     LOG(String("ForceFeedback: ")+TOSTRING(m_device->getFFAxesNumber())+" axe(s)");
-    const OIS::ForceFeedback::SupportedEffectList &supEffects=m_device->getSupportedEffects();
-    if (supEffects.size()>0)
+    const OIS::ForceFeedback::SupportedEffectList& supEffects = m_device->getSupportedEffects();
+    if (supEffects.size() > 0)
     {
         LOG("ForceFeedback: supported effects:");
         OIS::ForceFeedback::SupportedEffectList::const_iterator efit;
@@ -46,7 +46,7 @@ void ForceFeedback::Setup()
 #endif //OISHEAD
     }
     else
-        LOG("ForceFeedback: no supported effect found!");
+    LOG("ForceFeedback: no supported effect found!");
     m_device->setAutoCenterMode(false);
     m_device->setMasterGain(0.0);
 
@@ -61,7 +61,7 @@ void ForceFeedback::SetForces(float roll, float pitch, float wspeed, float dirco
     if (!m_hydro_effect)
     {
         //we create effect at the last moment, because it does not works otherwise
-        m_hydro_effect=new OIS::Effect(OIS::Effect::ConstantForce, OIS::Effect::Constant);
+        m_hydro_effect = new OIS::Effect(OIS::Effect::ConstantForce, OIS::Effect::Constant);
         m_hydro_effect->direction = OIS::Effect::North;
         m_hydro_effect->trigger_button = 0;
         m_hydro_effect->trigger_interval = 0;
@@ -69,7 +69,7 @@ void ForceFeedback::SetForces(float roll, float pitch, float wspeed, float dirco
         m_hydro_effect->replay_delay = 0;
         m_hydro_effect->setNumAxes(1);
         OIS::ConstantEffect* hydroConstForce = dynamic_cast<OIS::ConstantEffect*>(m_hydro_effect->getForceEffect());
-        hydroConstForce->level = 0;  //-10K to +10k
+        hydroConstForce->level = 0; //-10K to +10k
         hydroConstForce->envelope.attackLength = 0;
         hydroConstForce->envelope.attackLevel = (unsigned short)hydroConstForce->level;
         hydroConstForce->envelope.fadeLength = 0;
@@ -81,12 +81,13 @@ void ForceFeedback::SetForces(float roll, float pitch, float wspeed, float dirco
     OIS::ConstantEffect* hydroConstForce = dynamic_cast<OIS::ConstantEffect*>(m_hydro_effect->getForceEffect());
     float stress_gain = App::GetIoFFbackStressGain();
     float centering_gain = App::GetIoFFbackCenterGain();
-    float ff=-stress*stress_gain+dircommand*100.0*centering_gain*wspeed*wspeed;
-    if (ff>10000) ff=10000;
-    if (ff<-10000) ff=-10000;
-    hydroConstForce->level = ff;  //-10K to +10k
+    float ff = -stress * stress_gain + dircommand * 100.0 * centering_gain * wspeed * wspeed;
+    if (ff > 10000)
+        ff = 10000;
+    if (ff < -10000)
+        ff = -10000;
+    hydroConstForce->level = ff; //-10K to +10k
     m_device->modify(m_hydro_effect);
-
 }
 
 void ForceFeedback::SetEnabled(bool b)

@@ -12,7 +12,7 @@
 
     Rigs of Rods is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
@@ -28,23 +28,31 @@
 
 #pragma once
 
-#include <OgrePlatform.h>
 #include <OgreString.h>
 
-namespace RoR
-{
+#ifdef USE_CRASHRPT
+#   include "crashrpt.h" // see http://crashrpt.sourceforge.net/
+#endif
+
+namespace RoR {
 
 struct PlatformUtils
 {
     static const Ogre::String DIRECTORY_SEPARATOR;
 
-    static bool FileExists(const char * path);
+    static bool FileExists(const char* path);
 
-    static bool FileExists(Ogre::String const & path);
+    static bool FileExists(Ogre::String const& path);
 
-    static bool FolderExists(const char * path);
+    static bool FolderExists(const char* path);
 
-    static bool FolderExists(Ogre::String const & path);
+    static bool FolderExists(Ogre::String const& path);
 };
+
+#ifdef USE_CRASHRPT
+int CALLBACK CrashRptCallback(CR_CRASH_CALLBACK_INFO* pInfo);
+void InstallCrashRpt();
+void UninstallCrashRpt();
+#endif
 
 } // namespace RoR

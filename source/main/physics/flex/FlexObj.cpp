@@ -1,22 +1,24 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
+    Copyright 2013+     Petr Ohlidal & contributors
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
+
 #include "FlexObj.h"
 
 #include <Ogre.h>
@@ -28,54 +30,7 @@ FlexObj::FlexObj(node_t *nds, int numtexcoords, Vector3* texcoords, int numtrian
     unsigned int i;
     int j;
     triangleCount = numtriangles;
-    /*
-    //okay, we munch a bit the data to optimize submesh count
-    Vector3* texcoords=(Vector3*)malloc(sizeof(Vector3)*numtexcoords);
-    int* triangles=(int*)malloc(sizeof(int)*3*numtriangles);
-    int numsubmeshes=3;
-    int subtexindex[4];
-    int subtriindex[4];
-    int subisback[3]={0,1,2};
-    int numtex[3]={0,0,0};
-    int numtri[3]={0,0,0};
-    int postex[3]={0,0,0};
-    int postri[3]={0,0,0};
-    for (j=0; j<onumsubmeshes; j++)
-    {
-        int type=0;
-//             if (j<numsubmeshes-1)
-        {
-            type=osubisback[j+1];
-        }
-        numtex[type]+=osubtexindex[j+1]-osubtexindex[j];
-        numtri[type]+=osubtriindex[j+1]-osubtriindex[j];
-    }
-    postex[0]=0; postex[1]=numtex[0]; postex[2]=numtex[0]+numtex[1];
-    subtexindex[0]=0; subtexindex[1]=numtex[0]; subtexindex[2]=numtex[0]+numtex[1]; subtexindex[3]=numtex[0]+numtex[1]+numtex[2];
-    postri[0]=0; postri[1]=numtri[0]; postri[2]=numtri[0]+numtri[1];
-    subtriindex[0]=0; subtriindex[1]=numtri[0]; subtriindex[2]=numtri[0]+numtri[1]; subtriindex[3]=numtri[0]+numtri[1]+numtri[2];
-    for (j=0; j<onumsubmeshes; j++)
-    {
-        int type=0;
-        if (j<numsubmeshes-1)
-        {
-            type=osubisback[j+1];
-        }
-        for (i=0; i<osubtexindex[j+1]-osubtexindex[j]; i++)
-        {
-            texcoords[postex[type]]=otexcoords[osubtexindex[j]+i];
-        }
-        postex[type]+=osubtexindex[j+1]-osubtexindex[j];
-        for (i=0; i<osubtriindex[j+1]-osubtriindex[j]; i++)
-        {
-            int k;
-            for (k=0; k<3; k++)
-                triangles[postri[type]*3+k]=otriangles[(osubtriindex[j]+i)*3+k];
-        }
-        postri[type]+=osubtriindex[j+1]-osubtriindex[j];
-    }
-*/
-    //finished munching
+
     gEnv->sceneManager=gEnv->sceneManager;
     nodes=nds;
     /// Create the mesh via the MeshManager

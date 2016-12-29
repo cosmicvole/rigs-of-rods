@@ -19,11 +19,9 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** 
-    @file   SceneMouse.h
-    @author Thomas Fischer <thomas@thomasfischer.biz>
-    @date   11th of March 2011
-*/
+/// @file   SceneMouse.h
+/// @author Thomas Fischer <thomas@thomasfischer.biz>
+/// @date   11th of March 2011
 
 #include "SceneMouse.h"
 
@@ -48,18 +46,18 @@ using namespace RoR;
 SceneMouse::SceneMouse()
 {
     mouseGrabForce = 30000.0f;
-    grab_truck     = NULL;
-    
+    grab_truck = NULL;
+
     // load 3d line for mouse picking
-    pickLine =  gEnv->sceneManager->createManualObject("PickLineObject");
+    pickLine = gEnv->sceneManager->createManualObject("PickLineObject");
     pickLineNode = gEnv->sceneManager->getRootSceneNode()->createChildSceneNode("PickLineNode");
 
-    MaterialPtr pickLineMaterial = MaterialManager::getSingleton().create("PickLineMaterial",ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+    MaterialPtr pickLineMaterial = MaterialManager::getSingleton().create("PickLineMaterial", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
     pickLineMaterial->setReceiveShadows(false);
     pickLineMaterial->getTechnique(0)->setLightingEnabled(true);
-    pickLineMaterial->getTechnique(0)->getPass(0)->setDiffuse(0,0,1,0);
-    pickLineMaterial->getTechnique(0)->getPass(0)->setAmbient(0,0,1);
-    pickLineMaterial->getTechnique(0)->getPass(0)->setSelfIllumination(0,0,1);
+    pickLineMaterial->getTechnique(0)->getPass(0)->setDiffuse(0, 0, 1, 0);
+    pickLineMaterial->getTechnique(0)->getPass(0)->setAmbient(0, 0, 1);
+    pickLineMaterial->getTechnique(0)->getPass(0)->setSelfIllumination(0, 0, 1);
 
     pickLine->begin("PickLineMaterial", RenderOperation::OT_LINE_LIST);
     pickLine->position(0, 0, 0);
@@ -74,13 +72,11 @@ SceneMouse::SceneMouse()
 
 SceneMouse::~SceneMouse()
 {
-    
     if (pickLineNode != nullptr)
     {
         gEnv->sceneManager->getRootSceneNode()->removeAndDestroyChild("PickLineNode");
         pickLineNode = nullptr;
     }
-    
 
     if (pickLine != nullptr)
     {
@@ -102,13 +98,13 @@ void SceneMouse::releaseMousePick()
         grab_truck->mouseMove(minnode, Vector3::ZERO, 0);
 
     // reset the variables
-    minnode        = -1;
-    grab_truck     = 0;
-    mindist        = 99999;
+    minnode = -1;
+    grab_truck = 0;
+    mindist = 99999;
     mouseGrabState = 0;
-    lastgrabpos    = Vector3::ZERO;
-    lastMouseX     = 0;
-    lastMouseY     = 0;
+    lastgrabpos = Vector3::ZERO;
+    lastMouseX = 0;
+    lastMouseY = 0;
 
     mouseGrabState = 0;
 }
@@ -126,11 +122,11 @@ bool SceneMouse::mouseMoved(const OIS::MouseEvent& _arg)
     {
         lastMouseY = ms.Y.abs;
         lastMouseX = ms.X.abs;
-        
+
         Ray mouseRay = getMouseRay();
 
         // walk all trucks
-        Beam **trucks = BeamFactory::getSingleton().getTrucks();
+        Beam** trucks = BeamFactory::getSingleton().getTrucks();
         int trucksnum = BeamFactory::getSingleton().getTruckCount();
         minnode = -1;
         grab_truck = NULL;
@@ -140,11 +136,13 @@ bool SceneMouse::mouseMoved(const OIS::MouseEvent& _arg)
             {
                 // check if our ray intersects with the bounding box of the truck
                 std::pair<bool, Real> pair = mouseRay.intersects(trucks[i]->boundingBox);
-                if (!pair.first) continue;
+                if (!pair.first)
+                    continue;
 
                 for (int j = 0; j < trucks[i]->free_node; j++)
                 {
-                    if (trucks[i]->node_mouse_grab_disabled[j]) continue;
+                    if (trucks[i]->node_mouse_grab_disabled[j])
+                        continue;
 
                     // check if our ray intersects with the node
                     std::pair<bool, Real> pair = mouseRay.intersects(Sphere(trucks[i]->nodes[j].AbsPosition, 0.1f));
@@ -153,16 +151,17 @@ bool SceneMouse::mouseMoved(const OIS::MouseEvent& _arg)
                         // we hit it, check if its the nearest node
                         if (pair.second < mindist)
                         {
-                            mindist    = pair.second;
-                            minnode    = j;
+                            mindist = pair.second;
+                            minnode = j;
                             grab_truck = trucks[i];
                             break;
                         }
                     }
                 }
             }
-            
-            if (grab_truck) break;
+
+            if (grab_truck)
+                break;
         }
 
         // check if we hit a node
@@ -171,7 +170,7 @@ bool SceneMouse::mouseMoved(const OIS::MouseEvent& _arg)
             mouseGrabState = 1;
             pickLineNode->setVisible(true);
 
-            for (std::vector <hook_t>::iterator it = grab_truck->hooks.begin(); it!=grab_truck->hooks.end(); it++)
+            for (std::vector<hook_t>::iterator it = grab_truck->hooks.begin(); it != grab_truck->hooks.end(); it++)
             {
                 if (it->hookNode->id == minnode)
                 {
@@ -179,15 +178,16 @@ bool SceneMouse::mouseMoved(const OIS::MouseEvent& _arg)
                 }
             }
         }
-    } else if (ms.buttonDown(OIS::MB_Left) && mouseGrabState == 1)
+    }
+    else if (ms.buttonDown(OIS::MB_Left) && mouseGrabState == 1)
     {
         // force applying and so forth happens in update()
         lastMouseY = ms.Y.abs;
         lastMouseX = ms.X.abs;
         // not fixed
         return false;
-
-    } else if (!ms.buttonDown(OIS::MB_Left) && mouseGrabState == 1)
+    }
+    else if (!ms.buttonDown(OIS::MB_Left) && mouseGrabState == 1)
     {
         releaseMousePick();
         // not fixed
@@ -228,7 +228,7 @@ bool SceneMouse::mousePressed(const OIS::MouseEvent& _arg, OIS::MouseButtonID _i
     {
         if (gEnv->cameraManager && gEnv->cameraManager->getCurrentBehavior() == CameraManager::CAMERA_BEHAVIOR_VEHICLE)
         {
-            Beam *truck = BeamFactory::getSingleton().getCurrentTruck();
+            Beam* truck = BeamFactory::getSingleton().getCurrentTruck();
 
             if (truck)
             {
@@ -249,8 +249,8 @@ bool SceneMouse::mousePressed(const OIS::MouseEvent& _arg, OIS::MouseButtonID _i
                         if (ray_distance < nearest_ray_distance || (ray_distance == nearest_ray_distance && pair.second < nearest_camera_distance))
                         {
                             nearest_camera_distance = pair.second;
-                            nearest_ray_distance    = ray_distance;
-                            nearest_node_index      = i;
+                            nearest_ray_distance = ray_distance;
+                            nearest_node_index = i;
                         }
                     }
                 }
@@ -301,7 +301,7 @@ bool SceneMouse::keyReleased(const OIS::KeyEvent& _arg)
 
 Ray SceneMouse::getMouseRay()
 {
-    Viewport *vp = gEnv->mainCamera->getViewport();
+    Viewport* vp = gEnv->mainCamera->getViewport();
 
     return gEnv->mainCamera->getCameraToViewportRay((float)lastMouseX / (float)vp->getActualWidth(), (float)lastMouseY / (float)vp->getActualHeight());
 }

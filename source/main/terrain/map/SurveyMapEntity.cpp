@@ -1,22 +1,23 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
+
 #ifdef USE_MYGUI
 
 #include <Ogre.h>
@@ -30,8 +31,8 @@ using namespace Ogre;
 
 String SurveyMapEntity::entityStates[MaxEntityStates] = {"activated", "deactivated", "sleeping", "networked"};
 
-SurveyMapEntity::SurveyMapEntity(SurveyMapManager *ctrl, String type, MyGUI::StaticImagePtr parent) :
-      mMapControl(ctrl)
+SurveyMapEntity::SurveyMapEntity(SurveyMapManager* ctrl, String type, MyGUI::StaticImagePtr parent) :
+    mMapControl(ctrl)
     , mType(type)
     , mParent(parent)
     , mRotation(0)
@@ -59,7 +60,8 @@ void SurveyMapEntity::init()
     {
         //LOG("static map icon found: " + imageFile);
         mIsStatic = true;
-    } else
+    }
+    else
     {
         LOG("static map icon not found: " + imageFile);
         mIsStatic = false;
@@ -126,20 +128,21 @@ void SurveyMapEntity::setVisibility(bool value)
 
 void SurveyMapEntity::setState(int truckstate)
 {
-    if (mIsStatic) return;
+    if (mIsStatic)
+        return;
 
     EntityStates mapstate = Sleeping;
-    
+
     switch (truckstate)
     {
-        case SIMULATED:
-            mapstate = Activated;
-            break;
-        case NETWORKED:
-            mapstate = Networked;
-        default:
-            mapstate = Sleeping;
-            break;
+    case SIMULATED:
+        mapstate = Activated;
+        break;
+    case NETWORKED:
+        mapstate = Networked;
+    default:
+        mapstate = Sleeping;
+        break;
     }
 
     if (mState != mapstate)
@@ -157,7 +160,8 @@ int SurveyMapEntity::getState()
 
 void SurveyMapEntity::update()
 {
-    if (!mMainWidget->getVisible()) return;
+    if (!mMainWidget->getVisible())
+        return;
 
     if (!mMapControl->getMapEntitiesVisible())
     {
@@ -171,7 +175,7 @@ void SurveyMapEntity::update()
 
     // TODO: Fix the icon positions based on the overview map size and zoom value
     // TODO: Split visibility calculation and position update into two functions
-    
+
     mMainWidget->setPosition(
         mX / mMapControl->getMapSize().x * mParent->getWidth() - mMainWidget->getWidth() / 2,
         mZ / mMapControl->getMapSize().z * mParent->getHeight() - mMainWidget->getHeight() / 2
@@ -221,14 +225,14 @@ void SurveyMapEntity::updateIcon()
 
     if (!texture.isNull())
     {
-        mIconSize.width  = (int)texture->getWidth();
+        mIconSize.width = (int)texture->getWidth();
         mIconSize.height = (int)texture->getHeight();
         mIcon->setSize(mIconSize);
     }
-    
+
     if (mIconRotating)
     {
-        mIconRotating->setCenter(MyGUI::IntPoint(mIcon->getWidth()/2, mIcon->getHeight()/2));
+        mIconRotating->setCenter(MyGUI::IntPoint(mIcon->getWidth() / 2, mIcon->getHeight() / 2));
         mIconRotating->setAngle(mRotation);
     }
 }

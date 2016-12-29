@@ -1,27 +1,27 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
+    Copyright 2013+     Petr Ohlidal & contributors
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifdef USE_MYGUI
 
 #pragma once
-#ifndef __MAP_CONTROL_H_
-#define __MAP_CONTROL_H_
+
+#ifdef USE_MYGUI
 
 #include "RoRPrerequisites.h"
 
@@ -38,10 +38,10 @@ public:
     SurveyMapManager();
     ~SurveyMapManager();
 
-    SurveyMapEntity *createMapEntity(Ogre::String type);
-    SurveyMapEntity *createNamedMapEntity(Ogre::String name, Ogre::String type);
-    SurveyMapEntity *getMapEntityByName(Ogre::String name);
-    void deleteMapEntity(SurveyMapEntity *entity);
+    SurveyMapEntity* createMapEntity(Ogre::String type);
+    SurveyMapEntity* createNamedMapEntity(Ogre::String name, Ogre::String type);
+    SurveyMapEntity* getMapEntityByName(Ogre::String name);
+    void deleteMapEntity(SurveyMapEntity* entity);
     bool getMapEntitiesVisible() { return mMapEntitiesVisible; };
 
     void setAlpha(float alpha, bool permanent = true);
@@ -76,9 +76,15 @@ public:
 
     static Ogre::String getTypeByDriveable(int driveable);
 
-    enum SurveyMapTypes { SURVEY_MAP_NONE, SURVEY_MAP_SMALL, SURVEY_MAP_BIG, SURVEY_MAP_END};
+    enum SurveyMapTypes
+    {
+        SURVEY_MAP_NONE,
+        SURVEY_MAP_SMALL,
+        SURVEY_MAP_BIG,
+        SURVEY_MAP_END
+    };
 
-    void Update(Beam ** vehicles, int num_vehicles);
+    void Update(Beam** vehicles, int num_vehicles);
 
 protected:
 
@@ -90,6 +96,7 @@ protected:
     Ogre::Vector3 mMapSize;
 
     ATTRIBUTE_FIELD_WIDGET_NAME(SurveyMapManager, mMapTexture, "mMapTexture");
+
     MyGUI::StaticImage* mMapTexture;
 
     SurveyMapTextureCreator* mMapTextureCreator;
@@ -113,7 +120,5 @@ protected:
 
     void updateRenderMetrics();
 };
-
-#endif // __MAP_CONTROL_H_
 
 #endif // USE_MYGUI

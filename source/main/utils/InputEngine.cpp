@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2014 Petr Ohlidal
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -12,7 +12,7 @@
 
     Rigs of Rods is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
@@ -44,7 +44,7 @@
 #define _L(x) x
 #endif
 
-const char *mOISDeviceType[6] = {"Unknown Device", "Keyboard", "Mouse", "JoyStick", "Tablet", "Other Device"};
+const char* mOISDeviceType[6] = {"Unknown Device", "Keyboard", "Mouse", "JoyStick", "Tablet", "Other Device"};
 
 // LOOOONG list of possible events. see the struct type for the structure ;)
 eventInfo_t eventInfo[] = {
@@ -1594,15 +1594,15 @@ eventInfo_t eventInfo[] = {
     },
     {
         "TRUCK_TOGGLE_FORWARDCOMMANDS",
-            EV_TRUCK_TOGGLE_FORWARDCOMMANDS,
-            "Keyboard EXPL+CTRL+SHIFT+F",
-            _L("toggle forwardcommands")
+        EV_TRUCK_TOGGLE_FORWARDCOMMANDS,
+        "Keyboard EXPL+CTRL+SHIFT+F",
+        _L("toggle forwardcommands")
     },
     {
         "TRUCK_TOGGLE_IMPORTCOMMANDS",
-            EV_TRUCK_TOGGLE_IMPORTCOMMANDS,
-            "Keyboard EXPL+CTRL+SHIFT+I",
-            _L("toggle importcommands")
+        EV_TRUCK_TOGGLE_IMPORTCOMMANDS,
+        "Keyboard EXPL+CTRL+SHIFT+I",
+        _L("toggle importcommands")
     },
 
     // "new" commands
@@ -1746,48 +1746,45 @@ eventInfo_t eventInfo[] = {
     },
 
     // now position storage
-    { "TRUCK_SAVE_POS1", EV_TRUCK_SAVE_POS01, "Keyboard EXPL+ALT+CTRL+1", _L("save position as slot 1") },
-    { "TRUCK_SAVE_POS2", EV_TRUCK_SAVE_POS02, "Keyboard EXPL+ALT+CTRL+2", _L("save position as slot 2") },
-    { "TRUCK_SAVE_POS3", EV_TRUCK_SAVE_POS03, "Keyboard EXPL+ALT+CTRL+3", _L("save position as slot 3") },
-    { "TRUCK_SAVE_POS4", EV_TRUCK_SAVE_POS04, "Keyboard EXPL+ALT+CTRL+4", _L("save position as slot 4") },
-    { "TRUCK_SAVE_POS5", EV_TRUCK_SAVE_POS05, "Keyboard EXPL+ALT+CTRL+5", _L("save position as slot 5") },
-    { "TRUCK_SAVE_POS6", EV_TRUCK_SAVE_POS06, "Keyboard EXPL+ALT+CTRL+6", _L("save position as slot 6") },
-    { "TRUCK_SAVE_POS7", EV_TRUCK_SAVE_POS07, "Keyboard EXPL+ALT+CTRL+7", _L("save position as slot 7") },
-    { "TRUCK_SAVE_POS8", EV_TRUCK_SAVE_POS08, "Keyboard EXPL+ALT+CTRL+8", _L("save position as slot 8") },
-    { "TRUCK_SAVE_POS9", EV_TRUCK_SAVE_POS09, "Keyboard EXPL+ALT+CTRL+9", _L("save position as slot 9") },
-    { "TRUCK_SAVE_POS10", EV_TRUCK_SAVE_POS10, "Keyboard EXPL+ALT+CTRL+0", _L("save position as slot 10") },
+    {"TRUCK_SAVE_POS1", EV_TRUCK_SAVE_POS01, "Keyboard EXPL+ALT+CTRL+1", _L("save position as slot 1")},
+    {"TRUCK_SAVE_POS2", EV_TRUCK_SAVE_POS02, "Keyboard EXPL+ALT+CTRL+2", _L("save position as slot 2")},
+    {"TRUCK_SAVE_POS3", EV_TRUCK_SAVE_POS03, "Keyboard EXPL+ALT+CTRL+3", _L("save position as slot 3")},
+    {"TRUCK_SAVE_POS4", EV_TRUCK_SAVE_POS04, "Keyboard EXPL+ALT+CTRL+4", _L("save position as slot 4")},
+    {"TRUCK_SAVE_POS5", EV_TRUCK_SAVE_POS05, "Keyboard EXPL+ALT+CTRL+5", _L("save position as slot 5")},
+    {"TRUCK_SAVE_POS6", EV_TRUCK_SAVE_POS06, "Keyboard EXPL+ALT+CTRL+6", _L("save position as slot 6")},
+    {"TRUCK_SAVE_POS7", EV_TRUCK_SAVE_POS07, "Keyboard EXPL+ALT+CTRL+7", _L("save position as slot 7")},
+    {"TRUCK_SAVE_POS8", EV_TRUCK_SAVE_POS08, "Keyboard EXPL+ALT+CTRL+8", _L("save position as slot 8")},
+    {"TRUCK_SAVE_POS9", EV_TRUCK_SAVE_POS09, "Keyboard EXPL+ALT+CTRL+9", _L("save position as slot 9")},
+    {"TRUCK_SAVE_POS10", EV_TRUCK_SAVE_POS10, "Keyboard EXPL+ALT+CTRL+0", _L("save position as slot 10")},
 
-    { "TRUCK_LOAD_POS1", EV_TRUCK_LOAD_POS01, "Keyboard EXPL+ALT+1", _L("load position under slot 1") },
-    { "TRUCK_LOAD_POS2", EV_TRUCK_LOAD_POS02, "Keyboard EXPL+ALT+2", _L("load position under slot 2") },
-    { "TRUCK_LOAD_POS3", EV_TRUCK_LOAD_POS03, "Keyboard EXPL+ALT+3", _L("load position under slot 3") },
-    { "TRUCK_LOAD_POS4", EV_TRUCK_LOAD_POS04, "Keyboard EXPL+ALT+4", _L("load position under slot 4") },
-    { "TRUCK_LOAD_POS5", EV_TRUCK_LOAD_POS05, "Keyboard EXPL+ALT+5", _L("load position under slot 5") },
-    { "TRUCK_LOAD_POS6", EV_TRUCK_LOAD_POS06, "Keyboard EXPL+ALT+6", _L("load position under slot 6") },
-    { "TRUCK_LOAD_POS7", EV_TRUCK_LOAD_POS07, "Keyboard EXPL+ALT+7", _L("load position under slot 7") },
-    { "TRUCK_LOAD_POS8", EV_TRUCK_LOAD_POS08, "Keyboard EXPL+ALT+8", _L("load position under slot 8") },
-    { "TRUCK_LOAD_POS9", EV_TRUCK_LOAD_POS09, "Keyboard EXPL+ALT+9", _L("load position under slot 9") },
-    { "TRUCK_LOAD_POS10", EV_TRUCK_LOAD_POS10, "Keyboard EXPL+ALT+0", _L("load position under slot 10") },
+    {"TRUCK_LOAD_POS1", EV_TRUCK_LOAD_POS01, "Keyboard EXPL+ALT+1", _L("load position under slot 1")},
+    {"TRUCK_LOAD_POS2", EV_TRUCK_LOAD_POS02, "Keyboard EXPL+ALT+2", _L("load position under slot 2")},
+    {"TRUCK_LOAD_POS3", EV_TRUCK_LOAD_POS03, "Keyboard EXPL+ALT+3", _L("load position under slot 3")},
+    {"TRUCK_LOAD_POS4", EV_TRUCK_LOAD_POS04, "Keyboard EXPL+ALT+4", _L("load position under slot 4")},
+    {"TRUCK_LOAD_POS5", EV_TRUCK_LOAD_POS05, "Keyboard EXPL+ALT+5", _L("load position under slot 5")},
+    {"TRUCK_LOAD_POS6", EV_TRUCK_LOAD_POS06, "Keyboard EXPL+ALT+6", _L("load position under slot 6")},
+    {"TRUCK_LOAD_POS7", EV_TRUCK_LOAD_POS07, "Keyboard EXPL+ALT+7", _L("load position under slot 7")},
+    {"TRUCK_LOAD_POS8", EV_TRUCK_LOAD_POS08, "Keyboard EXPL+ALT+8", _L("load position under slot 8")},
+    {"TRUCK_LOAD_POS9", EV_TRUCK_LOAD_POS09, "Keyboard EXPL+ALT+9", _L("load position under slot 9")},
+    {"TRUCK_LOAD_POS10", EV_TRUCK_LOAD_POS10, "Keyboard EXPL+ALT+0", _L("load position under slot 10")},
 
+    {"DOF_TOGGLE", EV_DOF_TOGGLE, "Keyboard EXPL+CTRL+D", _L("turn on Depth of Field on or off")},
+    {"DOF_DEBUG", EV_DOF_DEBUG, "Keyboard EXPL+ALT+D", _L("turn on the Depth of field debug view")},
+    {"DOF_DEBUG_TOGGLE_FOCUS_MODE", EV_DOF_DEBUG_TOGGLE_FOCUS_MODE, "Keyboard EXPL+SPACE", _L("toggle the DOF focus mode")},
+    {"DOF_DEBUG_ZOOM_IN", EV_DOF_DEBUG_ZOOM_IN, "Keyboard EXPL+Q", _L("zoom in")},
+    {"DOF_DEBUG_ZOOM_OUT", EV_DOF_DEBUG_ZOOM_OUT, "Keyboard EXPL+Z", _L("zoom in")},
+    {"DOF_DEBUG_APERTURE_MORE", EV_DOF_DEBUG_APERTURE_MORE, "Keyboard EXPL+1", _L("more aperture")},
+    {"DOF_DEBUG_APERTURE_LESS", EV_DOF_DEBUG_APERTURE_LESS, "Keyboard EXPL+2", _L("less aperture")},
+    {"DOF_DEBUG_FOCUS_IN", EV_DOF_DEBUG_FOCUS_IN, "Keyboard EXPL+3", _L("move focus in")},
+    {"DOF_DEBUG_FOCUS_OUT", EV_DOF_DEBUG_FOCUS_OUT, "Keyboard EXPL+4", _L("move focus out")},
 
-    { "DOF_TOGGLE", EV_DOF_TOGGLE, "Keyboard EXPL+CTRL+D", _L("turn on Depth of Field on or off") },
-    { "DOF_DEBUG", EV_DOF_DEBUG, "Keyboard EXPL+ALT+D", _L("turn on the Depth of field debug view") },
-    { "DOF_DEBUG_TOGGLE_FOCUS_MODE", EV_DOF_DEBUG_TOGGLE_FOCUS_MODE, "Keyboard EXPL+SPACE", _L("toggle the DOF focus mode") },
-    { "DOF_DEBUG_ZOOM_IN", EV_DOF_DEBUG_ZOOM_IN, "Keyboard EXPL+Q", _L("zoom in") },
-    { "DOF_DEBUG_ZOOM_OUT", EV_DOF_DEBUG_ZOOM_OUT, "Keyboard EXPL+Z", _L("zoom in") },
-    { "DOF_DEBUG_APERTURE_MORE", EV_DOF_DEBUG_APERTURE_MORE, "Keyboard EXPL+1", _L("more aperture") },
-    { "DOF_DEBUG_APERTURE_LESS", EV_DOF_DEBUG_APERTURE_LESS, "Keyboard EXPL+2", _L("less aperture") },
-    { "DOF_DEBUG_FOCUS_IN", EV_DOF_DEBUG_FOCUS_IN, "Keyboard EXPL+3", _L("move focus in") },
-    { "DOF_DEBUG_FOCUS_OUT", EV_DOF_DEBUG_FOCUS_OUT, "Keyboard EXPL+4", _L("move focus out") },
+    {"TRUCKEDIT_RELOAD", EV_TRUCKEDIT_RELOAD, "Keyboard EXPL+SHIFT+CTRL+R", _L("reload truck")},
 
-    { "TRUCKEDIT_RELOAD", EV_TRUCKEDIT_RELOAD, "Keyboard EXPL+SHIFT+CTRL+R", _L("reload truck") },
-    
-    { "TOGGLESHADERS", EV_TOGGLESHADERS, "Keyboard EXPL+SHIFT+CTRL+S", _L("toggle shader usage") },
-
+    {"TOGGLESHADERS", EV_TOGGLESHADERS, "Keyboard EXPL+SHIFT+CTRL+S", _L("toggle shader usage")},
 
     // the end, DO NOT MODIFY
     {"", -1, "", ""},
 };
-
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
 #define strnlen(str,len) strlen(str)
@@ -1813,7 +1810,7 @@ using namespace OIS;
 
 // Constructor takes a RenderWindow because it uses that to determine input context
 InputEngine::InputEngine() :
-      captureMode(false)
+    captureMode(false)
     , free_joysticks(0)
     , inputsChanged(true)
     , mForceFeedback(0)
@@ -1823,7 +1820,8 @@ InputEngine::InputEngine() :
     , mappingLoaded(false)
     , uniqueCounter(0)
 {
-    for (int i=0;i<MAX_JOYSTICKS;i++) mJoy[i]=0;
+    for (int i = 0; i < MAX_JOYSTICKS; i++)
+        mJoy[i] = 0;
 #ifndef NOOGRE
     LOG("*** Loading OIS ***");
 #endif
@@ -1840,26 +1838,27 @@ InputEngine::~InputEngine()
 
 void InputEngine::destroy()
 {
-    if ( mInputManager )
+    if (mInputManager)
     {
 #ifndef NOOGRE
         LOG("*** Terminating OIS ***");
 #endif
         if (mMouse)
         {
-            mInputManager->destroyInputObject( mMouse );
-            mMouse=0;
+            mInputManager->destroyInputObject(mMouse);
+            mMouse = 0;
         }
         if (mKeyboard)
         {
-            mInputManager->destroyInputObject( mKeyboard );
-            mKeyboard=0;
+            mInputManager->destroyInputObject(mKeyboard);
+            mKeyboard = 0;
         }
         if (mJoy)
         {
-            for (int i=0;i<MAX_JOYSTICKS;i++)
+            for (int i = 0; i < MAX_JOYSTICKS; i++)
             {
-                if (!mJoy[i]) continue;
+                if (!mJoy[i])
+                    continue;
                 mInputManager->destroyInputObject(mJoy[i]);
                 mJoy[i] = 0;
             }
@@ -1870,10 +1869,8 @@ void InputEngine::destroy()
     }
 }
 
-
 bool InputEngine::setup(String hwnd, bool capture, bool capturemouse, bool captureKbd)
 {
-    
 #ifndef NOOGRE
     LOG("*** Initializing OIS ***");
 #endif
@@ -1885,7 +1882,7 @@ bool InputEngine::setup(String hwnd, bool capture, bool capturemouse, bool captu
         //size_t hWnd = 0;
         //win->getCustomAttribute("WINDOW", &hWnd);
         ParamList pl;
-        
+
 #if 0 //OGRE_PLATFORM == OGRE_PLATFORM_LINUX
         // we get the ogre way of defining the handle, extract the window HWND only
         int screen=0,app=0,windowhandle=0;
@@ -1893,7 +1890,7 @@ bool InputEngine::setup(String hwnd, bool capture, bool capturemouse, bool captu
         hwnd = TOSTRING(windowhandle);
         printf("OIS windowhandle = %s\n", hwnd.c_str());
 #endif // LINUX
-        
+
         pl.insert(OIS::ParamList::value_type("WINDOW", hwnd));
         if (RoR::App::GetIoInputGrabMode() != RoR::App::INPUT_GRAB_ALL)
         {
@@ -1928,24 +1925,24 @@ bool InputEngine::setup(String hwnd, bool capture, bool capturemouse, bool captu
 
         //List all devices
         OIS::DeviceList deviceList = mInputManager->listFreeDevices();
-        for (OIS::DeviceList::iterator i = deviceList.begin(); i != deviceList.end(); ++i )
-            LOG("* Device: " + String(mOISDeviceType[i->first]) + String(" Vendor: ") + i->second);
+        for (OIS::DeviceList::iterator i = deviceList.begin(); i != deviceList.end(); ++i)
+        LOG("* Device: " + String(mOISDeviceType[i->first]) + String(" Vendor: ") + i->second);
 #endif //NOOGRE
 
         //Create all devices (We only catch joystick exceptions here, as, most people have Key/Mouse)
-        mKeyboard=0;
+        mKeyboard = 0;
         if (captureKbd)
         {
             try
             {
-                mKeyboard = static_cast<Keyboard*>(mInputManager->createInputObject( OISKeyboard, true ));
+                mKeyboard = static_cast<Keyboard*>(mInputManager->createInputObject(OISKeyboard, true));
                 mKeyboard->setTextTranslation(OIS::Keyboard::Unicode);
-            } catch(OIS::Exception &ex)
+            }
+            catch (OIS::Exception& ex)
             {
                 LOG(String("Exception raised on keyboard creation: ") + String(ex.eText));
             }
         }
-
 
         try
         {
@@ -1959,7 +1956,8 @@ bool InputEngine::setup(String hwnd, bool capture, bool capturemouse, bool captu
                 free_joysticks++;
                 //create force feedback too
                 //here, we take the first device we can get, but we could take a device index
-                if (!mForceFeedback) mForceFeedback = (OIS::ForceFeedback*)mJoy[i]->queryInterface(OIS::Interface::ForceFeedback );
+                if (!mForceFeedback)
+                    mForceFeedback = (OIS::ForceFeedback*)mJoy[i]->queryInterface(OIS::Interface::ForceFeedback);
 
 #ifndef NOOGRE
                 LOG("Creating Joystick " + TOSTRING(i + 1) + " (" + mJoy[i]->vendor() + ")");
@@ -1972,7 +1970,7 @@ bool InputEngine::setup(String hwnd, bool capture, bool capturemouse, bool captu
             }
         }
 #ifndef NOOGRE
-        catch(OIS::Exception &ex)
+        catch (OIS::Exception& ex)
         {
             LOG(String("Exception raised on joystick creation: ") + String(ex.eText));
         }
@@ -1986,8 +1984,9 @@ bool InputEngine::setup(String hwnd, bool capture, bool capturemouse, bool captu
         {
             try
             {
-                mMouse = static_cast<Mouse*>(mInputManager->createInputObject( OISMouse, true ));
-            } catch(OIS::Exception &ex)
+                mMouse = static_cast<Mouse*>(mInputManager->createInputObject(OISMouse, true));
+            }
+            catch (OIS::Exception& ex)
             {
                 LOG(String("Exception raised on mouse creation: ") + String(ex.eText));
             }
@@ -2008,7 +2007,7 @@ bool InputEngine::setup(String hwnd, bool capture, bool capturemouse, bool captu
         }
         if (free_joysticks)
         {
-            for (int i=0;i<free_joysticks;i++)
+            for (int i = 0; i < free_joysticks; i++)
                 joyState[i] = mJoy[i]->getJoyStickState();
         }
 
@@ -2017,8 +2016,8 @@ bool InputEngine::setup(String hwnd, bool capture, bool capturemouse, bool captu
         // under linux, this will not work and the cursor will never reach (0,0)
         if (mMouse && RoR::App::GetOgreSubsystem()->GetRenderWindow())
         {
-            OIS::MouseState &mutableMouseState = const_cast<OIS::MouseState &>(mMouse->getMouseState());
-            mutableMouseState.X.abs = RoR::App::GetOgreSubsystem()->GetRenderWindow()->getWidth()  * 0.5f;
+            OIS::MouseState& mutableMouseState = const_cast<OIS::MouseState &>(mMouse->getMouseState());
+            mutableMouseState.X.abs = RoR::App::GetOgreSubsystem()->GetRenderWindow()->getWidth() * 0.5f;
             mutableMouseState.Y.abs = RoR::App::GetOgreSubsystem()->GetRenderWindow()->getHeight() * 0.5f;
         }
 #endif // _WIN32
@@ -2037,15 +2036,15 @@ bool InputEngine::setup(String hwnd, bool capture, bool capturemouse, bool captu
         for (int i = 0; i < free_joysticks; ++i)
         {
             String deviceStr = mJoy[i]->vendor();
-            
+
             // care about unsuitable chars
             String repl = "\\/ #@?!$%^&*()+=-><.:'|\";";
-            for(unsigned int c = 0; c < repl.size(); c++)
+            for (unsigned int c = 0; c < repl.size(); c++)
             {
-                deviceStr = StringUtil::replaceAll(deviceStr, repl.substr(c,1), "_");
+                deviceStr = StringUtil::replaceAll(deviceStr, repl.substr(c, 1), "_");
             }
             deviceStr += ".map";
-            
+
             loadMapping(deviceStr, true, i);
         }
 #endif //NOOGRE
@@ -2067,7 +2066,7 @@ void InputEngine::grabMouse(bool enable)
     if ((enable && lastmode == 0) || (!enable && lastmode == 1) || (lastmode == -1))
     {
         LOG("*** mouse grab: " + TOSTRING(enable));
-        //((LinuxMouse *)mMouse)->grab(enable);
+    //((LinuxMouse *)mMouse)->grab(enable);
         lastmode = enable?1:0;
     }
 #endif
@@ -2081,7 +2080,7 @@ void InputEngine::hideMouse(bool visible)
 #if OGRE_PLATFORM == OGRE_PLATFORM_LINUX
     if ((visible && mode == 0) || (!visible && mode == 1) || mode == -1)
     {
-        //((LinuxMouse *)mMouse)->hide(visible);
+    //((LinuxMouse *)mMouse)->hide(visible);
         mode = visible?1:0;
     }
 #endif
@@ -2093,13 +2092,13 @@ void InputEngine::setMousePosition(int x, int y, bool padding)
         return;
 #if OGRE_PLATFORM == OGRE_PLATFORM_LINUX
     // padding ensures that the mouse has a safety area at the window's borders
-//    ((LinuxMouse *)mMouse)->setMousePosition(x, y, padding);
+    //	((LinuxMouse *)mMouse)->setMousePosition(x, y, padding);
 #endif
 }
 
 OIS::MouseState InputEngine::getMouseState()
 {
-    static float mX=999999, mY=999999;
+    static float mX = 999999, mY = 999999;
     static int mode = -1;
     if (mode == -1)
     {
@@ -2110,7 +2109,7 @@ OIS::MouseState InputEngine::getMouseState()
         LOG("Mouse X sens: " + TOSTRING((Real)mX));
         LOG("Mouse Y sens: " + TOSTRING((Real)mY));
         mode = 1;
-        if (mX == 0 || mY ==0)
+        if (mX == 0 || mY == 0)
             mode = 2;
 #else
         // no scaling without ogre
@@ -2139,7 +2138,7 @@ String InputEngine::getKeyNameForKeyCode(OIS::KeyCode keycode)
         return "CTRL";
     if (keycode == KC_LMENU || keycode == KC_RMENU)
         return "ALT";
-    for (allit = allkeys.begin();allit != allkeys.end();allit++)
+    for (allit = allkeys.begin(); allit != allkeys.end(); allit++)
     {
         if (allit->second == keycode)
             return allit->first;
@@ -2159,7 +2158,7 @@ void InputEngine::Capture()
         mMouse->capture();
     }
 
-    for (int i=0; i < free_joysticks; i++)
+    for (int i = 0; i < free_joysticks; i++)
     {
         if (mJoy[i])
         {
@@ -2176,7 +2175,7 @@ void InputEngine::windowResized(Ogre::RenderWindow* rw)
     unsigned int width, height, depth;
     int left, top;
     rw->getMetrics(width, height, depth, left, top);
-    const OIS::MouseState &ms = mMouse->getMouseState();
+    const OIS::MouseState& ms = mMouse->getMouseState();
     ms.width = width;
     ms.height = height;
 #ifdef USE_MYGUI
@@ -2214,58 +2213,63 @@ void InputEngine::RestoreKeyboardListener()
 }
 
 /* --- Joystik Events ------------------------------------------ */
-bool InputEngine::buttonPressed( const OIS::JoyStickEvent &arg, int button )
+bool InputEngine::buttonPressed(const OIS::JoyStickEvent& arg, int button)
 {
-    inputsChanged=true;
+    inputsChanged = true;
     //LOG("*** buttonPressed " + TOSTRING(button));
     int i = arg.device->getID();
-    if (i < 0 || i >= MAX_JOYSTICKS) i = 0;
+    if (i < 0 || i >= MAX_JOYSTICKS)
+        i = 0;
     joyState[i] = arg.state;
     return true;
 }
 
-bool InputEngine::buttonReleased( const OIS::JoyStickEvent &arg, int button )
+bool InputEngine::buttonReleased(const OIS::JoyStickEvent& arg, int button)
 {
-    inputsChanged=true;
+    inputsChanged = true;
     //LOG("*** buttonReleased " + TOSTRING(button));
     int i = arg.device->getID();
-    if (i < 0 || i >= MAX_JOYSTICKS) i = 0;
+    if (i < 0 || i >= MAX_JOYSTICKS)
+        i = 0;
     joyState[i] = arg.state;
     return true;
 }
 
-bool InputEngine::axisMoved( const OIS::JoyStickEvent &arg, int axis )
+bool InputEngine::axisMoved(const OIS::JoyStickEvent& arg, int axis)
 {
-    inputsChanged=true;
+    inputsChanged = true;
     //LOG("*** axisMoved " + TOSTRING(axis) + " / " + TOSTRING((int)(arg.state.mAxes[axis].abs / (float)(mJoy->MAX_AXIS/100))));
     int i = arg.device->getID();
-    if (i < 0 || i >= MAX_JOYSTICKS) i = 0;
+    if (i < 0 || i >= MAX_JOYSTICKS)
+        i = 0;
     joyState[i] = arg.state;
     return true;
 }
 
-bool InputEngine::sliderMoved( const OIS::JoyStickEvent &arg, int )
+bool InputEngine::sliderMoved(const OIS::JoyStickEvent& arg, int)
 {
-    inputsChanged=true;
+    inputsChanged = true;
     //LOG("*** sliderMoved");
     int i = arg.device->getID();
-    if (i < 0 || i >= MAX_JOYSTICKS) i = 0;
+    if (i < 0 || i >= MAX_JOYSTICKS)
+        i = 0;
     joyState[i] = arg.state;
     return true;
 }
 
-bool InputEngine::povMoved( const OIS::JoyStickEvent &arg, int )
+bool InputEngine::povMoved(const OIS::JoyStickEvent& arg, int)
 {
-    inputsChanged=true;
+    inputsChanged = true;
     //LOG("*** povMoved");
     int i = arg.device->getID();
-    if (i < 0 || i >= MAX_JOYSTICKS) i = 0;
+    if (i < 0 || i >= MAX_JOYSTICKS)
+        i = 0;
     joyState[i] = arg.state;
     return true;
 }
 
 /* --- Key Events ------------------------------------------ */
-bool InputEngine::keyPressed( const OIS::KeyEvent &arg )
+bool InputEngine::keyPressed(const OIS::KeyEvent& arg)
 {
 #ifdef USE_MYGUI
     if (RoR::App::GetGuiManager()->keyPressed(arg))
@@ -2274,13 +2278,13 @@ bool InputEngine::keyPressed( const OIS::KeyEvent &arg )
 
     //LOG("*** keyPressed");
     if (keyState[arg.key] != 1)
-        inputsChanged=true;
+        inputsChanged = true;
     keyState[arg.key] = 1;
 
     return true;
 }
 
-bool InputEngine::keyReleased( const OIS::KeyEvent &arg )
+bool InputEngine::keyReleased(const OIS::KeyEvent& arg)
 {
 #ifdef USE_MYGUI
     if (RoR::App::GetGuiManager()->keyReleased(arg))
@@ -2288,44 +2292,44 @@ bool InputEngine::keyReleased( const OIS::KeyEvent &arg )
 #endif //MYGUI
     //LOG("*** keyReleased");
     if (keyState[arg.key] != 0)
-        inputsChanged=true;
+        inputsChanged = true;
     keyState[arg.key] = 0;
     return true;
 }
 
 /* --- Mouse Events ------------------------------------------ */
-bool InputEngine::mouseMoved( const OIS::MouseEvent &arg )
+bool InputEngine::mouseMoved(const OIS::MouseEvent& arg)
 {
 #ifdef USE_MYGUI
     if (RoR::App::GetGuiManager()->mouseMoved(arg))
         return true;
 #endif //MYGUI
     //LOG("*** mouseMoved");
-    inputsChanged=true;
+    inputsChanged = true;
     mouseState = arg.state;
     return true;
 }
 
-bool InputEngine::mousePressed( const OIS::MouseEvent &arg, OIS::MouseButtonID id )
+bool InputEngine::mousePressed(const OIS::MouseEvent& arg, OIS::MouseButtonID id)
 {
 #ifdef USE_MYGUI
     if (RoR::App::GetGuiManager()->mousePressed(arg, id))
         return true;
 #endif //MYGUI
     //LOG("*** mousePressed");
-    inputsChanged=true;
+    inputsChanged = true;
     mouseState = arg.state;
     return true;
 }
 
-bool InputEngine::mouseReleased( const OIS::MouseEvent &arg, OIS::MouseButtonID id )
+bool InputEngine::mouseReleased(const OIS::MouseEvent& arg, OIS::MouseButtonID id)
 {
 #ifdef USE_MYGUI
     if (RoR::App::GetGuiManager()->mouseReleased(arg, id))
         return true;
 #endif //MYGUI
     //LOG("*** mouseReleased");
-    inputsChanged=true;
+    inputsChanged = true;
     mouseState = arg.state;
     return true;
 }
@@ -2339,10 +2343,9 @@ void InputEngine::prepareShutdown()
     destroy();
 }
 
-
 void InputEngine::resetKeys()
 {
-    for ( std::map<int, bool>::iterator iter = keyState.begin(); iter != keyState.end(); ++iter)
+    for (std::map<int, bool>::iterator iter = keyState.begin(); iter != keyState.end(); ++iter)
     {
         iter->second = false;
     }
@@ -2360,7 +2363,8 @@ bool InputEngine::getEventBoolValueBounce(int eventID, float time)
     else
     {
         bool res = getEventBoolValue(eventID);
-        if (res) event_times[eventID] = time;
+        if (res)
+            event_times[eventID] = time;
         return res;
     }
 }
@@ -2372,7 +2376,7 @@ float InputEngine::getEventBounceTime(int eventID)
 
 void InputEngine::updateKeyBounces(float dt)
 {
-    for (std::map<int, float>::iterator it=event_times.begin(); it!=event_times.end(); it++)
+    for (std::map<int, float>::iterator it = event_times.begin(); it != event_times.end(); it++)
     {
         if (it->second > 0)
             it->second -= dt;
@@ -2389,11 +2393,11 @@ float InputEngine::deadZone(float axisValue, float dz)
 
     // check for deadzone
     if (fabs(axisValue) < dz)
-        // dead zone case
+    // dead zone case
         return 0.0f;
     else
-        // non-deadzone, remap the remaining part
-        return (axisValue - dz) * (1.0f / (1.0f-dz));
+    // non-deadzone, remap the remaining part
+        return (axisValue - dz) * (1.0f / (1.0f - dz));
 }
 
 float InputEngine::axisLinearity(float axisValue, float linearity)
@@ -2403,15 +2407,19 @@ float InputEngine::axisLinearity(float axisValue, float linearity)
 
 float InputEngine::logval(float val)
 {
-    if (val>0) return log10(1.0/(1.1-val))/1.0;
-    if (val==0) return 0;
-    return -log10(1.0/(1.1+val))/1.0;
+    if (val > 0)
+        return log10(1.0 / (1.1 - val)) / 1.0;
+    if (val == 0)
+        return 0;
+    return -log10(1.0 / (1.1 + val)) / 1.0;
 }
 
-void InputEngine::smoothValue(float &ref, float value, float rate)
+void InputEngine::smoothValue(float& ref, float value, float rate)
 {
-    if (value < -1) value = -1;
-    if (value > 1) value = 1;
+    if (value < -1)
+        value = -1;
+    if (value > 1)
+        value = 1;
     // smooth!
     if (ref > value)
     {
@@ -2431,13 +2439,13 @@ String InputEngine::getEventCommand(int eventID)
     return "";
 }
 
-event_trigger_t *InputEngine::getEventBySUID(int suid)
+event_trigger_t* InputEngine::getEventBySUID(int suid)
 {
-    std::map<int, std::vector<event_trigger_t> >::iterator a;
+    std::map<int, std::vector<event_trigger_t>>::iterator a;
     std::vector<event_trigger_t>::iterator b;
-    for (a = events.begin();a != events.end(); a++)
+    for (a = events.begin(); a != events.end(); a++)
     {
-        for (b = a->second.begin();b != a->second.end(); b++)
+        for (b = a->second.begin(); b != a->second.end(); b++)
         {
             if (b->suid == suid)
                 return &(*b);
@@ -2448,11 +2456,11 @@ event_trigger_t *InputEngine::getEventBySUID(int suid)
 
 bool InputEngine::deleteEventBySUID(int suid)
 {
-    std::map<int, std::vector<event_trigger_t> >::iterator a;
+    std::map<int, std::vector<event_trigger_t>>::iterator a;
     std::vector<event_trigger_t>::iterator b;
-    for (a = events.begin();a != events.end(); a++)
+    for (a = events.begin(); a != events.end(); a++)
     {
-        for (b = a->second.begin();b != a->second.end(); b++)
+        for (b = a->second.begin(); b != a->second.end(); b++)
         {
             if (b->suid == suid)
             {
@@ -2494,21 +2502,21 @@ bool InputEngine::isEventAnalog(int eventID)
     {
         //loop through all eventtypes, because we want to find a analog device wether it is the first device or not
         //this means a analog device is always preferred over a digital one
-        for (unsigned int i=0;i<t_vec.size();i++)
+        for (unsigned int i = 0; i < t_vec.size(); i++)
         {
-            if ((t_vec[i].eventtype == ET_MouseAxisX \
-                || t_vec[i].eventtype == ET_MouseAxisY \
-                || t_vec[i].eventtype == ET_MouseAxisZ \
-                || t_vec[i].eventtype == ET_JoystickAxisAbs \
-                || t_vec[i].eventtype == ET_JoystickAxisRel \
-                || t_vec[i].eventtype == ET_JoystickSliderX \
-                || t_vec[i].eventtype == ET_JoystickSliderY) \
+            if ((t_vec[i].eventtype == ET_MouseAxisX
+                    || t_vec[i].eventtype == ET_MouseAxisY
+                    || t_vec[i].eventtype == ET_MouseAxisZ
+                    || t_vec[i].eventtype == ET_JoystickAxisAbs
+                    || t_vec[i].eventtype == ET_JoystickAxisRel
+                    || t_vec[i].eventtype == ET_JoystickSliderX
+                    || t_vec[i].eventtype == ET_JoystickSliderY)
                 //check if value comes from analog device
                 //this way, only valid events (e.g. joystick mapped, but unplugged) are recognized as analog events
-                && getEventValue(eventID, true, 2)!=0.0)
-                {
-                    return true;
-                }
+                && getEventValue(eventID, true, 2) != 0.0)
+            {
+                return true;
+            }
         }
     }
     return false;
@@ -2536,196 +2544,198 @@ float InputEngine::getEventValue(int eventID, bool pure, int valueSource)
 {
     float returnValue = 0;
     std::vector<event_trigger_t> t_vec = events[eventID];
-    float value=0;
+    float value = 0;
     for (std::vector<event_trigger_t>::iterator i = t_vec.begin(); i != t_vec.end(); i++)
     {
         event_trigger_t t = *i;
 
-        if (valueSource==0 || valueSource==1)
-        {
-            switch(t.eventtype)
-            {
-                case ET_NONE:
-                    break;
-                case ET_Keyboard:
-                    if (!keyState[t.keyCode])
-                        break;
-
-                    // only use explicite mapping, if two keys with different modifiers exist, i.e. F1 and SHIFT+F1.
-                    // check for modificators
-                    if (t.explicite)
-                    {
-                        if (t.ctrl != (keyState[KC_LCONTROL] || keyState[KC_RCONTROL]))
-                            break;
-                        if (t.shift != (keyState[KC_LSHIFT] || keyState[KC_RSHIFT]))
-                            break;
-                        if (t.alt != (keyState[KC_LMENU] || keyState[KC_RMENU]))
-                            break;
-                    } else {
-                        if (t.ctrl && !(keyState[KC_LCONTROL] || keyState[KC_RCONTROL]))
-                            break;
-                        if (t.shift && !(keyState[KC_LSHIFT] || keyState[KC_RSHIFT]))
-                            break;
-                        if (t.alt && !(keyState[KC_LMENU] || keyState[KC_RMENU]))
-                            break;
-                    }
-                    value = 1;
-                    break;
-                case ET_MouseButton:
-                    //if (t.mouseButtonNumber == 0)
-                    // TODO: FIXME
-                    value = mouseState.buttonDown(MB_Left);
-                    break;
-                case ET_JoystickButton:
-                    {
-                        if (t.joystickNumber > free_joysticks || !mJoy[t.joystickNumber])
-                        {
-                            value=0;
-                            continue;
-                        }
-                        if (t.joystickButtonNumber >= (int)mJoy[t.joystickNumber]->getNumberOfComponents(OIS_Button))
-                        {
-#ifndef NOOGRE
-                            LOG("*** Joystick has not enough buttons for mapping: need button "+TOSTRING(t.joystickButtonNumber) + ", availabe buttons: "+TOSTRING(mJoy[t.joystickNumber]->getNumberOfComponents(OIS_Button)));
-#endif
-                            value=0;
-                            continue;
-                        }
-                        value = joyState[t.joystickNumber].mButtons[t.joystickButtonNumber];
-                    }
-                    break;
-                case ET_JoystickPov:
-                    {
-                        if (t.joystickNumber > free_joysticks || !mJoy[t.joystickNumber])
-                        {
-                            value=0;
-                            continue;
-                        }
-                        if (t.joystickPovNumber >= (int)mJoy[t.joystickNumber]->getNumberOfComponents(OIS_POV))
-                        {
-#ifndef NOOGRE
-                            LOG("*** Joystick has not enough POVs for mapping: need POV "+TOSTRING(t.joystickPovNumber) + ", availabe POVs: "+TOSTRING(mJoy[t.joystickNumber]->getNumberOfComponents(OIS_POV)));
-#endif
-                            value=0;
-                            continue;
-                        }
-                        if (joyState[t.joystickNumber].mPOV[t.joystickPovNumber].direction & t.joystickPovDirection)
-                            value = 1;
-                        else
-                            value = 0;
-                    }
-                    break;
-            }
-
-        }
-        if (valueSource==0 || valueSource==2)
+        if (valueSource == 0 || valueSource == 1)
         {
             switch (t.eventtype)
             {
-                case ET_MouseAxisX:
-                    value = mouseState.X.abs / 32767;
+            case ET_NONE:
+                break;
+            case ET_Keyboard:
+                if (!keyState[t.keyCode])
                     break;
-                case ET_MouseAxisY:
-                    value = mouseState.Y.abs / 32767;
-                    break;
-                case ET_MouseAxisZ:
-                    value = mouseState.Z.abs / 32767;
-                    break;
-                
-                case ET_JoystickAxisRel:
-                case ET_JoystickAxisAbs:
-                    {
-                        if (t.joystickNumber > free_joysticks || !mJoy[t.joystickNumber])
-                        {
-                            value=0;
-                            continue;
-                        }
-                        if (t.joystickAxisNumber >= (int)joyState[t.joystickNumber].mAxes.size())
-                        {
-    #ifndef NOOGRE
-                            LOG("*** Joystick has not enough axis for mapping: need axe "+TOSTRING(t.joystickAxisNumber) + ", availabe axis: "+TOSTRING(joyState[t.joystickNumber].mAxes.size()));
-    #endif
-                            value=0;
-                            continue;
-                        }
-                        Axis axe = joyState[t.joystickNumber].mAxes[t.joystickAxisNumber];
 
-                        if (t.eventtype == ET_JoystickAxisRel)
+                // only use explicite mapping, if two keys with different modifiers exist, i.e. F1 and SHIFT+F1.
+                // check for modificators
+                if (t.explicite)
+                {
+                    if (t.ctrl != (keyState[KC_LCONTROL] || keyState[KC_RCONTROL]))
+                        break;
+                    if (t.shift != (keyState[KC_LSHIFT] || keyState[KC_RSHIFT]))
+                        break;
+                    if (t.alt != (keyState[KC_LMENU] || keyState[KC_RMENU]))
+                        break;
+                }
+                else
+                {
+                    if (t.ctrl && !(keyState[KC_LCONTROL] || keyState[KC_RCONTROL]))
+                        break;
+                    if (t.shift && !(keyState[KC_LSHIFT] || keyState[KC_RSHIFT]))
+                        break;
+                    if (t.alt && !(keyState[KC_LMENU] || keyState[KC_RMENU]))
+                        break;
+                }
+                value = 1;
+                break;
+            case ET_MouseButton:
+                //if (t.mouseButtonNumber == 0)
+                // TODO: FIXME
+                value = mouseState.buttonDown(MB_Left);
+                break;
+            case ET_JoystickButton:
+                {
+                    if (t.joystickNumber > free_joysticks || !mJoy[t.joystickNumber])
+                    {
+                        value = 0;
+                        continue;
+                    }
+                    if (t.joystickButtonNumber >= (int)mJoy[t.joystickNumber]->getNumberOfComponents(OIS_Button))
+                    {
+#ifndef NOOGRE
+                        LOG("*** Joystick has not enough buttons for mapping: need button "+TOSTRING(t.joystickButtonNumber) + ", availabe buttons: "+TOSTRING(mJoy[t.joystickNumber]->getNumberOfComponents(OIS_Button)));
+#endif
+                        value = 0;
+                        continue;
+                    }
+                    value = joyState[t.joystickNumber].mButtons[t.joystickButtonNumber];
+                }
+                break;
+            case ET_JoystickPov:
+                {
+                    if (t.joystickNumber > free_joysticks || !mJoy[t.joystickNumber])
+                    {
+                        value = 0;
+                        continue;
+                    }
+                    if (t.joystickPovNumber >= (int)mJoy[t.joystickNumber]->getNumberOfComponents(OIS_POV))
+                    {
+#ifndef NOOGRE
+                        LOG("*** Joystick has not enough POVs for mapping: need POV "+TOSTRING(t.joystickPovNumber) + ", availabe POVs: "+TOSTRING(mJoy[t.joystickNumber]->getNumberOfComponents(OIS_POV)));
+#endif
+                        value = 0;
+                        continue;
+                    }
+                    if (joyState[t.joystickNumber].mPOV[t.joystickPovNumber].direction & t.joystickPovDirection)
+                        value = 1;
+                    else
+                        value = 0;
+                }
+                break;
+            }
+        }
+        if (valueSource == 0 || valueSource == 2)
+        {
+            switch (t.eventtype)
+            {
+            case ET_MouseAxisX:
+                value = mouseState.X.abs / 32767;
+                break;
+            case ET_MouseAxisY:
+                value = mouseState.Y.abs / 32767;
+                break;
+            case ET_MouseAxisZ:
+                value = mouseState.Z.abs / 32767;
+                break;
+
+            case ET_JoystickAxisRel:
+            case ET_JoystickAxisAbs:
+                {
+                    if (t.joystickNumber > free_joysticks || !mJoy[t.joystickNumber])
+                    {
+                        value = 0;
+                        continue;
+                    }
+                    if (t.joystickAxisNumber >= (int)joyState[t.joystickNumber].mAxes.size())
+                    {
+#ifndef NOOGRE
+                        LOG("*** Joystick has not enough axis for mapping: need axe "+TOSTRING(t.joystickAxisNumber) + ", availabe axis: "+TOSTRING(joyState[t.joystickNumber].mAxes.size()));
+#endif
+                        value = 0;
+                        continue;
+                    }
+                    Axis axe = joyState[t.joystickNumber].mAxes[t.joystickAxisNumber];
+
+                    if (t.eventtype == ET_JoystickAxisRel)
+                    {
+                        value = (float)axe.rel / (float)mJoy[t.joystickNumber]->MAX_AXIS;
+                    }
+                    else
+                    {
+                        value = (float)axe.abs / (float)mJoy[t.joystickNumber]->MAX_AXIS;
+                        switch (t.joystickAxisRegion)
                         {
-                            value = (float)axe.rel / (float)mJoy[t.joystickNumber]->MAX_AXIS;
+                        case 0:
+                            // normal case, full axis used
+                            value = (value + 1) / 2;
+                            break;
+                        case -1:
+                            // lower range used
+                            if (value > 0)
+                                value = 0;
+                            else
+                                value = -value;
+                            break;
+                        case 1:
+                            // upper range used
+                            if (value < 0)
+                                value = 0;
+                            break;
+                        }
+
+                        if (t.joystickAxisHalf)
+                        {
+                            // XXX: TODO: write this
+                            //float a = (double)((value+1.0)/2.0);
+                            //float b = (double)(1.0-(value+1.0)/2.0);
+                            //LOG("half: "+TOSTRING(value)+" / "+TOSTRING(a)+" / "+TOSTRING(b));
+                            //no dead zone in half axis
+                            value = (1.0 + value) / 2.0;
+                            if (t.joystickAxisReverse)
+                                value = 1.0 - value;
+                            if (!pure)
+                                value = axisLinearity(value, t.joystickAxisLinearity);
                         }
                         else
                         {
-                            value = (float)axe.abs / (float)mJoy[t.joystickNumber]->MAX_AXIS;
-                            switch(t.joystickAxisRegion)
-                            {
-                            case 0:
-                                // normal case, full axis used
-                                value = (value + 1)/2;
-                                break;
-                            case -1:
-                                // lower range used
-                                if (value > 0)
-                                    value = 0;
-                                else
-                                    value = -value;
-                                break;
-                            case 1:
-                                // upper range used
-                                if (value < 0)
-                                    value = 0;
-                                break;
-                            }
-
-                            if (t.joystickAxisHalf)
-                            {
-                                // XXX: TODO: write this
-                                //float a = (double)((value+1.0)/2.0);
-                                //float b = (double)(1.0-(value+1.0)/2.0);
-                                //LOG("half: "+TOSTRING(value)+" / "+TOSTRING(a)+" / "+TOSTRING(b));
-                                //no dead zone in half axis
-                                value = (1.0 + value) / 2.0;
-                                if (t.joystickAxisReverse)
-                                    value = 1.0 - value;
-                                if (!pure)
-                                    value = axisLinearity(value, t.joystickAxisLinearity);
-                            }else
-                            {
-                                //LOG("not half: "+TOSTRING(value)+" / "+TOSTRING(deadZone(value, t.joystickAxisDeadzone)) +" / "+TOSTRING(t.joystickAxisDeadzone) );
-                                if (t.joystickAxisReverse)
-                                    value = 1-value;
-                                if (!pure)
-                                    // no deadzone when using oure value
-                                    value = deadZone(value, t.joystickAxisDeadzone);
-                                if (!pure)
-                                    value = axisLinearity(value, t.joystickAxisLinearity);
-                            }
-                            // digital mapping of analog axis
-                            if (t.joystickAxisUseDigital)
-                                if (value >= 0.5)
-                                    value = 1;
-                                else
-                                    value = 0;
+                            //LOG("not half: "+TOSTRING(value)+" / "+TOSTRING(deadZone(value, t.joystickAxisDeadzone)) +" / "+TOSTRING(t.joystickAxisDeadzone) );
+                            if (t.joystickAxisReverse)
+                                value = 1 - value;
+                            if (!pure)
+                            // no deadzone when using oure value
+                                value = deadZone(value, t.joystickAxisDeadzone);
+                            if (!pure)
+                                value = axisLinearity(value, t.joystickAxisLinearity);
                         }
+                        // digital mapping of analog axis
+                        if (t.joystickAxisUseDigital)
+                            if (value >= 0.5)
+                                value = 1;
+                            else
+                                value = 0;
                     }
-                    break;
-                case ET_JoystickSliderX:
-                case ET_JoystickSliderY:
+                }
+                break;
+            case ET_JoystickSliderX:
+            case ET_JoystickSliderY:
+                {
+                    if (t.joystickNumber > free_joysticks || !mJoy[t.joystickNumber])
                     {
-                        if (t.joystickNumber > free_joysticks || !mJoy[t.joystickNumber])
-                        {
-                            value=0;
-                            continue;
-                        }
-                        if (t.eventtype == ET_JoystickSliderX)
-                            value = (float)joyState[t.joystickNumber].mSliders[t.joystickSliderNumber].abX / (float)mJoy[t.joystickNumber]->MAX_AXIS;
-                        else if (t.eventtype == ET_JoystickSliderY)
-                            value = (float)joyState[t.joystickNumber].mSliders[t.joystickSliderNumber].abY / (float)mJoy[t.joystickNumber]->MAX_AXIS;
-                        value = (value + 1)/2; // full axis
-                        if (t.joystickSliderReverse)
-                            value = 1.0 - value; // reversed
+                        value = 0;
+                        continue;
                     }
-                    break;
+                    if (t.eventtype == ET_JoystickSliderX)
+                        value = (float)joyState[t.joystickNumber].mSliders[t.joystickSliderNumber].abX / (float)mJoy[t.joystickNumber]->MAX_AXIS;
+                    else if (t.eventtype == ET_JoystickSliderY)
+                        value = (float)joyState[t.joystickNumber].mSliders[t.joystickSliderNumber].abY / (float)mJoy[t.joystickNumber]->MAX_AXIS;
+                    value = (value + 1) / 2; // full axis
+                    if (t.joystickSliderReverse)
+                        value = 1.0 - value; // reversed
+                }
+                break;
             }
         }
         // only return if grater zero, otherwise check all other bombinations
@@ -2737,25 +2747,27 @@ float InputEngine::getEventValue(int eventID, bool pure, int valueSource)
 
 bool InputEngine::isKeyDown(OIS::KeyCode key)
 {
-    if (!mKeyboard) return false;
+    if (!mKeyboard)
+        return false;
     return this->mKeyboard->isKeyDown(key);
 }
 
 bool InputEngine::isKeyDownValueBounce(OIS::KeyCode mod, float time)
 {
-    if(event_times[-mod] > 0)
+    if (event_times[-mod] > 0)
         return false;
     else
     {
         bool res = isKeyDown(mod);
-        if(res) event_times[-mod] = time;
+        if (res)
+            event_times[-mod] = time;
         return res;
     }
 }
 
 String InputEngine::getDeviceName(event_trigger_t evt)
 {
-    switch(evt.eventtype)
+    switch (evt.eventtype)
     {
     case ET_NONE:
         return "None";
@@ -2779,7 +2791,7 @@ String InputEngine::getDeviceName(event_trigger_t evt)
 
 String InputEngine::getEventTypeName(int type)
 {
-    switch(type)
+    switch (type)
     {
     case ET_NONE: return "None";
     case ET_Keyboard: return "Keyboard";
@@ -2798,12 +2810,12 @@ String InputEngine::getEventTypeName(int type)
 }
 
 void InputEngine::addEvent(int eventID, event_trigger_t t)
- {
+{
     uniqueCounter++;
     t.suid = uniqueCounter;
 
     if (eventID == -1)
-        //unknown event, discard
+    //unknown event, discard
         return;
     if (events.find(eventID) == events.end())
     {
@@ -2816,7 +2828,7 @@ void InputEngine::addEvent(int eventID, event_trigger_t t)
 void InputEngine::updateEvent(int eventID, event_trigger_t t)
 {
     if (eventID == -1)
-        //unknown event, discard
+    //unknown event, discard
         return;
     if (events.find(eventID) == events.end())
     {
@@ -2826,12 +2838,11 @@ void InputEngine::updateEvent(int eventID, event_trigger_t t)
     events[eventID].push_back(t);
 }
 
-
-bool InputEngine::processLine(char *line, int deviceID)
+bool InputEngine::processLine(char* line, int deviceID)
 {
     static String cur_comment = "";
 
-    char eventName[256]="", evtype[256]="";
+    char eventName[256] = "", evtype[256] = "";
     const char delimiters[] = "+";
     size_t linelen = strnlen(line, 1024);
     enum eventtypes eventtype = ET_NONE;
@@ -2839,7 +2850,7 @@ bool InputEngine::processLine(char *line, int deviceID)
     int joyNo = 0;
     float defaultDeadzone = 0.1f;
     float defaultLinearity = 1.0f;
-    if (line[0]==';' || linelen < 5)
+    if (line[0] == ';' || linelen < 5)
     {
         cur_comment += line;;
         return false;
@@ -2848,32 +2859,44 @@ bool InputEngine::processLine(char *line, int deviceID)
     if (strnlen(eventName, 255) == 0 || strnlen(evtype, 255) == 0)
         return false;
 
-    if (!strncmp(evtype, "Keyboard", 8))              eventtype = ET_Keyboard;
-    else if (!strncmp(evtype, "MouseButton", 10))     eventtype = ET_MouseButton;
-    else if (!strncmp(evtype, "MouseAxisX", 9))       eventtype = ET_MouseAxisX;
-    else if (!strncmp(evtype, "MouseAxisY", 9))       eventtype = ET_MouseAxisY;
-    else if (!strncmp(evtype, "MouseAxisZ", 9))       eventtype = ET_MouseAxisZ;
-    else if (!strncmp(evtype, "JoystickButton", 14))  eventtype = ET_JoystickButton;
-    else if (!strncmp(evtype, "JoystickAxis", 12))    eventtype = ET_JoystickAxisAbs;
+    if (!strncmp(evtype, "Keyboard", 8))
+        eventtype = ET_Keyboard;
+    else if (!strncmp(evtype, "MouseButton", 10))
+        eventtype = ET_MouseButton;
+    else if (!strncmp(evtype, "MouseAxisX", 9))
+        eventtype = ET_MouseAxisX;
+    else if (!strncmp(evtype, "MouseAxisY", 9))
+        eventtype = ET_MouseAxisY;
+    else if (!strncmp(evtype, "MouseAxisZ", 9))
+        eventtype = ET_MouseAxisZ;
+    else if (!strncmp(evtype, "JoystickButton", 14))
+        eventtype = ET_JoystickButton;
+    else if (!strncmp(evtype, "JoystickAxis", 12))
+        eventtype = ET_JoystickAxisAbs;
     //else if (!strncmp(evtype, "JoystickAxis", 250)) eventtype = ET_JoystickAxisRel;
-    else if (!strncmp(evtype, "JoystickPov", 11))     eventtype = ET_JoystickPov;
-    else if (!strncmp(evtype, "JoystickSlider", 14))  eventtype = ET_JoystickSliderX;
-    else if (!strncmp(evtype, "JoystickSliderX", 15)) eventtype = ET_JoystickSliderX;
-    else if (!strncmp(evtype, "JoystickSliderY", 15)) eventtype = ET_JoystickSliderY;
-    else if (!strncmp(evtype, "None", 4))             eventtype = ET_NONE;
+    else if (!strncmp(evtype, "JoystickPov", 11))
+        eventtype = ET_JoystickPov;
+    else if (!strncmp(evtype, "JoystickSlider", 14))
+        eventtype = ET_JoystickSliderX;
+    else if (!strncmp(evtype, "JoystickSliderX", 15))
+        eventtype = ET_JoystickSliderX;
+    else if (!strncmp(evtype, "JoystickSliderY", 15))
+        eventtype = ET_JoystickSliderY;
+    else if (!strncmp(evtype, "None", 4))
+        eventtype = ET_NONE;
 
-    switch(eventtype)
+    switch (eventtype)
     {
     case ET_Keyboard:
         {
-            bool alt   = false;
+            bool alt = false;
             bool shift = false;
-            bool ctrl  = false;
-            bool expl  = false;
+            bool ctrl = false;
+            bool expl = false;
 
-            char *keycode            = 0;
-            char  keycodes[256]      = {};
-            char  keycodes_work[256] = {};
+            char* keycode = 0;
+            char keycodes[256] = {};
+            char keycodes_work[256] = {};
 
             OIS::KeyCode key = KC_UNASSIGNED;
 
@@ -2882,18 +2905,18 @@ bool InputEngine::processLine(char *line, int deviceID)
             //LOG("try to add key: " + String(eventName)+","+ String(evtype)+","+String(keycodes));
             strncpy(keycodes_work, keycodes, 255);
             keycodes_work[255] = '\0';
-            char *token = strtok(keycodes_work, delimiters);
+            char* token = strtok(keycodes_work, delimiters);
 
             while (token != NULL)
             {
                 if (strncmp(token, "SHIFT", 5) == 0)
-                    shift=true;
+                    shift = true;
                 else if (strncmp(token, "CTRL", 4) == 0)
-                    ctrl=true;
+                    ctrl = true;
                 else if (strncmp(token, "ALT", 3) == 0)
-                    alt=true;
+                    alt = true;
                 else if (strncmp(token, "EXPL", 4) == 0)
-                    expl=true;
+                    expl = true;
                 keycode = token;
                 token = strtok(NULL, delimiters);
             }
@@ -2905,7 +2928,8 @@ bool InputEngine::processLine(char *line, int deviceID)
                 LOG("unknown key: " + string(keycodes));
 #endif
                 key = KC_UNASSIGNED;
-            } else
+            }
+            else
             {
                 //LOG("found key: " + string(keycode) + " = " + TOSTRING((int)key));
                 key = allit->second;
@@ -2919,12 +2943,12 @@ bool InputEngine::processLine(char *line, int deviceID)
             event_trigger_t t_key = newEvent();
             //memset(&t_key, 0, sizeof(event_trigger_t));
             t_key.eventtype = ET_Keyboard;
-            t_key.shift     = shift;
-            t_key.ctrl      = ctrl;
-            t_key.alt       = alt;
-            t_key.keyCode   = key;
+            t_key.shift = shift;
+            t_key.ctrl = ctrl;
+            t_key.alt = alt;
+            t_key.keyCode = key;
             t_key.explicite = expl;
-            
+
             strncpy(t_key.configline, keycodes, 128);
             strncpy(t_key.group, getEventGroup(eventName).c_str(), 128);
             strncpy(t_key.tmp_eventname, eventName, 128);
@@ -2942,14 +2966,16 @@ bool InputEngine::processLine(char *line, int deviceID)
             event_trigger_t t_joy = newEvent();
             //memset(&t_joy, 0, sizeof(event_trigger_t));
             int eventID = resolveEventName(String(eventName));
-            if (eventID == -1) return false;
+            if (eventID == -1)
+                return false;
             t_joy.eventtype = ET_JoystickButton;
-            t_joy.joystickNumber = (deviceID==-1?joyNo:deviceID);
+            t_joy.joystickNumber = (deviceID == -1 ? joyNo : deviceID);
             t_joy.joystickButtonNumber = buttonNo;
             if (!strcmp(tmp2, "!NEW!"))
             {
                 strncpy(t_joy.configline, tmp2, 128);
-            } else
+            }
+            else
             {
                 char tmp[256] = {};
                 sprintf(tmp, "%d", buttonNo);
@@ -2969,14 +2995,15 @@ bool InputEngine::processLine(char *line, int deviceID)
             char options[256] = {};
             sscanf(line, "%s %s %d %d %s", eventName, evtype, &joyNo, &axisNo, options);
             int eventID = resolveEventName(String(eventName));
-            if (eventID == -1) return false;
+            if (eventID == -1)
+                return false;
 
-            bool half       = false;
-            bool reverse    = false;
-            bool linear     = false;
-            bool relative   = false;
+            bool half = false;
+            bool reverse = false;
+            bool linear = false;
+            bool relative = false;
             bool usedigital = false;
-            float deadzone  = defaultDeadzone;
+            float deadzone = defaultDeadzone;
             float linearity = defaultLinearity;
             int jAxisRegion = 0;
             //  0 = all
@@ -2985,34 +3012,34 @@ bool InputEngine::processLine(char *line, int deviceID)
             char tmp[256] = {};
             strcpy(tmp, options);
             tmp[255] = '\0';
-            char *token = strtok(tmp, delimiters);
+            char* token = strtok(tmp, delimiters);
             while (token != NULL)
             {
                 if (strncmp(token, "HALF", 4) == 0)
-                    half=true;
+                    half = true;
                 else if (strncmp(token, "REVERSE", 7) == 0)
-                    reverse=true;
+                    reverse = true;
                 else if (strncmp(token, "LINEAR", 6) == 0)
-                    linear=true;
+                    linear = true;
                 else if (strncmp(token, "UPPER", 5) == 0)
                     jAxisRegion = 1;
                 else if (strncmp(token, "LOWER", 5) == 0)
                     jAxisRegion = -1;
                 else if (strncmp(token, "RELATIVE", 8) == 0)
-                    relative=true;
+                    relative = true;
                 else if (strncmp(token, "DIGITAL", 7) == 0)
-                    usedigital=true;
+                    usedigital = true;
                 else if (strncmp(token, "DEADZONE", 8) == 0 && strnlen(token, 250) > 9)
                 {
                     char tmp2[256] = {};
-                    strcpy(tmp2,token+9);
+                    strcpy(tmp2, token + 9);
                     deadzone = atof(tmp2);
                     //LOG("got deadzone: " + TOSTRING(deadzone)+", "+String(tmp2));
                 }
                 else if (strncmp(token, "LINEARITY", 9) == 0 && strnlen(token, 250) > 10)
                 {
                     char tmp2[256] = {};
-                    strcpy(tmp2,token+10);
+                    strcpy(tmp2, token + 10);
                     linearity = atof(tmp2);
                 }
                 token = strtok(NULL, delimiters);
@@ -3031,7 +3058,7 @@ bool InputEngine::processLine(char *line, int deviceID)
             t_joy.joystickAxisLinearity = linearity;
             t_joy.joystickAxisReverse = reverse;
             t_joy.joystickAxisNumber = axisNo;
-            t_joy.joystickNumber = (deviceID==-1?joyNo:deviceID);
+            t_joy.joystickNumber = (deviceID == -1 ? joyNo : deviceID);
             strncpy(t_joy.configline, options, 128);
             strncpy(t_joy.group, getEventGroup(eventName).c_str(), 128);
             strncpy(t_joy.tmp_eventname, eventName, 128);
@@ -3044,7 +3071,8 @@ bool InputEngine::processLine(char *line, int deviceID)
     case ET_NONE:
         {
             int eventID = resolveEventName(String(eventName));
-            if (eventID == -1) return false;
+            if (eventID == -1)
+                return false;
             event_trigger_t t_none = newEvent();
             t_none.eventtype = eventtype;
             //t_none.configline = "";
@@ -3067,21 +3095,30 @@ bool InputEngine::processLine(char *line, int deviceID)
             char dir[256] = {};
             sscanf(line, "%s %s %d %d %s", eventName, evtype, &joyNo, &povNumber, dir);
             int eventID = resolveEventName(String(eventName));
-            if (eventID == -1) return false;
+            if (eventID == -1)
+                return false;
 
             int direction = OIS::Pov::Centered;
-            if (!strcmp(dir, "North"))     direction = OIS::Pov::North;
-            if (!strcmp(dir, "South"))     direction = OIS::Pov::South;
-            if (!strcmp(dir, "East"))      direction = OIS::Pov::East;
-            if (!strcmp(dir, "West"))      direction = OIS::Pov::West;
-            if (!strcmp(dir, "NorthEast")) direction = OIS::Pov::NorthEast;
-            if (!strcmp(dir, "SouthEast")) direction = OIS::Pov::SouthEast;
-            if (!strcmp(dir, "NorthWest")) direction = OIS::Pov::NorthWest;
-            if (!strcmp(dir, "SouthWest")) direction = OIS::Pov::SouthWest;
+            if (!strcmp(dir, "North"))
+                direction = OIS::Pov::North;
+            if (!strcmp(dir, "South"))
+                direction = OIS::Pov::South;
+            if (!strcmp(dir, "East"))
+                direction = OIS::Pov::East;
+            if (!strcmp(dir, "West"))
+                direction = OIS::Pov::West;
+            if (!strcmp(dir, "NorthEast"))
+                direction = OIS::Pov::NorthEast;
+            if (!strcmp(dir, "SouthEast"))
+                direction = OIS::Pov::SouthEast;
+            if (!strcmp(dir, "NorthWest"))
+                direction = OIS::Pov::NorthWest;
+            if (!strcmp(dir, "SouthWest"))
+                direction = OIS::Pov::SouthWest;
 
             event_trigger_t t_pov = newEvent();
             t_pov.eventtype = eventtype;
-            t_pov.joystickNumber = (deviceID==-1?joyNo:deviceID);
+            t_pov.joystickNumber = (deviceID == -1 ? joyNo : deviceID);
             t_pov.joystickPovNumber = povNumber;
             t_pov.joystickPovDirection = direction;
 
@@ -3101,17 +3138,18 @@ bool InputEngine::processLine(char *line, int deviceID)
             char type;
             sscanf(line, "%s %s %d %c %d %s", eventName, evtype, &joyNo, &type, &sliderNumber, options);
             int eventID = resolveEventName(String(eventName));
-            if (eventID == -1) return false;
+            if (eventID == -1)
+                return false;
 
-            bool reverse=false;
+            bool reverse = false;
             char tmp[256] = {};
             strncpy(tmp, options, 255);
             tmp[255] = '\0';
-            char *token = strtok(tmp, delimiters);
+            char* token = strtok(tmp, delimiters);
             while (token != NULL)
             {
                 if (strncmp(token, "REVERSE", 7) == 0)
-                    reverse=true;
+                    reverse = true;
 
                 token = strtok(NULL, delimiters);
             }
@@ -3124,7 +3162,7 @@ bool InputEngine::processLine(char *line, int deviceID)
                 eventtype = ET_JoystickSliderX;
 
             t_slider.eventtype = eventtype;
-            t_slider.joystickNumber = (deviceID==-1?joyNo:deviceID);
+            t_slider.joystickNumber = (deviceID == -1 ? joyNo : deviceID);
             t_slider.joystickSliderNumber = sliderNumber;
             t_slider.joystickSliderReverse = reverse;
             // TODO: add region support to sliders!
@@ -3143,11 +3181,11 @@ bool InputEngine::processLine(char *line, int deviceID)
     }
 }
 
-int InputEngine::getCurrentJoyButton(int &joystickNumber, int &button)
+int InputEngine::getCurrentJoyButton(int& joystickNumber, int& button)
 {
-    for (int j=0;j<free_joysticks;j++)
+    for (int j = 0; j < free_joysticks; j++)
     {
-        for (int i=0;i<(int)joyState[j].mButtons.size();i++)
+        for (int i = 0; i < (int)joyState[j].mButtons.size(); i++)
         {
             if (joyState[j].mButtons[i])
             {
@@ -3160,11 +3198,11 @@ int InputEngine::getCurrentJoyButton(int &joystickNumber, int &button)
     return 0;
 }
 
-int InputEngine::getCurrentPovValue(int &joystickNumber, int &pov, int &povdir)
+int InputEngine::getCurrentPovValue(int& joystickNumber, int& pov, int& povdir)
 {
-    for (int j=0; j<free_joysticks; j++)
+    for (int j = 0; j < free_joysticks; j++)
     {
-        for (int i=0; i<MAX_JOYSTICK_POVS; i++)
+        for (int i = 0; i < MAX_JOYSTICK_POVS; i++)
         {
             if (joyState[j].mPOV[i].direction != Pov::Centered)
             {
@@ -3178,7 +3216,6 @@ int InputEngine::getCurrentPovValue(int &joystickNumber, int &pov, int &povdir)
     return 0;
 }
 
-
 event_trigger_t InputEngine::newEvent()
 {
     event_trigger_t res;
@@ -3188,31 +3225,33 @@ event_trigger_t InputEngine::newEvent()
 
 int InputEngine::getJoyComponentCount(OIS::ComponentType type, int joystickNumber)
 {
-    if (joystickNumber > free_joysticks || !mJoy[joystickNumber]) return 0;
+    if (joystickNumber > free_joysticks || !mJoy[joystickNumber])
+        return 0;
     return mJoy[joystickNumber]->getNumberOfComponents(type);
 }
 
 std::string InputEngine::getJoyVendor(int joystickNumber)
 {
-    if (joystickNumber > free_joysticks || !mJoy[joystickNumber]) return "unknown";
+    if (joystickNumber > free_joysticks || !mJoy[joystickNumber])
+        return "unknown";
     return mJoy[joystickNumber]->vendor();
 }
 
-JoyStickState *InputEngine::getCurrentJoyState(int joystickNumber)
+JoyStickState* InputEngine::getCurrentJoyState(int joystickNumber)
 {
-    if (joystickNumber > free_joysticks) return 0;
+    if (joystickNumber > free_joysticks)
+        return 0;
     return &joyState[joystickNumber];
 }
 
-
-int InputEngine::getCurrentKeyCombo(String *combo)
+int InputEngine::getCurrentKeyCombo(String* combo)
 {
     std::map<int, bool>::iterator i;
     int keyCounter = 0;
     int modCounter = 0;
 
     // list all modificators first
-    for (i = keyState.begin();i!=keyState.end();i++)
+    for (i = keyState.begin(); i != keyState.end(); i++)
     {
         if (i->second)
         {
@@ -3228,7 +3267,7 @@ int InputEngine::getCurrentKeyCombo(String *combo)
     }
 
     // now list all keys
-    for (i = keyState.begin();i!=keyState.end();i++)
+    for (i = keyState.begin(); i != keyState.end(); i++)
     {
         if (i->second)
         {
@@ -3247,7 +3286,8 @@ int InputEngine::getCurrentKeyCombo(String *combo)
     if (modCounter > 0 && keyCounter == 0)
     {
         return -modCounter;
-    } else if (keyCounter==0 && modCounter == 0)
+    }
+    else if (keyCounter == 0 && modCounter == 0)
     {
         *combo = "(Please press a key)";
         return 0;
@@ -3261,7 +3301,7 @@ String InputEngine::getEventGroup(String eventName)
     char tmp[256] = {};
     strncpy(tmp, eventName.c_str(), 255);
     tmp[255] = '\0';
-    char *token = strtok(tmp, delimiters);
+    char* token = strtok(tmp, delimiters);
     while (token != NULL)
     {
         return String(token);
@@ -3271,7 +3311,7 @@ String InputEngine::getEventGroup(String eventName)
 
 bool InputEngine::appendLineToConfig(std::string line, std::string outfile)
 {
-    FILE *f = fopen(const_cast<char *>(outfile.c_str()),"a");
+    FILE* f = fopen(const_cast<char *>(outfile.c_str()), "a");
     if (!f)
         return false;
     fprintf(f, "%s\n", line.c_str());
@@ -3286,7 +3326,7 @@ bool InputEngine::reloadConfig(std::string outfile)
     return true;
 }
 
-bool InputEngine::updateConfigline(event_trigger_t *t)
+bool InputEngine::updateConfigline(event_trigger_t* t)
 {
     if (t->eventtype != ET_JoystickAxisAbs && t->eventtype != ET_JoystickSliderX && t->eventtype != ET_JoystickSliderY)
         return false;
@@ -3300,13 +3340,13 @@ bool InputEngine::updateConfigline(event_trigger_t *t)
         else if (t->joystickSliderReverse && strlen(t->configline))
             strcat(t->configline, "+REVERSE");
 
-        if (t->joystickSliderRegion==1 && !strlen(t->configline))
+        if (t->joystickSliderRegion == 1 && !strlen(t->configline))
             strcat(t->configline, "UPPER");
-        else if (t->joystickSliderRegion==1 && strlen(t->configline))
+        else if (t->joystickSliderRegion == 1 && strlen(t->configline))
             strcat(t->configline, "+UPPER");
-        else if (t->joystickSliderRegion==-1 && !strlen(t->configline))
+        else if (t->joystickSliderRegion == -1 && !strlen(t->configline))
             strcat(t->configline, "LOWER");
-        else if (t->joystickSliderRegion==-1 && strlen(t->configline))
+        else if (t->joystickSliderRegion == -1 && strlen(t->configline))
             strcat(t->configline, "+LOWER");
 
         // is this is a slider, ignore the rest
@@ -3318,17 +3358,16 @@ bool InputEngine::updateConfigline(event_trigger_t *t)
     else if (t->joystickAxisReverse && strlen(t->configline))
         strcat(t->configline, "+REVERSE");
 
-    if (t->joystickAxisRegion==1 && !strlen(t->configline))
+    if (t->joystickAxisRegion == 1 && !strlen(t->configline))
         strcat(t->configline, "UPPER");
-    else if (t->joystickAxisRegion==1 && strlen(t->configline))
+    else if (t->joystickAxisRegion == 1 && strlen(t->configline))
         strcat(t->configline, "+UPPER");
-    else if (t->joystickAxisRegion==-1 && !strlen(t->configline))
+    else if (t->joystickAxisRegion == -1 && !strlen(t->configline))
         strcat(t->configline, "LOWER");
-    else if (t->joystickAxisRegion==-1 && strlen(t->configline))
+    else if (t->joystickAxisRegion == -1 && strlen(t->configline))
         strcat(t->configline, "+LOWER");
 
-
-    if (fabs(t->joystickAxisDeadzone-0.1) > 0.0001f)
+    if (fabs(t->joystickAxisDeadzone - 0.1) > 0.0001f)
     {
         char tmp[256] = {};
         sprintf(tmp, "DEADZONE=%0.2f", t->joystickAxisDeadzone);
@@ -3361,75 +3400,37 @@ bool InputEngine::saveMapping(String outfile, String hwnd, int joyNum)
     // -2  = keyboard
     // -3  = mouse
     // >0 joystick
-    FILE *f = fopen(const_cast<char *>(outfile.c_str()),"w");
+    FILE* f = fopen(const_cast<char *>(outfile.c_str()), "w");
     if (!f)
         return false;
 
-    bool created=false;
-    /*
-    // we dont need to capture the mouse anymore
-    if (mInputManager && !captureMode && hwnd>0)
-    {
-        destroy();
-        setup(hwnd, true, true);
-        created=true;
-    }
-    */
+    bool created = false;
+
     if (!mInputManager && !hwnd.empty())
     {
         destroy();
         setup(hwnd, false, false);
-        created=true;
+        created = true;
     }
-    /*
-    // heap problems below, removed
-    if (mInputManager)
-    {
-        // some helpful information
-        unsigned int v = mInputManager->getVersionNumber();
-        fprintf(f, ";==== Input System Information Start\n");
-        fprintf(f, ";OIS Version: %d.%d.%d\n",(v>>16), ((v>>8) & 0x000000FF), (v & 0x000000FF));
-        fprintf(f, ";OIS Release Name: '%s'\n", mInputManager->getVersionName().c_str());
-        fprintf(f, ";OIS Manager: %s\n", mInputManager->inputSystemName().c_str());
-        fprintf(f, ";Total Keyboards: %d\n", mInputManager->getNumberOfDevices(OISKeyboard));
-        fprintf(f, ";Total Mice: %d\n", mInputManager->getNumberOfDevices(OISMouse));
-        fprintf(f, ";Total JoySticks: %d\n", mInputManager->getNumberOfDevices(OISJoyStick));
-        OIS::DeviceList list = mInputManager->listFreeDevices();
-        for (OIS::DeviceList::iterator i = list.begin(); i != list.end(); ++i )
-            fprintf(f, "; OIS Device: %s Vendor: '%s'\n",mOISDeviceType[i->first], i->second.c_str());
-        for (int i = 0; i < mInputManager->getNumberOfDevices(OISJoyStick); ++i)
-        {
-            if (joyNum != -1 && i != joyNum) continue;
-            if (!mJoy[i]) continue;
-            fprintf(f, ";*Joystick %d '%s'\n", i, mJoy[i]->vendor().c_str());
-            if (mJoy[i]->getNumberOfComponents(OIS_Axis)>0)    fprintf(f, ";**Axes: %d\n", mJoy[i]->getNumberOfComponents(OIS_Axis));
-            if (mJoy[i]->getNumberOfComponents(OIS_Slider)>0)  fprintf(f, ";**Sliders: %d\n", mJoy[i]->getNumberOfComponents(OIS_Slider));
-            if (mJoy[i]->getNumberOfComponents(OIS_POV)>0)     fprintf(f, ";**POV/HATs: %d\n", mJoy[i]->getNumberOfComponents(OIS_POV));
-            if (mJoy[i]->getNumberOfComponents(OIS_Button)>0)  fprintf(f, ";**Buttons: %d\n", mJoy[i]->getNumberOfComponents(OIS_Button));
-            if (mJoy[i]->getNumberOfComponents(OIS_Vector3)>0) fprintf(f, ";**Vector3: %d\n", mJoy[i]->getNumberOfComponents(OIS_Vector3));
-        }
-        fprintf(f, ";==== Input System Information End\n");
-
-        if (created)
-            destroy();
-    }
-    */
 
     int counter = 0;
     char curGroup[128] = "";
-    std::map<int, std::vector<event_trigger_t> > controls = getEvents();
-    std::map<int, std::vector<event_trigger_t> >::iterator mapIt;
+    std::map<int, std::vector<event_trigger_t>> controls = getEvents();
+    std::map<int, std::vector<event_trigger_t>>::iterator mapIt;
     std::vector<event_trigger_t>::iterator vecIt;
     for (mapIt = controls.begin(); mapIt != controls.end(); mapIt++)
     {
         std::vector<event_trigger_t> vec = mapIt->second;
 
-        for (vecIt = vec.begin(); vecIt != vec.end(); vecIt++, counter++)
+        for (vecIt = vec.begin(); vecIt != vec.end(); vecIt++ , counter++)
         {
             // filters
-            if (vecIt->eventtype == ET_Keyboard && joyNum != -10 && joyNum != -2) continue;
-            if ((vecIt->eventtype == ET_MouseAxisX || vecIt->eventtype == ET_MouseAxisY || vecIt->eventtype == ET_MouseAxisZ) && joyNum != -10 && joyNum != -3) continue;
-            if ((vecIt->eventtype == ET_JoystickAxisAbs || vecIt->eventtype == ET_JoystickAxisRel || vecIt->eventtype == ET_JoystickButton || vecIt->eventtype == ET_JoystickPov || vecIt->eventtype == ET_JoystickSliderX || vecIt->eventtype == ET_JoystickSliderY) && joyNum>=0 && vecIt->joystickNumber != joyNum) continue;
+            if (vecIt->eventtype == ET_Keyboard && joyNum != -10 && joyNum != -2)
+                continue;
+            if ((vecIt->eventtype == ET_MouseAxisX || vecIt->eventtype == ET_MouseAxisY || vecIt->eventtype == ET_MouseAxisZ) && joyNum != -10 && joyNum != -3)
+                continue;
+            if ((vecIt->eventtype == ET_JoystickAxisAbs || vecIt->eventtype == ET_JoystickAxisRel || vecIt->eventtype == ET_JoystickButton || vecIt->eventtype == ET_JoystickPov || vecIt->eventtype == ET_JoystickSliderX || vecIt->eventtype == ET_JoystickSliderY) && joyNum >= 0 && vecIt->joystickNumber != joyNum)
+                continue;
 
             if (strcmp(vecIt->group, curGroup))
             {
@@ -3440,7 +3441,7 @@ bool InputEngine::saveMapping(String outfile, String hwnd, int joyNum)
 
             // no user comments for now!
             //if (vecIt->comments!="")
-            //    fprintf(f, "%s", vecIt->comments.c_str());
+            //	fprintf(f, "%s", vecIt->comments.c_str());
 
             // print event name
             fprintf(f, "%-30s ", eventIDToName(mapIt->first).c_str());
@@ -3450,12 +3451,14 @@ bool InputEngine::saveMapping(String outfile, String hwnd, int joyNum)
             if (vecIt->eventtype == ET_Keyboard)
             {
                 fprintf(f, "%s ", vecIt->configline);
-            } else if (vecIt->eventtype == ET_JoystickAxisAbs || vecIt->eventtype == ET_JoystickAxisRel)
+            }
+            else if (vecIt->eventtype == ET_JoystickAxisAbs || vecIt->eventtype == ET_JoystickAxisRel)
             {
                 fprintf(f, "%d ", vecIt->joystickNumber);
                 fprintf(f, "%d ", vecIt->joystickAxisNumber);
                 fprintf(f, "%s ", vecIt->configline);
-            } else if (vecIt->eventtype == ET_JoystickSliderX || vecIt->eventtype == ET_JoystickSliderY)
+            }
+            else if (vecIt->eventtype == ET_JoystickSliderX || vecIt->eventtype == ET_JoystickSliderY)
             {
                 fprintf(f, "%d ", vecIt->joystickNumber);
                 char type = 'X';
@@ -3464,21 +3467,31 @@ bool InputEngine::saveMapping(String outfile, String hwnd, int joyNum)
                 fprintf(f, "%c ", type);
                 fprintf(f, "%d ", vecIt->joystickSliderNumber);
                 fprintf(f, "%s ", vecIt->configline);
-            } else if (vecIt->eventtype == ET_JoystickButton)
+            }
+            else if (vecIt->eventtype == ET_JoystickButton)
             {
                 fprintf(f, "%d ", vecIt->joystickNumber);
                 fprintf(f, "%d ", vecIt->joystickButtonNumber);
-            } else if (vecIt->eventtype == ET_JoystickPov)
+            }
+            else if (vecIt->eventtype == ET_JoystickPov)
             {
-                const char *dirStr = "North";
-                if (vecIt->joystickPovDirection == OIS::Pov::North)     dirStr = "North";
-                if (vecIt->joystickPovDirection == OIS::Pov::South)     dirStr = "South";
-                if (vecIt->joystickPovDirection == OIS::Pov::East)      dirStr = "East";
-                if (vecIt->joystickPovDirection == OIS::Pov::West)      dirStr = "West";
-                if (vecIt->joystickPovDirection == OIS::Pov::NorthEast) dirStr = "NorthEast";
-                if (vecIt->joystickPovDirection == OIS::Pov::SouthEast) dirStr = "SouthEast";
-                if (vecIt->joystickPovDirection == OIS::Pov::NorthWest) dirStr = "NorthWest";
-                if (vecIt->joystickPovDirection == OIS::Pov::SouthWest) dirStr = "SouthWest";
+                const char* dirStr = "North";
+                if (vecIt->joystickPovDirection == OIS::Pov::North)
+                    dirStr = "North";
+                if (vecIt->joystickPovDirection == OIS::Pov::South)
+                    dirStr = "South";
+                if (vecIt->joystickPovDirection == OIS::Pov::East)
+                    dirStr = "East";
+                if (vecIt->joystickPovDirection == OIS::Pov::West)
+                    dirStr = "West";
+                if (vecIt->joystickPovDirection == OIS::Pov::NorthEast)
+                    dirStr = "NorthEast";
+                if (vecIt->joystickPovDirection == OIS::Pov::SouthEast)
+                    dirStr = "SouthEast";
+                if (vecIt->joystickPovDirection == OIS::Pov::NorthWest)
+                    dirStr = "NorthWest";
+                if (vecIt->joystickPovDirection == OIS::Pov::SouthWest)
+                    dirStr = "SouthWest";
 
                 fprintf(f, "%d %d %s", vecIt->joystickNumber, vecIt->joystickPovNumber, dirStr);
             }
@@ -3492,14 +3505,17 @@ bool InputEngine::saveMapping(String outfile, String hwnd, int joyNum)
 
 void InputEngine::completeMissingEvents()
 {
-    if (!mappingLoaded) return;
-    
+    if (!mappingLoaded)
+        return;
+
     for (int i = 0; i < EV_MODE_LAST; i++)
     {
         if (events.find(eventInfo[i].eventID) == events.end())
         {
-            if (eventInfo[i].defaultKey.empty()) continue;
-            if (eventInfo[i].defaultKey == "None") continue;
+            if (eventInfo[i].defaultKey.empty())
+                continue;
+            if (eventInfo[i].defaultKey == "None")
+                continue;
 
             // not existing, insert default
             char tmp[256] = "";
@@ -3511,7 +3527,6 @@ void InputEngine::completeMissingEvents()
         }
     }
 }
-
 
 bool InputEngine::loadMapping(String outfile, bool append, int deviceID)
 {
@@ -3532,7 +3547,8 @@ bool InputEngine::loadMapping(String outfile, bool append, int deviceID)
         try
         {
             ds = ResourceGroupManager::getSingleton().openResource(outfile, ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-        } catch(...)
+        }
+        catch (...)
         {
             return false;
         }
@@ -3540,7 +3556,7 @@ bool InputEngine::loadMapping(String outfile, bool append, int deviceID)
         {
             size_t size = 1024;
             if (ds->tell() + size >= ds->size())
-                size = ds->size()-ds->tell();
+                size = ds->size() - ds->tell();
             if (ds->tell() >= ds->size())
                 break;
             size_t readnum = ds->readLine(line, size);
@@ -3570,8 +3586,8 @@ bool InputEngine::loadMapping(String outfile, bool append, int deviceID)
 
 int InputEngine::resolveEventName(String eventName)
 {
-    int i=0;
-    while(i!=EV_MODE_LAST)
+    int i = 0;
+    while (i != EV_MODE_LAST)
     {
         if (eventInfo[i].name == eventName)
             return eventInfo[i].eventID;
@@ -3585,8 +3601,8 @@ int InputEngine::resolveEventName(String eventName)
 
 String InputEngine::eventIDToName(int eventID)
 {
-    int i=0;
-    while(i!=EV_MODE_LAST)
+    int i = 0;
+    while (i != EV_MODE_LAST)
     {
         if (eventInfo[i].eventID == eventID)
             return eventInfo[i].name;
@@ -3607,7 +3623,7 @@ void InputEngine::initAllKeys()
     allkeys["7"] = KC_7;
     allkeys["8"] = KC_8;
     allkeys["9"] = KC_9;
-    allkeys["A"] = KC_A ;
+    allkeys["A"] = KC_A;
     allkeys["ABNT_C1"] = KC_ABNT_C1;
     allkeys["ABNT_C2"] = KC_ABNT_C2;
     allkeys["ADD"] = KC_ADD;
@@ -3751,16 +3767,17 @@ void InputEngine::setupDefault(Ogre::String inputhwnd /* = "" */)
     RoR::App::GetOgreSubsystem()->GetRenderWindow()->getCustomAttribute("WINDOW", &hWnd);
 
     this->setup(TOSTRING(hWnd), true, true);
-
 }
 
-String InputEngine::getKeyForCommand( int eventID )
+String InputEngine::getKeyForCommand(int eventID)
 {
-    std::map<int, std::vector<event_trigger_t> >::iterator it = events.find(eventID);
+    std::map<int, std::vector<event_trigger_t>>::iterator it = events.find(eventID);
 
-    if (it == events.end()) return String();
-    if (it->second.empty()) return String();
-    
+    if (it == events.end())
+        return String();
+    if (it->second.empty())
+        return String();
+
     std::vector<event_trigger_t>::iterator it2 = it->second.begin();
     return getKeyNameForKeyCode((OIS::KeyCode)it2->keyCode);
 }

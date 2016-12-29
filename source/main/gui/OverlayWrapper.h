@@ -12,18 +12,18 @@
 
     Rigs of Rods is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** 
-    @file   OverlayWrapper.h
-    @author Thomas Fischer
-    @date   6th of May 2010
-*/
+
+/// @file
+/// @author Thomas Fischer
+/// @date   6th of May 2010
+
 
 #pragma once
 
@@ -64,40 +64,30 @@ public:
     float mTimeUntilNextToggle;
 
     void SetupDirectionArrow();
-
     void UpdateDirectionArrow(Beam* vehicle, Ogre::Vector3 const & point_to);
-
     void HideDirectionOverlay();
-
     void ShowDirectionOverlay(Ogre::String const & caption);
 
     void UpdatePressureTexture(float pressure);
 
     void UpdateLandVehicleHUD(Beam * vehicle);
-
     void UpdateAerialHUD(Beam * vehicle);
-
     void UpdateMarineHUD(Beam * vehicle);
 
     void ShowRacingOverlay();
-
     void HideRacingOverlay();
 
-    /** Hides all overlays, but doesn't change visibility flags (for further restoring).
-    */
+    /// Hides all overlays, but doesn't change visibility flags (for further restoring).
     void TemporarilyHideAllOverlays(Beam *current_vehicle);
 
-    /** Shows all overlays flagged as "visible".
-    */
+    /// Shows all overlays flagged as "visible".
     void RestoreOverlaysVisibility(Beam *current_vehicle);
 
 protected:
 
-    /**
-    * RoR needs to temporarily hide all overlays when player enters editor. 
-    * However, OGRE only provides per-overlay show() and hide() functionality.
-    * Thus, an external state must be kept to restore overlays after exiting the editor.
-    */
+    /// RoR needs to temporarily hide all overlays when player enters editor. 
+    /// However, OGRE only provides per-overlay show() and hide() functionality.
+    /// Thus, an external state must be kept to restore overlays after exiting the editor.
     struct VisibleOverlays
     {
         static const int DIRECTION_ARROW              = BITMASK(1);
@@ -143,7 +133,7 @@ protected:
     // Misc
     Ogre::Overlay *m_direction_arrow_overlay;
     Ogre::Overlay *m_debug_fps_memory_overlay;
-    Ogre::Overlay *m_debug_beam_timing_overlay;    
+    Ogre::Overlay *m_debug_beam_timing_overlay;	
     Ogre::Overlay *m_racing_overlay;
 
     // -------------------------------------------------------------

@@ -1,34 +1,29 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
-/**
- * File: MovableText.h
- *
- * description: This create create a billboarding object that display a text.
- *
- * @author  2003 by cTh see gavocanov@rambler.ru
- * @update  2006 by barraq see nospam@barraquand.com
- */
+
+/// @file This creates a billboarding object that displays a text.
+///
+/// @author  2003 by cTh see gavocanov@rambler.ru
+/// @update  2006 by barraq see nospam@barraquand.com
 
 #pragma once
-#ifndef __include_MovableText_H__
-#define __include_MovableText_H__
 
 #include <Ogre.h>
 #include <OgreFontManager.h>
@@ -45,34 +40,34 @@ public:
     enum VerticalAlignment      {V_BELOW, V_ABOVE};
 
 protected:
-    UTFString            mFontName;
-    UTFString            mType;
-    String            mName;
-    UTFString            mCaption;
-    HorizontalAlignment    mHorizontalAlignment;
-    VerticalAlignment    mVerticalAlignment;
+    UTFString			mFontName;
+    UTFString			mType;
+    String			    mName;
+    UTFString			mCaption;
+    HorizontalAlignment	mHorizontalAlignment;
+    VerticalAlignment	mVerticalAlignment;
 
-    ColourValue        mColor;
-    RenderOperation    mRenderOp;
-    AxisAlignedBox    mAABB;
-    LightList        mLList;
+    ColourValue		mColor;
+    RenderOperation	mRenderOp;
+    AxisAlignedBox	mAABB;
+    LightList		mLList;
 
-    Real            mCharHeight;
-    Real            mSpaceWidth;
+    Real			mCharHeight;
+    Real			mSpaceWidth;
 
-    bool            mNeedUpdate;
-    bool            mUpdateColors;
-    bool            mOnTop;
+    bool			mNeedUpdate;
+    bool			mUpdateColors;
+    bool			mOnTop;
 
-    Real            mTimeUntilNextToggle;
-    Real            mRadius;
+    Real			mTimeUntilNextToggle;
+    Real			mRadius;
     Real            mAdditionalHeight;
 
-    Camera            *mpCam;
-    RenderWindow    *mpWin;
-    Font            *mpFont;
-    MaterialPtr        mpMaterial;
-    MaterialPtr        mpBackgroundMaterial;
+    Camera			*mpCam;
+    RenderWindow	*mpWin;
+    Font			*mpFont;
+    MaterialPtr		mpMaterial;
+    MaterialPtr		mpBackgroundMaterial;
 
     /******************************** public methods ******************************/
 public:
@@ -103,14 +98,14 @@ public:
     uint    getSpaceWidth() const {return (uint) mSpaceWidth;}
     Real    getAdditionalHeight() const {return mAdditionalHeight;}
     bool    getShowOnTop() const {return mOnTop;}
-    AxisAlignedBox            GetAABB(void) { return mAABB; }
+    AxisAlignedBox	        GetAABB(void) { return mAABB; }
 
     /******************************** protected methods and overload **************/
 protected:
 
     // from MovableText, create the object
-    void    _setupGeometry();
-    void    _updateColors();
+    void	_setupGeometry();
+    void	_updateColors();
 
     // from MovableObject
     void    getWorldTransforms(Matrix4 *xform) const;
@@ -131,6 +126,5 @@ protected:
     const   LightList         &getLights(void) const {return mLList;};
 };
 
-}
+} // namespace
 
-#endif

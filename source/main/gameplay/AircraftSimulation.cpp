@@ -12,7 +12,7 @@
 
     Rigs of Rods is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
@@ -22,10 +22,10 @@
 #include "AircraftSimulation.h"
 
 #ifdef ROR_USE_OGRE_1_9
-#    include <Overlay/OgreOverlayManager.h>
+#   include <Overlay/OgreOverlayManager.h>
 #else
-#    include <OgreOverlayManager.h>
-#    include <OgreOverlayElement.h>
+#   include <OgreOverlayManager.h>
+#   include <OgreOverlayElement.h>
 #endif
 
 #include "AeroEngine.h"
@@ -45,11 +45,11 @@ void AircraftSimulation::UpdateVehicle(Beam* vehicle, float seconds_since_last_f
         vehicle->disconnectAutopilot();
     }
     //AIRPLANE KEYS
-    float commandrate=4.0;
+    float commandrate = 4.0;
     //turning
     if (vehicle->replaymode)
     {
-        if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_COMMON_REPLAY_FORWARD, 0.1f) && vehicle->replaypos<=0)
+        if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_COMMON_REPLAY_FORWARD, 0.1f) && vehicle->replaypos <= 0)
         {
             vehicle->replaypos++;
         }
@@ -57,21 +57,21 @@ void AircraftSimulation::UpdateVehicle(Beam* vehicle, float seconds_since_last_f
         {
             vehicle->replaypos--;
         }
-        if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_COMMON_REPLAY_FAST_FORWARD, 0.1f) && vehicle->replaypos+10<=0)
+        if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_COMMON_REPLAY_FAST_FORWARD, 0.1f) && vehicle->replaypos + 10 <= 0)
         {
-            vehicle->replaypos+=10;
+            vehicle->replaypos += 10;
         }
-        if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_COMMON_REPLAY_FAST_BACKWARD, 0.1f) && vehicle->replaypos-10 > -vehicle->replaylen)
+        if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_COMMON_REPLAY_FAST_BACKWARD, 0.1f) && vehicle->replaypos - 10 > -vehicle->replaylen)
         {
-            vehicle->replaypos-=10;
+            vehicle->replaypos -= 10;
         }
-    } 
+    }
     else
     {
         float tmp_left = RoR::App::GetInputEngine()->getEventValue(EV_AIRPLANE_STEER_LEFT);
         float tmp_right = RoR::App::GetInputEngine()->getEventValue(EV_AIRPLANE_STEER_RIGHT);
         float sum_steer = -tmp_left + tmp_right;
-        RoR::App::GetInputEngine()->smoothValue(vehicle->aileron, sum_steer, seconds_since_last_frame*commandrate);
+        RoR::App::GetInputEngine()->smoothValue(vehicle->aileron, sum_steer, seconds_since_last_frame * commandrate);
         vehicle->hydrodircommand = vehicle->aileron;
         vehicle->hydroSpeedCoupling = !(RoR::App::GetInputEngine()->isEventAnalog(EV_AIRPLANE_STEER_LEFT) && RoR::App::GetInputEngine()->isEventAnalog(EV_AIRPLANE_STEER_RIGHT));
     }
@@ -80,20 +80,20 @@ void AircraftSimulation::UpdateVehicle(Beam* vehicle, float seconds_since_last_f
     float tmp_pitch_up = RoR::App::GetInputEngine()->getEventValue(EV_AIRPLANE_ELEVATOR_UP);
     float tmp_pitch_down = RoR::App::GetInputEngine()->getEventValue(EV_AIRPLANE_ELEVATOR_DOWN);
     float sum_pitch = tmp_pitch_down - tmp_pitch_up;
-    RoR::App::GetInputEngine()->smoothValue(vehicle->elevator, sum_pitch, seconds_since_last_frame*commandrate);
+    RoR::App::GetInputEngine()->smoothValue(vehicle->elevator, sum_pitch, seconds_since_last_frame * commandrate);
 
     //rudder
     float tmp_rudder_left = RoR::App::GetInputEngine()->getEventValue(EV_AIRPLANE_RUDDER_LEFT);
     float tmp_rudder_right = RoR::App::GetInputEngine()->getEventValue(EV_AIRPLANE_RUDDER_RIGHT);
     float sum_rudder = tmp_rudder_left - tmp_rudder_right;
-    RoR::App::GetInputEngine()->smoothValue(vehicle->rudder, sum_rudder, seconds_since_last_frame*commandrate);
+    RoR::App::GetInputEngine()->smoothValue(vehicle->rudder, sum_rudder, seconds_since_last_frame * commandrate);
 
     //brake
     if (!vehicle->replaymode && !vehicle->parkingbrake)
     {
-        vehicle->brake=0.0;
+        vehicle->brake = 0.0;
         float brakevalue = RoR::App::GetInputEngine()->getEventValue(EV_AIRPLANE_BRAKE);
-        vehicle->brake=vehicle->brakeforce*0.66*brakevalue;
+        vehicle->brake = vehicle->brakeforce * 0.66 * brakevalue;
     }
     if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_AIRPLANE_PARKING_BRAKE))
     {
@@ -113,7 +113,7 @@ void AircraftSimulation::UpdateVehicle(Beam* vehicle, float seconds_since_last_f
     //reverse
     if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_AIRPLANE_REVERSE))
     {
-        for (int i=0; i<vehicle->free_aeroengine; i++)
+        for (int i = 0; i < vehicle->free_aeroengine; i++)
         {
             vehicle->aeroengines[i]->toggleReverse();
         }
@@ -122,7 +122,7 @@ void AircraftSimulation::UpdateVehicle(Beam* vehicle, float seconds_since_last_f
     // toggle engines
     if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_AIRPLANE_TOGGLE_ENGINES))
     {
-        for (int i=0; i<vehicle->free_aeroengine; i++)
+        for (int i = 0; i < vehicle->free_aeroengine; i++)
         {
             vehicle->aeroengines[i]->flipStart();
         }
@@ -131,60 +131,60 @@ void AircraftSimulation::UpdateVehicle(Beam* vehicle, float seconds_since_last_f
     //flaps
     if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_AIRPLANE_FLAPS_NONE))
     {
-        if (vehicle->flap>0)
+        if (vehicle->flap > 0)
         {
-            vehicle->flap=0;
+            vehicle->flap = 0;
         }
     }
     if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_AIRPLANE_FLAPS_FULL))
     {
-        if (vehicle->flap<5)
+        if (vehicle->flap < 5)
         {
-            vehicle->flap=5;
+            vehicle->flap = 5;
         }
     }
     if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_AIRPLANE_FLAPS_LESS))
     {
-        if (vehicle->flap>0)
+        if (vehicle->flap > 0)
         {
-            vehicle->flap=(vehicle->flap)-1;
+            vehicle->flap = (vehicle->flap) - 1;
         }
     }
     if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_AIRPLANE_FLAPS_MORE))
     {
-        if (vehicle->flap<5)
+        if (vehicle->flap < 5)
         {
-            vehicle->flap=(vehicle->flap)+1;
+            vehicle->flap = (vehicle->flap) + 1;
         }
     }
 
     //airbrakes
     if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_AIRPLANE_AIRBRAKES_NONE))
     {
-        if (vehicle->airbrakeval>0)
+        if (vehicle->airbrakeval > 0)
         {
-            vehicle->airbrakeval=0;
+            vehicle->airbrakeval = 0;
         }
     }
     if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_AIRPLANE_AIRBRAKES_FULL))
     {
-        if (vehicle->airbrakeval<5)
+        if (vehicle->airbrakeval < 5)
         {
-            vehicle->airbrakeval=5;
+            vehicle->airbrakeval = 5;
         }
     }
     if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_AIRPLANE_AIRBRAKES_LESS))
     {
-        if (vehicle->airbrakeval>0)
+        if (vehicle->airbrakeval > 0)
         {
-            vehicle->airbrakeval=(vehicle->airbrakeval)-1;
+            vehicle->airbrakeval = (vehicle->airbrakeval) - 1;
         }
     }
     if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_AIRPLANE_AIRBRAKES_MORE))
     {
-        if (vehicle->airbrakeval<5)
+        if (vehicle->airbrakeval < 5)
         {
-            vehicle->airbrakeval=(vehicle->airbrakeval)+1;
+            vehicle->airbrakeval = (vehicle->airbrakeval) + 1;
         }
     }
 
@@ -192,7 +192,7 @@ void AircraftSimulation::UpdateVehicle(Beam* vehicle, float seconds_since_last_f
     float tmp_throttle = RoR::App::GetInputEngine()->getEventBoolValue(EV_AIRPLANE_THROTTLE);
     if (tmp_throttle > 0)
     {
-        for (int i=0; i<vehicle->free_aeroengine; i++)
+        for (int i = 0; i < vehicle->free_aeroengine; i++)
         {
             vehicle->aeroengines[i]->setThrottle(tmp_throttle);
         }
@@ -200,7 +200,7 @@ void AircraftSimulation::UpdateVehicle(Beam* vehicle, float seconds_since_last_f
     if (RoR::App::GetInputEngine()->isEventDefined(EV_AIRPLANE_THROTTLE_AXIS))
     {
         float f = RoR::App::GetInputEngine()->getEventValue(EV_AIRPLANE_THROTTLE_AXIS);
-        for (int i=0; i<vehicle->free_aeroengine; i++)
+        for (int i = 0; i < vehicle->free_aeroengine; i++)
         {
             vehicle->aeroengines[i]->setThrottle(f);
         }
@@ -208,23 +208,23 @@ void AircraftSimulation::UpdateVehicle(Beam* vehicle, float seconds_since_last_f
     if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_AIRPLANE_THROTTLE_DOWN, 0.1f))
     {
         //throttle down
-        for (int i=0; i<vehicle->free_aeroengine; i++)
+        for (int i = 0; i < vehicle->free_aeroengine; i++)
         {
-            vehicle->aeroengines[i]->setThrottle(vehicle->aeroengines[i]->getThrottle()-0.05);
+            vehicle->aeroengines[i]->setThrottle(vehicle->aeroengines[i]->getThrottle() - 0.05);
         }
     }
     if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_AIRPLANE_THROTTLE_UP, 0.1f))
     {
         //throttle up
-        for (int i=0; i<vehicle->free_aeroengine; i++)
+        for (int i = 0; i < vehicle->free_aeroengine; i++)
         {
-            vehicle->aeroengines[i]->setThrottle(vehicle->aeroengines[i]->getThrottle()+0.05);
+            vehicle->aeroengines[i]->setThrottle(vehicle->aeroengines[i]->getThrottle() + 0.05);
         }
     }
     if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_AIRPLANE_THROTTLE_NO, 0.1f))
     {
         // no throttle
-        for (int i=0; i<vehicle->free_aeroengine; i++)
+        for (int i = 0; i < vehicle->free_aeroengine; i++)
         {
             vehicle->aeroengines[i]->setThrottle(0);
         }
@@ -232,14 +232,14 @@ void AircraftSimulation::UpdateVehicle(Beam* vehicle, float seconds_since_last_f
     if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_AIRPLANE_THROTTLE_FULL, 0.1f))
     {
         // full throttle
-        for (int i=0; i<vehicle->free_aeroengine; i++)
+        for (int i = 0; i < vehicle->free_aeroengine; i++)
         {
             vehicle->aeroengines[i]->setThrottle(1);
         }
     }
     if (vehicle->autopilot)
     {
-        for (int i=0; i<vehicle->free_aeroengine; i++)
+        for (int i = 0; i < vehicle->free_aeroengine; i++)
         {
             vehicle->aeroengines[i]->setThrottle(vehicle->autopilot->getThrottle(vehicle->aeroengines[i]->getThrottle(), seconds_since_last_frame));
         }

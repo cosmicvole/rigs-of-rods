@@ -1,22 +1,23 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
+
 #ifdef USE_OPENAL
 
 #include "SoundScriptManager.h"
@@ -38,11 +39,11 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 using namespace Ogre;
 using namespace RoR;
 
-const float SoundScriptInstance::PITCHDOWN_FADE_FACTOR   = 3.0f;
+const float SoundScriptInstance::PITCHDOWN_FADE_FACTOR = 3.0f;
 const float SoundScriptInstance::PITCHDOWN_CUTOFF_FACTOR = 5.0f;
 
 SoundScriptManager::SoundScriptManager() :
-      disabled(true)
+    disabled(true)
     , loading_base(false)
     , instance_counter(0)
     , max_distance(500.0f)
@@ -50,27 +51,27 @@ SoundScriptManager::SoundScriptManager() :
     , reference_distance(7.5f)
     , sound_manager(0)
 {
-    for (int i=0; i < SS_MAX_TRIG; i++)
+    for (int i = 0; i < SS_MAX_TRIG; i++)
     {
         free_trigs[i] = 0;
     }
 
-    for (int i=0; i < SS_MAX_MOD; i++)
+    for (int i = 0; i < SS_MAX_MOD; i++)
     {
         free_pitches[i] = 0;
-        free_gains[i]   = 0;
+        free_gains[i] = 0;
     }
 
     // TODO: there is a memory corruption going on here, need to fix
-    for (int i=0; i < SS_MAX_TRIG * MAX_INSTANCES_PER_GROUP; i++)
+    for (int i = 0; i < SS_MAX_TRIG * MAX_INSTANCES_PER_GROUP; i++)
     {
         trigs[i] = 0;
     }
 
-    for (int i=0; i < SS_MAX_MOD * MAX_INSTANCES_PER_GROUP; i++)
+    for (int i = 0; i < SS_MAX_MOD * MAX_INSTANCES_PER_GROUP; i++)
     {
         pitches[i] = 0;
-        gains[i]   = 0;
+        gains[i] = 0;
     }
 
     // reset all states
@@ -97,9 +98,10 @@ SoundScriptManager::SoundScriptManager() :
     ResourceGroupManager::getSingleton()._registerScriptLoader(this);
 }
 
-void SoundScriptManager::trigOnce(Beam *truck, int trig, int linkType, int linkItemID)
+void SoundScriptManager::trigOnce(Beam* truck, int trig, int linkType, int linkItemID)
 {
-    if (disabled) return;
+    if (disabled)
+        return;
 
     if (truck)
     {
@@ -109,12 +111,13 @@ void SoundScriptManager::trigOnce(Beam *truck, int trig, int linkType, int linkI
 
 void SoundScriptManager::trigOnce(int truck, int trig, int linkType, int linkItemID)
 {
-    if (disabled) return;
+    if (disabled)
+        return;
 
-    for (int i=0; i < free_trigs[trig]; i++)
+    for (int i = 0; i < free_trigs[trig]; i++)
     {
         // cycle through all instance groups
-        SoundScriptInstance* inst = trigs[trig+i*SS_MAX_TRIG];
+        SoundScriptInstance* inst = trigs[trig + i * SS_MAX_TRIG];
 
         if (inst && inst->truck == truck && inst->sound_link_type == linkType && inst->sound_link_item_id == linkItemID)
         {
@@ -123,9 +126,10 @@ void SoundScriptManager::trigOnce(int truck, int trig, int linkType, int linkIte
     }
 }
 
-void SoundScriptManager::trigStart(Beam *truck, int trig, int linkType, int linkItemID)
+void SoundScriptManager::trigStart(Beam* truck, int trig, int linkType, int linkItemID)
 {
-    if (disabled) return;
+    if (disabled)
+        return;
 
     if (truck)
     {
@@ -135,14 +139,16 @@ void SoundScriptManager::trigStart(Beam *truck, int trig, int linkType, int link
 
 void SoundScriptManager::trigStart(int truck, int trig, int linkType, int linkItemID)
 {
-    if (disabled) return;
-    if (getTrigState(truck, trig, linkType, linkItemID)) return;
+    if (disabled)
+        return;
+    if (getTrigState(truck, trig, linkType, linkItemID))
+        return;
 
     state_map[linkType][linkItemID][truck][trig] = true;
 
-    for (int i=0; i < free_trigs[trig]; i++)
+    for (int i = 0; i < free_trigs[trig]; i++)
     {
-        SoundScriptInstance* inst = trigs[trig+i*SS_MAX_TRIG];
+        SoundScriptInstance* inst = trigs[trig + i * SS_MAX_TRIG];
 
         if (inst && inst->truck == truck && inst->sound_link_type == linkType && inst->sound_link_item_id == linkItemID)
         {
@@ -151,9 +157,10 @@ void SoundScriptManager::trigStart(int truck, int trig, int linkType, int linkIt
     }
 }
 
-void SoundScriptManager::trigStop(Beam *truck, int trig, int linkType, int linkItemID)
+void SoundScriptManager::trigStop(Beam* truck, int trig, int linkType, int linkItemID)
 {
-    if (disabled) return;
+    if (disabled)
+        return;
 
     if (truck)
     {
@@ -163,13 +170,15 @@ void SoundScriptManager::trigStop(Beam *truck, int trig, int linkType, int linkI
 
 void SoundScriptManager::trigStop(int truck, int trig, int linkType, int linkItemID)
 {
-    if (disabled) return;
-    if (!getTrigState(truck, trig, linkType, linkItemID)) return;
-    
+    if (disabled)
+        return;
+    if (!getTrigState(truck, trig, linkType, linkItemID))
+        return;
+
     state_map[linkType][linkItemID][truck][trig] = false;
-    for (int i=0; i < free_trigs[trig]; i++)
+    for (int i = 0; i < free_trigs[trig]; i++)
     {
-        SoundScriptInstance* inst = trigs[trig+i*SS_MAX_TRIG];
+        SoundScriptInstance* inst = trigs[trig + i * SS_MAX_TRIG];
 
         if (inst && inst->truck == truck && inst->sound_link_type == linkType && inst->sound_link_item_id == linkItemID)
         {
@@ -178,9 +187,10 @@ void SoundScriptManager::trigStop(int truck, int trig, int linkType, int linkIte
     }
 }
 
-void SoundScriptManager::trigKill(Beam *truck, int trig, int linkType, int linkItemID)
+void SoundScriptManager::trigKill(Beam* truck, int trig, int linkType, int linkItemID)
 {
-    if (disabled) return;
+    if (disabled)
+        return;
 
     if (truck)
     {
@@ -190,13 +200,15 @@ void SoundScriptManager::trigKill(Beam *truck, int trig, int linkType, int linkI
 
 void SoundScriptManager::trigKill(int truck, int trig, int linkType, int linkItemID)
 {
-    if (disabled) return;
-    if (!getTrigState(truck, trig, linkType, linkItemID)) return;
+    if (disabled)
+        return;
+    if (!getTrigState(truck, trig, linkType, linkItemID))
+        return;
 
     state_map[linkType][linkItemID][truck][trig] = false;
     for (int i = 0; i < free_trigs[trig]; i++)
     {
-        SoundScriptInstance* inst = trigs[trig + i*SS_MAX_TRIG];
+        SoundScriptInstance* inst = trigs[trig + i * SS_MAX_TRIG];
 
         if (inst && inst->truck == truck && inst->sound_link_type == linkType && inst->sound_link_item_id == linkItemID)
         {
@@ -205,10 +217,11 @@ void SoundScriptManager::trigKill(int truck, int trig, int linkType, int linkIte
     }
 }
 
-void SoundScriptManager::trigToggle(Beam *truck, int trig, int linkType, int linkItemID)
+void SoundScriptManager::trigToggle(Beam* truck, int trig, int linkType, int linkItemID)
 {
-    if (disabled) return;
-    
+    if (disabled)
+        return;
+
     if (truck)
     {
         trigToggle(truck->trucknum, trig, linkType, linkItemID);
@@ -217,7 +230,8 @@ void SoundScriptManager::trigToggle(Beam *truck, int trig, int linkType, int lin
 
 void SoundScriptManager::trigToggle(int truck, int trig, int linkType, int linkItemID)
 {
-    if (disabled) return;
+    if (disabled)
+        return;
 
     if (getTrigState(truck, trig, linkType, linkItemID))
         trigStop(truck, trig, linkType, linkItemID);
@@ -225,9 +239,10 @@ void SoundScriptManager::trigToggle(int truck, int trig, int linkType, int linkI
         trigStart(truck, trig, linkType, linkItemID);
 }
 
-bool SoundScriptManager::getTrigState(Beam *truck, int trig, int linkType, int linkItemID)
+bool SoundScriptManager::getTrigState(Beam* truck, int trig, int linkType, int linkItemID)
 {
-    if (disabled) return false;
+    if (disabled)
+        return false;
 
     if (truck)
         return getTrigState(truck->trucknum, trig, linkType, linkItemID);
@@ -237,14 +252,16 @@ bool SoundScriptManager::getTrigState(Beam *truck, int trig, int linkType, int l
 
 bool SoundScriptManager::getTrigState(int truck, int trig, int linkType, int linkItemID)
 {
-    if (disabled) return false;
+    if (disabled)
+        return false;
 
     return state_map[linkType][linkItemID][truck][trig];
 }
 
-void SoundScriptManager::modulate(Beam *truck, int mod, float value, int linkType, int linkItemID)
+void SoundScriptManager::modulate(Beam* truck, int mod, float value, int linkType, int linkItemID)
 {
-    if (disabled) return;
+    if (disabled)
+        return;
 
     if (truck)
     {
@@ -254,30 +271,32 @@ void SoundScriptManager::modulate(Beam *truck, int mod, float value, int linkTyp
 
 void SoundScriptManager::modulate(int truck, int mod, float value, int linkType, int linkItemID)
 {
-    if (disabled) return;
+    if (disabled)
+        return;
 
-    if (mod >= SS_MAX_MOD) return;
+    if (mod >= SS_MAX_MOD)
+        return;
 
-    for (int i=0; i < free_gains[mod]; i++)
+    for (int i = 0; i < free_gains[mod]; i++)
     {
         SoundScriptInstance* inst = gains[mod + i * SS_MAX_MOD];
         if (inst && inst->truck == truck && inst->sound_link_type == linkType && inst->sound_link_item_id == linkItemID)
         {
             // this one requires modulation
-            float gain=value*value*inst->templ->gain_square+value*inst->templ->gain_multiplier+inst->templ->gain_offset;
+            float gain = value * value * inst->templ->gain_square + value * inst->templ->gain_multiplier + inst->templ->gain_offset;
             gain = std::max(0.0f, gain);
             gain = std::min(gain, 1.0f);
             inst->setGain(gain);
         }
     }
 
-    for (int i=0; i < free_pitches[mod]; i++)
+    for (int i = 0; i < free_pitches[mod]; i++)
     {
         SoundScriptInstance* inst = pitches[mod + i * SS_MAX_MOD];
         if (inst && inst->truck == truck && inst->sound_link_type == linkType && inst->sound_link_item_id == linkItemID)
         {
             // this one requires modulation
-            float pitch=value*value*inst->templ->pitch_square+value*inst->templ->pitch_multiplier+inst->templ->pitch_offset;
+            float pitch = value * value * inst->templ->pitch_square + value * inst->templ->pitch_multiplier + inst->templ->pitch_offset;
             pitch = std::max(0.0f, pitch);
             inst->setPitch(pitch);
         }
@@ -286,7 +305,8 @@ void SoundScriptManager::modulate(int truck, int mod, float value, int linkType,
 
 void SoundScriptManager::setCamera(Vector3 position, Vector3 direction, Vector3 up, Vector3 velocity)
 {
-    if (disabled) return;
+    if (disabled)
+        return;
     sound_manager->setCamera(position, direction, up, velocity);
 }
 
@@ -310,7 +330,7 @@ SoundScriptTemplate* SoundScriptManager::createTemplate(String name, String grou
         return nullptr;
     }
 
-    SoundScriptTemplate *ssi = new SoundScriptTemplate(name, groupname, filename, loading_base);
+    SoundScriptTemplate* ssi = new SoundScriptTemplate(name, groupname, filename, loading_base);
     templates[name] = ssi;
     return ssi;
 }
@@ -318,12 +338,13 @@ SoundScriptTemplate* SoundScriptManager::createTemplate(String name, String grou
 void SoundScriptManager::unloadResourceGroup(String groupname)
 {
     // first, search if there is a template name collision
-    for (std::map<Ogre::String, SoundScriptTemplate*>::iterator it = templates.begin(); it!=templates.end();)
+    for (std::map<Ogre::String, SoundScriptTemplate*>::iterator it = templates.begin(); it != templates.end();)
     {
         if (it->second && it->second->group_name == groupname)
         {
             STL_ERASE(templates, it);
-        } else
+        }
+        else
         {
             ++it;
         }
@@ -343,8 +364,8 @@ void SoundScriptManager::clearNonBaseTemplates()
             counter++;
 
             STL_ERASE(templates, it);
-
-        } else
+        }
+        else
         {
             ++it;
         }
@@ -356,7 +377,7 @@ void SoundScriptManager::clearNonBaseTemplates()
     }
 }
 
-SoundScriptInstance* SoundScriptManager::createInstance(Ogre::String templatename, int truck, Ogre::SceneNode *toAttach, int soundLinkType, int soundLinkItemId)
+SoundScriptInstance* SoundScriptManager::createInstance(Ogre::String templatename, int truck, Ogre::SceneNode* toAttach, int soundLinkType, int soundLinkItemId)
 {
     //first, search template
     SoundScriptTemplate* templ = NULL;
@@ -373,15 +394,15 @@ SoundScriptInstance* SoundScriptManager::createInstance(Ogre::String templatenam
         return NULL; // invalid template!
     }
 
-    if (   free_trigs[templ->trigger_source]   >= MAX_INSTANCES_PER_GROUP
-        || (free_gains[templ->trigger_source]   >= MAX_INSTANCES_PER_GROUP && templ->gain_source  != SS_MOD_NONE)
+    if (free_trigs[templ->trigger_source] >= MAX_INSTANCES_PER_GROUP
+        || (free_gains[templ->trigger_source] >= MAX_INSTANCES_PER_GROUP && templ->gain_source != SS_MOD_NONE)
         || (free_pitches[templ->trigger_source] >= MAX_INSTANCES_PER_GROUP && templ->pitch_source != SS_MOD_NONE))
     {
         LOG("SoundScriptManager: Reached MAX_INSTANCES_PER_GROUP limit (" + TOSTRING(MAX_INSTANCES_PER_GROUP) + ")");
         return NULL; // reached limit!
     }
 
-    SoundScriptInstance* inst = new SoundScriptInstance(truck, templ, sound_manager, templ->file_name+"-"+TOSTRING(truck)+"-"+TOSTRING(instance_counter), soundLinkType, soundLinkItemId);
+    SoundScriptInstance* inst = new SoundScriptInstance(truck, templ, sound_manager, templ->file_name + "-" + TOSTRING(truck) + "-" + TOSTRING(instance_counter), soundLinkType, soundLinkItemId);
     instance_counter++;
 
     // register to lookup tables
@@ -416,11 +437,11 @@ void SoundScriptManager::parseScript(DataStreamPtr& stream, const String& groupN
 
     LOG("SoundScriptManager: Parsing script "+stream->getName());
 
-    while(!stream->eof())
+    while (!stream->eof())
     {
         line = RoR::Utils::SanitizeUtf8String(stream->getLine());
         // ignore comments & blanks
-        if (!(line.length() == 0 || line.substr(0,2) == "//"))
+        if (!(line.length() == 0 || line.substr(0, 2) == "//"))
         {
             if (sst == 0)
             {
@@ -438,14 +459,16 @@ void SoundScriptManager::parseScript(DataStreamPtr& stream, const String& groupN
                 }
                 // skip to and over next {
                 skipToNextOpenBrace(stream);
-            } else
+            }
+            else
             {
                 // already in a ss
                 if (line == "}")
                 {
                     // finished ss
                     sst = 0;
-                } else
+                }
+                else
                 {
                     // attribute
                     // split params on space
@@ -492,7 +515,7 @@ void SoundScriptManager::setEnabled(bool state)
 //=====================================================================
 
 SoundScriptTemplate::SoundScriptTemplate(String name, String groupname, String filename, bool baseTemplate) :
-      base_template(baseTemplate)
+    base_template(baseTemplate)
     , file_name(filename)
     , free_sound(0)
     , gain_multiplier(1.0f)
@@ -516,84 +539,351 @@ SoundScriptTemplate::SoundScriptTemplate(String name, String groupname, String f
 
 bool SoundScriptTemplate::setParameter(Ogre::StringVector vec)
 {
-    if (vec.empty()) return false;
+    if (vec.empty())
+        return false;
 
     if (vec[0] == String("trigger_source"))
     {
-        if (vec.size() < 2) return false;
-        if (vec[1] == String("engine")) {trigger_source=SS_TRIG_ENGINE; return true;};
-        if (vec[1] == String("aeroengine1")) {trigger_source=SS_TRIG_AEROENGINE1; return true;};
-        if (vec[1] == String("aeroengine2")) {trigger_source=SS_TRIG_AEROENGINE2; return true;};
-        if (vec[1] == String("aeroengine3")) {trigger_source=SS_TRIG_AEROENGINE3; return true;};
-        if (vec[1] == String("aeroengine4")) {trigger_source=SS_TRIG_AEROENGINE4; return true;};
-        if (vec[1] == String("aeroengine5")) {trigger_source=SS_TRIG_AEROENGINE5; return true;};
-        if (vec[1] == String("aeroengine6")) {trigger_source=SS_TRIG_AEROENGINE6; return true;};
-        if (vec[1] == String("aeroengine7")) {trigger_source=SS_TRIG_AEROENGINE7; return true;};
-        if (vec[1] == String("aeroengine8")) {trigger_source=SS_TRIG_AEROENGINE8; return true;};
-        if (vec[1] == String("horn")) {trigger_source=SS_TRIG_HORN; return true;};
-        if (vec[1] == String("brake")) {trigger_source=SS_TRIG_BRAKE; return true;};
-        if (vec[1] == String("pump")) {trigger_source=SS_TRIG_PUMP; return true;};
-        if (vec[1] == String("starter")) {trigger_source=SS_TRIG_STARTER; return true;};
-        if (vec[1] == String("turbo_BOV")) { trigger_source = SS_TRIG_TURBOBOV; return true; };
-        if (vec[1] == String("turbo_waste_gate")) { trigger_source = SS_TRIG_TURBOWASTEGATE; return true; };
-        if (vec[1] == String("turbo_back_fire")) { trigger_source = SS_TRIG_TURBOBACKFIRE; return true; };
-        if (vec[1] == String("always_on")) {trigger_source=SS_TRIG_ALWAYSON; return true;};
-        if (vec[1] == String("repair")) {trigger_source=SS_TRIG_REPAIR; return true;};
-        if (vec[1] == String("air")) {trigger_source=SS_TRIG_AIR; return true;};
-        if (vec[1] == String("gpws_ap_disconnect")) {trigger_source=SS_TRIG_GPWS_APDISCONNECT; return true;};
-        if (vec[1] == String("gpws_10")) {trigger_source=SS_TRIG_GPWS_10; return true;};
-        if (vec[1] == String("gpws_20")) {trigger_source=SS_TRIG_GPWS_20; return true;};
-        if (vec[1] == String("gpws_30")) {trigger_source=SS_TRIG_GPWS_30; return true;};
-        if (vec[1] == String("gpws_40")) {trigger_source=SS_TRIG_GPWS_40; return true;};
-        if (vec[1] == String("gpws_50")) {trigger_source=SS_TRIG_GPWS_50; return true;};
-        if (vec[1] == String("gpws_100")) {trigger_source=SS_TRIG_GPWS_100; return true;};
-        if (vec[1] == String("gpws_pull_up")) {trigger_source=SS_TRIG_GPWS_PULLUP; return true;};
-        if (vec[1] == String("gpws_minimums")) {trigger_source=SS_TRIG_GPWS_MINIMUMS; return true;};
-        if (vec[1] == String("air_purge")) {trigger_source=SS_TRIG_AIR_PURGE; return true;};
-        if (vec[1] == String("shift")) {trigger_source=SS_TRIG_SHIFT; return true;};
-        if (vec[1] == String("gear_slide")) {trigger_source=SS_TRIG_GEARSLIDE; return true;};
-        if (vec[1] == String("creak") && App::GetAudioEnableCreak()) {trigger_source=SS_TRIG_CREAK; return true;};
-        if (vec[1] == String("break")) {trigger_source=SS_TRIG_BREAK; return true;};
-        if (vec[1] == String("screetch")) {trigger_source=SS_TRIG_SCREETCH; return true;};
-        if (vec[1] == String("parking_brake")) {trigger_source=SS_TRIG_PARK; return true;};
-        if (vec[1] == String("antilock")) {trigger_source=SS_TRIG_ALB_ACTIVE; return true;};
-        if (vec[1] == String("tractioncontrol")) {trigger_source=SS_TRIG_TC_ACTIVE; return true;};
-        if (vec[1] == String("afterburner1")) {trigger_source=SS_TRIG_AFTERBURNER1; return true;};
-        if (vec[1] == String("afterburner2")) {trigger_source=SS_TRIG_AFTERBURNER2; return true;};
-        if (vec[1] == String("afterburner3")) {trigger_source=SS_TRIG_AFTERBURNER3; return true;};
-        if (vec[1] == String("afterburner4")) {trigger_source=SS_TRIG_AFTERBURNER4; return true;};
-        if (vec[1] == String("afterburner5")) {trigger_source=SS_TRIG_AFTERBURNER5; return true;};
-        if (vec[1] == String("afterburner6")) {trigger_source=SS_TRIG_AFTERBURNER6; return true;};
-        if (vec[1] == String("afterburner7")) {trigger_source=SS_TRIG_AFTERBURNER7; return true;};
-        if (vec[1] == String("afterburner8")) {trigger_source=SS_TRIG_AFTERBURNER8; return true;};
-        if (vec[1] == String("avionic_chat_01")) {trigger_source=SS_TRIG_AVICHAT01; return true;};
-        if (vec[1] == String("avionic_chat_02")) {trigger_source=SS_TRIG_AVICHAT02; return true;};
-        if (vec[1] == String("avionic_chat_03")) {trigger_source=SS_TRIG_AVICHAT03; return true;};
-        if (vec[1] == String("avionic_chat_04")) {trigger_source=SS_TRIG_AVICHAT04; return true;};
-        if (vec[1] == String("avionic_chat_05")) {trigger_source=SS_TRIG_AVICHAT05; return true;};
-        if (vec[1] == String("avionic_chat_06")) {trigger_source=SS_TRIG_AVICHAT06; return true;};
-        if (vec[1] == String("avionic_chat_07")) {trigger_source=SS_TRIG_AVICHAT07; return true;};
-        if (vec[1] == String("avionic_chat_08")) {trigger_source=SS_TRIG_AVICHAT08; return true;};
-        if (vec[1] == String("avionic_chat_09")) {trigger_source=SS_TRIG_AVICHAT09; return true;};
-        if (vec[1] == String("avionic_chat_10")) {trigger_source=SS_TRIG_AVICHAT10; return true;};
-        if (vec[1] == String("avionic_chat_11")) {trigger_source=SS_TRIG_AVICHAT11; return true;};
-        if (vec[1] == String("avionic_chat_12")) {trigger_source=SS_TRIG_AVICHAT12; return true;};
-        if (vec[1] == String("avionic_chat_13")) {trigger_source=SS_TRIG_AVICHAT13; return true;};
-        if (vec[1] == String("aoa_horn")) {trigger_source=SS_TRIG_AOA; return true;};
-        if (vec[1] == String("ignition")) {trigger_source=SS_TRIG_IGNITION; return true;};
-        if (vec[1] == String("reverse_gear")) {trigger_source=SS_TRIG_REVERSE_GEAR; return true;};
-        if (vec[1] == String("turn_signal")) {trigger_source=SS_TRIG_TURN_SIGNAL; return true;};
-        if (vec[1] == String("turn_signal_tick")) {trigger_source=SS_TRIG_TURN_SIGNAL_TICK; return true;};
-        if (vec[1] == String("turn_signal_warn_tick")) {trigger_source=SS_TRIG_TURN_SIGNAL_WARN_TICK; return true;};
-        if (vec[1] == String("linked_command")) {trigger_source=SS_TRIG_LINKED_COMMAND; return true;};
-        if (vec[1] == String("main_menu")) { trigger_source = SS_TRIG_MAIN_MENU; return true; };
+        if (vec.size() < 2)
+            return false;
+        if (vec[1] == String("engine"))
+        {
+            trigger_source = SS_TRIG_ENGINE;
+            return true;
+        };
+        if (vec[1] == String("aeroengine1"))
+        {
+            trigger_source = SS_TRIG_AEROENGINE1;
+            return true;
+        };
+        if (vec[1] == String("aeroengine2"))
+        {
+            trigger_source = SS_TRIG_AEROENGINE2;
+            return true;
+        };
+        if (vec[1] == String("aeroengine3"))
+        {
+            trigger_source = SS_TRIG_AEROENGINE3;
+            return true;
+        };
+        if (vec[1] == String("aeroengine4"))
+        {
+            trigger_source = SS_TRIG_AEROENGINE4;
+            return true;
+        };
+        if (vec[1] == String("aeroengine5"))
+        {
+            trigger_source = SS_TRIG_AEROENGINE5;
+            return true;
+        };
+        if (vec[1] == String("aeroengine6"))
+        {
+            trigger_source = SS_TRIG_AEROENGINE6;
+            return true;
+        };
+        if (vec[1] == String("aeroengine7"))
+        {
+            trigger_source = SS_TRIG_AEROENGINE7;
+            return true;
+        };
+        if (vec[1] == String("aeroengine8"))
+        {
+            trigger_source = SS_TRIG_AEROENGINE8;
+            return true;
+        };
+        if (vec[1] == String("horn"))
+        {
+            trigger_source = SS_TRIG_HORN;
+            return true;
+        };
+        if (vec[1] == String("brake"))
+        {
+            trigger_source = SS_TRIG_BRAKE;
+            return true;
+        };
+        if (vec[1] == String("pump"))
+        {
+            trigger_source = SS_TRIG_PUMP;
+            return true;
+        };
+        if (vec[1] == String("starter"))
+        {
+            trigger_source = SS_TRIG_STARTER;
+            return true;
+        };
+        if (vec[1] == String("turbo_BOV"))
+        {
+            trigger_source = SS_TRIG_TURBOBOV;
+            return true;
+        };
+        if (vec[1] == String("turbo_waste_gate"))
+        {
+            trigger_source = SS_TRIG_TURBOWASTEGATE;
+            return true;
+        };
+        if (vec[1] == String("turbo_back_fire"))
+        {
+            trigger_source = SS_TRIG_TURBOBACKFIRE;
+            return true;
+        };
+        if (vec[1] == String("always_on"))
+        {
+            trigger_source = SS_TRIG_ALWAYSON;
+            return true;
+        };
+        if (vec[1] == String("repair"))
+        {
+            trigger_source = SS_TRIG_REPAIR;
+            return true;
+        };
+        if (vec[1] == String("air"))
+        {
+            trigger_source = SS_TRIG_AIR;
+            return true;
+        };
+        if (vec[1] == String("gpws_ap_disconnect"))
+        {
+            trigger_source = SS_TRIG_GPWS_APDISCONNECT;
+            return true;
+        };
+        if (vec[1] == String("gpws_10"))
+        {
+            trigger_source = SS_TRIG_GPWS_10;
+            return true;
+        };
+        if (vec[1] == String("gpws_20"))
+        {
+            trigger_source = SS_TRIG_GPWS_20;
+            return true;
+        };
+        if (vec[1] == String("gpws_30"))
+        {
+            trigger_source = SS_TRIG_GPWS_30;
+            return true;
+        };
+        if (vec[1] == String("gpws_40"))
+        {
+            trigger_source = SS_TRIG_GPWS_40;
+            return true;
+        };
+        if (vec[1] == String("gpws_50"))
+        {
+            trigger_source = SS_TRIG_GPWS_50;
+            return true;
+        };
+        if (vec[1] == String("gpws_100"))
+        {
+            trigger_source = SS_TRIG_GPWS_100;
+            return true;
+        };
+        if (vec[1] == String("gpws_pull_up"))
+        {
+            trigger_source = SS_TRIG_GPWS_PULLUP;
+            return true;
+        };
+        if (vec[1] == String("gpws_minimums"))
+        {
+            trigger_source = SS_TRIG_GPWS_MINIMUMS;
+            return true;
+        };
+        if (vec[1] == String("air_purge"))
+        {
+            trigger_source = SS_TRIG_AIR_PURGE;
+            return true;
+        };
+        if (vec[1] == String("shift"))
+        {
+            trigger_source = SS_TRIG_SHIFT;
+            return true;
+        };
+        if (vec[1] == String("gear_slide"))
+        {
+            trigger_source = SS_TRIG_GEARSLIDE;
+            return true;
+        };
+        if (vec[1] == String("creak") && App::GetAudioEnableCreak())
+        {
+            trigger_source = SS_TRIG_CREAK;
+            return true;
+        };
+        if (vec[1] == String("break"))
+        {
+            trigger_source = SS_TRIG_BREAK;
+            return true;
+        };
+        if (vec[1] == String("screetch"))
+        {
+            trigger_source = SS_TRIG_SCREETCH;
+            return true;
+        };
+        if (vec[1] == String("parking_brake"))
+        {
+            trigger_source = SS_TRIG_PARK;
+            return true;
+        };
+        if (vec[1] == String("antilock"))
+        {
+            trigger_source = SS_TRIG_ALB_ACTIVE;
+            return true;
+        };
+        if (vec[1] == String("tractioncontrol"))
+        {
+            trigger_source = SS_TRIG_TC_ACTIVE;
+            return true;
+        };
+        if (vec[1] == String("afterburner1"))
+        {
+            trigger_source = SS_TRIG_AFTERBURNER1;
+            return true;
+        };
+        if (vec[1] == String("afterburner2"))
+        {
+            trigger_source = SS_TRIG_AFTERBURNER2;
+            return true;
+        };
+        if (vec[1] == String("afterburner3"))
+        {
+            trigger_source = SS_TRIG_AFTERBURNER3;
+            return true;
+        };
+        if (vec[1] == String("afterburner4"))
+        {
+            trigger_source = SS_TRIG_AFTERBURNER4;
+            return true;
+        };
+        if (vec[1] == String("afterburner5"))
+        {
+            trigger_source = SS_TRIG_AFTERBURNER5;
+            return true;
+        };
+        if (vec[1] == String("afterburner6"))
+        {
+            trigger_source = SS_TRIG_AFTERBURNER6;
+            return true;
+        };
+        if (vec[1] == String("afterburner7"))
+        {
+            trigger_source = SS_TRIG_AFTERBURNER7;
+            return true;
+        };
+        if (vec[1] == String("afterburner8"))
+        {
+            trigger_source = SS_TRIG_AFTERBURNER8;
+            return true;
+        };
+        if (vec[1] == String("avionic_chat_01"))
+        {
+            trigger_source = SS_TRIG_AVICHAT01;
+            return true;
+        };
+        if (vec[1] == String("avionic_chat_02"))
+        {
+            trigger_source = SS_TRIG_AVICHAT02;
+            return true;
+        };
+        if (vec[1] == String("avionic_chat_03"))
+        {
+            trigger_source = SS_TRIG_AVICHAT03;
+            return true;
+        };
+        if (vec[1] == String("avionic_chat_04"))
+        {
+            trigger_source = SS_TRIG_AVICHAT04;
+            return true;
+        };
+        if (vec[1] == String("avionic_chat_05"))
+        {
+            trigger_source = SS_TRIG_AVICHAT05;
+            return true;
+        };
+        if (vec[1] == String("avionic_chat_06"))
+        {
+            trigger_source = SS_TRIG_AVICHAT06;
+            return true;
+        };
+        if (vec[1] == String("avionic_chat_07"))
+        {
+            trigger_source = SS_TRIG_AVICHAT07;
+            return true;
+        };
+        if (vec[1] == String("avionic_chat_08"))
+        {
+            trigger_source = SS_TRIG_AVICHAT08;
+            return true;
+        };
+        if (vec[1] == String("avionic_chat_09"))
+        {
+            trigger_source = SS_TRIG_AVICHAT09;
+            return true;
+        };
+        if (vec[1] == String("avionic_chat_10"))
+        {
+            trigger_source = SS_TRIG_AVICHAT10;
+            return true;
+        };
+        if (vec[1] == String("avionic_chat_11"))
+        {
+            trigger_source = SS_TRIG_AVICHAT11;
+            return true;
+        };
+        if (vec[1] == String("avionic_chat_12"))
+        {
+            trigger_source = SS_TRIG_AVICHAT12;
+            return true;
+        };
+        if (vec[1] == String("avionic_chat_13"))
+        {
+            trigger_source = SS_TRIG_AVICHAT13;
+            return true;
+        };
+        if (vec[1] == String("aoa_horn"))
+        {
+            trigger_source = SS_TRIG_AOA;
+            return true;
+        };
+        if (vec[1] == String("ignition"))
+        {
+            trigger_source = SS_TRIG_IGNITION;
+            return true;
+        };
+        if (vec[1] == String("reverse_gear"))
+        {
+            trigger_source = SS_TRIG_REVERSE_GEAR;
+            return true;
+        };
+        if (vec[1] == String("turn_signal"))
+        {
+            trigger_source = SS_TRIG_TURN_SIGNAL;
+            return true;
+        };
+        if (vec[1] == String("turn_signal_tick"))
+        {
+            trigger_source = SS_TRIG_TURN_SIGNAL_TICK;
+            return true;
+        };
+        if (vec[1] == String("turn_signal_warn_tick"))
+        {
+            trigger_source = SS_TRIG_TURN_SIGNAL_WARN_TICK;
+            return true;
+        };
+        if (vec[1] == String("linked_command"))
+        {
+            trigger_source = SS_TRIG_LINKED_COMMAND;
+            return true;
+        };
+        if (vec[1] == String("main_menu"))
+        {
+            trigger_source = SS_TRIG_MAIN_MENU;
+            return true;
+        };
 
         return false;
     }
 
     if (vec[0] == String("pitch_source"))
     {
-        if (vec.size() < 2) return false;
+        if (vec.size() < 2)
+            return false;
         int mod = parseModulation(vec[1]);
         if (mod >= 0)
         {
@@ -605,19 +895,21 @@ bool SoundScriptTemplate::setParameter(Ogre::StringVector vec)
 
     if (vec[0] == String("pitch_factors"))
     {
-        if (vec.size() < 3) return false;
-        pitch_offset     = StringConverter::parseReal(vec[1]);
+        if (vec.size() < 3)
+            return false;
+        pitch_offset = StringConverter::parseReal(vec[1]);
         pitch_multiplier = StringConverter::parseReal(vec[2]);
         if (vec.size() == 4)
         {
-            pitch_square=StringConverter::parseReal(vec[3]);
+            pitch_square = StringConverter::parseReal(vec[3]);
         }
         return true;
     }
 
     if (vec[0] == String("gain_source"))
     {
-        if (vec.size() < 2) return false;
+        if (vec.size() < 2)
+            return false;
         int mod = parseModulation(vec[1]);
         if (mod >= 0)
         {
@@ -629,8 +921,9 @@ bool SoundScriptTemplate::setParameter(Ogre::StringVector vec)
 
     if (vec[0] == String("gain_factors"))
     {
-        if (vec.size() < 3) return false;
-        gain_offset     = StringConverter::parseReal(vec[1]);
+        if (vec.size() < 3)
+            return false;
+        gain_offset = StringConverter::parseReal(vec[1]);
         gain_multiplier = StringConverter::parseReal(vec[2]);
         if (vec.size() == 4)
         {
@@ -641,25 +934,28 @@ bool SoundScriptTemplate::setParameter(Ogre::StringVector vec)
 
     if (vec[0] == String("start_sound"))
     {
-        if (vec.size() < 3) return false;
+        if (vec.size() < 3)
+            return false;
         start_sound_pitch = StringConverter::parseReal(vec[1]); // unparsable (e.g. "unpitched") will result in value 0.0
-        start_sound_name  = vec[2];
-        has_start_sound   = true;
+        start_sound_name = vec[2];
+        has_start_sound = true;
         return true;
     }
 
     if (vec[0] == String("stop_sound"))
     {
-        if (vec.size() < 3) return false;
+        if (vec.size() < 3)
+            return false;
         stop_sound_pitch = StringConverter::parseReal(vec[1]); // unparsable (e.g. "unpitched") will result in value 0.0
-        stop_sound_name  = vec[2];
-        has_stop_sound   = true;
+        stop_sound_name = vec[2];
+        has_stop_sound = true;
         return true;
     }
 
     if (vec[0] == String("sound"))
     {
-        if (vec.size() < 3) return false;
+        if (vec.size() < 3)
+            return false;
         if (free_sound >= MAX_SOUNDS_PER_SCRIPT)
         {
             LOG("SoundScriptManager: Reached MAX_SOUNDS_PER_SCRIPT limit (" + TOSTRING(MAX_SOUNDS_PER_SCRIPT) + ")");
@@ -684,45 +980,76 @@ bool SoundScriptTemplate::setParameter(Ogre::StringVector vec)
 
 int SoundScriptTemplate::parseModulation(String str)
 {
-    if (str == String("none"))                   return SS_MOD_NONE;
-    if (str == String("engine_rpm"))             return SS_MOD_ENGINE;
-    if (str == String("turbo_rpm"))              return SS_MOD_TURBO;
-    if (str == String("aeroengine1_rpm"))        return SS_MOD_AEROENGINE1;
-    if (str == String("aeroengine2_rpm"))        return SS_MOD_AEROENGINE2;
-    if (str == String("aeroengine3_rpm"))        return SS_MOD_AEROENGINE3;
-    if (str == String("aeroengine4_rpm"))        return SS_MOD_AEROENGINE4;
-    if (str == String("aeroengine5_rpm"))        return SS_MOD_AEROENGINE5;
-    if (str == String("aeroengine6_rpm"))        return SS_MOD_AEROENGINE6;
-    if (str == String("aeroengine7_rpm"))        return SS_MOD_AEROENGINE7;
-    if (str == String("aeroengine8_rpm"))        return SS_MOD_AEROENGINE8;
-    if (str == String("wheel_speed_kmph"))       return SS_MOD_WHEELSPEED;
-    if (str == String("injector_ratio"))         return SS_MOD_INJECTOR;
-    if (str == String("torque_nm"))              return SS_MOD_TORQUE;
-    if (str == String("gearbox_rpm"))            return SS_MOD_GEARBOX;
-    if (str == String("creak"))                  return SS_MOD_CREAK;
-    if (str == String("break"))                  return SS_MOD_BREAK;
-    if (str == String("screetch"))               return SS_MOD_SCREETCH;
-    if (str == String("pump_rpm"))               return SS_MOD_PUMP;
-    if (str == String("aeroengine1_throttle"))   return SS_MOD_THROTTLE1;
-    if (str == String("aeroengine2_throttle"))   return SS_MOD_THROTTLE2;
-    if (str == String("aeroengine3_throttle"))   return SS_MOD_THROTTLE3;
-    if (str == String("aeroengine4_throttle"))   return SS_MOD_THROTTLE4;
-    if (str == String("aeroengine5_throttle"))   return SS_MOD_THROTTLE5;
-    if (str == String("aeroengine6_throttle"))   return SS_MOD_THROTTLE6;
-    if (str == String("aeroengine7_throttle"))   return SS_MOD_THROTTLE7;
-    if (str == String("aeroengine8_throttle"))   return SS_MOD_THROTTLE8;
-    if (str == String("air_speed_knots"))        return SS_MOD_AIRSPEED;
-    if (str == String("angle_of_attack_degree")) return SS_MOD_AOA;
-    if (str == String("linked_command_rate"))    return SS_MOD_LINKED_COMMANDRATE;
-    if (str == String("music_volume"))             return SS_MOD_MUSIC_VOLUME;
+    if (str == String("none"))
+        return SS_MOD_NONE;
+    if (str == String("engine_rpm"))
+        return SS_MOD_ENGINE;
+    if (str == String("turbo_rpm"))
+        return SS_MOD_TURBO;
+    if (str == String("aeroengine1_rpm"))
+        return SS_MOD_AEROENGINE1;
+    if (str == String("aeroengine2_rpm"))
+        return SS_MOD_AEROENGINE2;
+    if (str == String("aeroengine3_rpm"))
+        return SS_MOD_AEROENGINE3;
+    if (str == String("aeroengine4_rpm"))
+        return SS_MOD_AEROENGINE4;
+    if (str == String("aeroengine5_rpm"))
+        return SS_MOD_AEROENGINE5;
+    if (str == String("aeroengine6_rpm"))
+        return SS_MOD_AEROENGINE6;
+    if (str == String("aeroengine7_rpm"))
+        return SS_MOD_AEROENGINE7;
+    if (str == String("aeroengine8_rpm"))
+        return SS_MOD_AEROENGINE8;
+    if (str == String("wheel_speed_kmph"))
+        return SS_MOD_WHEELSPEED;
+    if (str == String("injector_ratio"))
+        return SS_MOD_INJECTOR;
+    if (str == String("torque_nm"))
+        return SS_MOD_TORQUE;
+    if (str == String("gearbox_rpm"))
+        return SS_MOD_GEARBOX;
+    if (str == String("creak"))
+        return SS_MOD_CREAK;
+    if (str == String("break"))
+        return SS_MOD_BREAK;
+    if (str == String("screetch"))
+        return SS_MOD_SCREETCH;
+    if (str == String("pump_rpm"))
+        return SS_MOD_PUMP;
+    if (str == String("aeroengine1_throttle"))
+        return SS_MOD_THROTTLE1;
+    if (str == String("aeroengine2_throttle"))
+        return SS_MOD_THROTTLE2;
+    if (str == String("aeroengine3_throttle"))
+        return SS_MOD_THROTTLE3;
+    if (str == String("aeroengine4_throttle"))
+        return SS_MOD_THROTTLE4;
+    if (str == String("aeroengine5_throttle"))
+        return SS_MOD_THROTTLE5;
+    if (str == String("aeroengine6_throttle"))
+        return SS_MOD_THROTTLE6;
+    if (str == String("aeroengine7_throttle"))
+        return SS_MOD_THROTTLE7;
+    if (str == String("aeroengine8_throttle"))
+        return SS_MOD_THROTTLE8;
+    if (str == String("air_speed_knots"))
+        return SS_MOD_AIRSPEED;
+    if (str == String("angle_of_attack_degree"))
+        return SS_MOD_AOA;
+    if (str == String("linked_command_rate"))
+        return SS_MOD_LINKED_COMMANDRATE;
+    if (str == String("music_volume"))
+        return SS_MOD_MUSIC_VOLUME;
 
     return -1;
 }
 
 //====================================================================
 
-SoundScriptInstance::SoundScriptInstance(int truck, SoundScriptTemplate *templ, SoundManager* sound_manager, String instancename, int soundLinkType, int soundLinkItemId) :
-      truck(truck)
+SoundScriptInstance::SoundScriptInstance(int truck, SoundScriptTemplate* templ, SoundManager* sound_manager, String instancename, int soundLinkType, int soundLinkItemId) :
+    truck(truck)
     , templ(templ)
     , sound_manager(sound_manager)
     , sound_link_type(soundLinkType)
@@ -738,17 +1065,17 @@ SoundScriptInstance::SoundScriptInstance(int truck, SoundScriptTemplate *templ, 
     {
         start_sound = sound_manager->createSound(templ->start_sound_name);
     }
-    
+
     if (templ->has_stop_sound)
     {
         stop_sound = sound_manager->createSound(templ->stop_sound_name);
     }
-    
-    for (int i=0; i < templ->free_sound; i++)
+
+    for (int i = 0; i < templ->free_sound; i++)
     {
         sounds[i] = sound_manager->createSound(templ->sound_names[i]);
     }
-    
+
     setPitch(0.0f);
     setGain(1.0f);
 
@@ -772,7 +1099,7 @@ void SoundScriptInstance::setPitch(float value)
         // searching the interval
         int up = 0;
 
-        for (up=0; up < templ->free_sound; up++)
+        for (up = 0; up < templ->free_sound; up++)
         {
             if (templ->sound_pitches[up] > value)
             {
@@ -790,50 +1117,55 @@ void SoundScriptInstance::setPitch(float value)
                 sounds[0]->setPitch(value / templ->sound_pitches[0]);
             }
 
-            for (int i=1; i < templ->free_sound; i++)
+            for (int i = 1; i < templ->free_sound; i++)
             {
                 if (templ->sound_pitches[i] != 0.0f)
                 {
                     sounds_pitchgain[i] = 0.0f;
                     // pause?
-                } else
+                }
+                else
                 {
                     sounds_pitchgain[i] = 1.0f; // unpitched
                 }
             }
-        } else if (up == templ->free_sound)
+        }
+        else if (up == templ->free_sound)
         {
             // high sound case
-            for (int i=0; i < templ->free_sound-1; i++)
+            for (int i = 0; i < templ->free_sound - 1; i++)
             {
                 if (templ->sound_pitches[i] != 0.0f)
                 {
                     sounds_pitchgain[i] = 0.0f;
                     // pause?
-                } else
+                }
+                else
                 {
                     sounds_pitchgain[i] = 1.0f; // unpitched
                 }
             }
-            
+
             sounds_pitchgain[templ->free_sound - 1] = 1.0f;
 
-            if (templ->sound_pitches[templ->free_sound - 1] != 0.0f && sounds[templ->free_sound-1])
+            if (templ->sound_pitches[templ->free_sound - 1] != 0.0f && sounds[templ->free_sound - 1])
             {
-                sounds[templ->free_sound-1]->setPitch(value / templ->sound_pitches[templ->free_sound - 1]);
+                sounds[templ->free_sound - 1]->setPitch(value / templ->sound_pitches[templ->free_sound - 1]);
             }
-        } else
+        }
+        else
         {
             // middle sound case
             int low = up - 1;
 
-            for (int i=0; i < low; i++)
+            for (int i = 0; i < low; i++)
             {
                 if (templ->sound_pitches[i] != 0.0f)
                 {
                     sounds_pitchgain[i] = 0.0f;
                     // pause?
-                } else
+                }
+                else
                 {
                     sounds_pitchgain[i] = 1.0f; // unpitched
                 }
@@ -843,27 +1175,30 @@ void SoundScriptInstance::setPitch(float value)
             {
                 sounds_pitchgain[low] = (templ->sound_pitches[up] - value) / (templ->sound_pitches[up] - templ->sound_pitches[low]);
                 sounds[low]->setPitch(value / templ->sound_pitches[low]);
-            } else
+            }
+            else
             {
                 sounds_pitchgain[low] = 1.0f; // unpitched
             }
 
             if (templ->sound_pitches[up] != 0.0f && sounds[up])
             {
-                sounds_pitchgain[up]=(value - templ->sound_pitches[low]) / (templ->sound_pitches[up] - templ->sound_pitches[low]);
+                sounds_pitchgain[up] = (value - templ->sound_pitches[low]) / (templ->sound_pitches[up] - templ->sound_pitches[low]);
                 sounds[up]->setPitch(value / templ->sound_pitches[up]);
-            } else
+            }
+            else
             {
                 sounds_pitchgain[up] = 1.0f; // unpitched
             }
 
-            for (int i=up+1; i < templ->free_sound; i++)
+            for (int i = up + 1; i < templ->free_sound; i++)
             {
                 if (templ->sound_pitches[i] != 0.0f)
                 {
                     sounds_pitchgain[i] = 0.0f;
                     // pause?
-                } else
+                }
+                else
                 {
                     sounds_pitchgain[i] = 1.0f; // unpitched
                 }
@@ -892,12 +1227,12 @@ float SoundScriptInstance::pitchgain_cutoff(float sourcepitch, float targetpitch
         return 1.0f; // unpitchable
     }
 
-    if (targetpitch>sourcepitch / PITCHDOWN_FADE_FACTOR)
+    if (targetpitch > sourcepitch / PITCHDOWN_FADE_FACTOR)
     {
         return 1.0f; // pass
     }
 
-    if (targetpitch<sourcepitch / PITCHDOWN_CUTOFF_FACTOR)
+    if (targetpitch < sourcepitch / PITCHDOWN_CUTOFF_FACTOR)
     {
         return 0.0f; // cutoff
     }
@@ -913,7 +1248,7 @@ void SoundScriptInstance::setGain(float value)
         start_sound->setGain(value * start_sound_pitchgain);
     }
 
-    for (int i=0; i < templ->free_sound; i++)
+    for (int i = 0; i < templ->free_sound; i++)
     {
         if (sounds[i])
         {
@@ -937,7 +1272,7 @@ void SoundScriptInstance::setPosition(Vector3 pos, Vector3 velocity)
         start_sound->setVelocity(velocity);
     }
 
-    for (int i=0; i<templ->free_sound; i++)
+    for (int i = 0; i < templ->free_sound; i++)
     {
         if (sounds[i])
         {
@@ -964,7 +1299,7 @@ void SoundScriptInstance::runOnce()
         start_sound->play();
     }
 
-    for (int i=0; i<templ->free_sound; i++)
+    for (int i = 0; i < templ->free_sound; i++)
     {
         if (sounds[i])
         {
@@ -996,7 +1331,7 @@ void SoundScriptInstance::start()
         start_sound->play();
     }
 
-    for (int i=0; i<templ->free_sound; i++)
+    for (int i = 0; i < templ->free_sound; i++)
     {
         if (sounds[i])
         {
@@ -1008,9 +1343,10 @@ void SoundScriptInstance::start()
 
 void SoundScriptInstance::stop()
 {
-    for (int i=0; i<templ->free_sound; i++)
+    for (int i = 0; i < templ->free_sound; i++)
     {
-        if (sounds[i]) sounds[i]->stop();
+        if (sounds[i])
+            sounds[i]->stop();
     }
 
     if (stop_sound)
@@ -1022,9 +1358,10 @@ void SoundScriptInstance::stop()
 
 void SoundScriptInstance::kill()
 {
-    for (int i = 0; i<templ->free_sound; i++)
+    for (int i = 0; i < templ->free_sound; i++)
     {
-        if (sounds[i]) sounds[i]->stop();
+        if (sounds[i])
+            sounds[i]->stop();
     }
 
     if (start_sound)
@@ -1049,7 +1386,7 @@ void SoundScriptInstance::setEnabled(bool e)
         stop_sound->setEnabled(e);
     }
 
-    for (int i=0; i < templ->free_sound; i++)
+    for (int i = 0; i < templ->free_sound; i++)
     {
         if (sounds[i])
         {

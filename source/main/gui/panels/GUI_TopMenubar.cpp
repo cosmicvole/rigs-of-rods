@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2014 Petr Ohlidal
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -12,18 +12,16 @@
 
     Rigs of Rods is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** 
-    @file   GUIMenu.h
-    @date   13th of August 2009
-    @author Thomas Fischer thomas{AT}thomasfischer{DOT}biz
-*/
+/// @file   GUIMenu.h
+/// @date   13th of August 2009
+/// @author Thomas Fischer thomas{AT}thomasfischer{DOT}biz
 
 #ifdef USE_MYGUI
 
@@ -76,7 +74,7 @@ TopMenubar::TopMenubar() :
     p->setPopupAccept(true);
     
     p->addItem(_L("Get new vehicle"),                 MyGUI::MenuItemType::Normal);
-    p->addItem(_L("Show vehicle description"),          MyGUI::MenuItemType::Normal);
+    p->addItem(_L("Show vehicle description"),		  MyGUI::MenuItemType::Normal);
     p->addItem(_L("Reload current vehicle"),          MyGUI::MenuItemType::Normal);
     p->addItem(_L("Remove current vehicle"),          MyGUI::MenuItemType::Normal);
 
@@ -126,7 +124,7 @@ TopMenubar::TopMenubar() :
     p->addItem(_L("Friction Settings"),  MyGUI::MenuItemType::Normal, "frictiongui");
     p->addItem(_L("Show Console"),       MyGUI::MenuItemType::Normal, "showConsole");
     p->addItem(_L("Texture Tool"),       MyGUI::MenuItemType::Normal, "texturetool");
-    p->addItem(_L("Debug Options"),         MyGUI::MenuItemType::Normal, "debugoptions");
+    p->addItem(_L("Debug Options"),		 MyGUI::MenuItemType::Normal, "debugoptions");
     m_popup_menus.push_back(p);
 
     /* -------------------------------------------------------------------------------- */

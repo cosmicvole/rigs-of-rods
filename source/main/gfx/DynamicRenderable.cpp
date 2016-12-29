@@ -52,9 +52,10 @@ void DynamicRenderable::prepareHardwareBuffers(size_t vertexCount,
         while (newVertCapacity < vertexCount)
             newVertCapacity <<= 1;
     }
-    else if (vertexCount < mVertexBufferCapacity>>1) {
+    else if (vertexCount < mVertexBufferCapacity >> 1)
+    {
         // Make capacity the previous power of two
-        while (vertexCount < newVertCapacity>>1)
+        while (vertexCount < newVertCapacity >> 1)
             newVertCapacity >>= 1;
     }
     if (newVertCapacity != mVertexBufferCapacity)
@@ -63,9 +64,9 @@ void DynamicRenderable::prepareHardwareBuffers(size_t vertexCount,
         // Create new vertex buffer
         HardwareVertexBufferSharedPtr vbuf =
             HardwareBufferManager::getSingleton().createVertexBuffer(
-            mRenderOp.vertexData->vertexDeclaration->getVertexSize(0),
-            mVertexBufferCapacity,
-            HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY); // TODO: Custom HBU_?
+                mRenderOp.vertexData->vertexDeclaration->getVertexSize(0),
+                mVertexBufferCapacity,
+                HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY); // TODO: Custom HBU_?
 
         // Bind buffer
         mRenderOp.vertexData->vertexBufferBinding->setBinding(0, vbuf);
@@ -92,12 +93,11 @@ void DynamicRenderable::prepareHardwareBuffers(size_t vertexCount,
             // Make capacity the next power of two
             while (newIndexCapacity < indexCount)
                 newIndexCapacity <<= 1;
-
         }
-        else if (indexCount < newIndexCapacity>>1)
+        else if (indexCount < newIndexCapacity >> 1)
         {
             // Make capacity the previous power of two
-            while (indexCount < newIndexCapacity>>1)
+            while (indexCount < newIndexCapacity >> 1)
                 newIndexCapacity >>= 1;
         }
 
@@ -107,9 +107,9 @@ void DynamicRenderable::prepareHardwareBuffers(size_t vertexCount,
             // Create new index buffer
             mRenderOp.indexData->indexBuffer =
                 HardwareBufferManager::getSingleton().createIndexBuffer(
-                HardwareIndexBuffer::IT_16BIT,
-                mIndexBufferCapacity,
-                HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY); // TODO: Custom HBU_?
+                    HardwareIndexBuffer::IT_16BIT,
+                    mIndexBufferCapacity,
+                    HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY); // TODO: Custom HBU_?
         }
 
         // Update index count in the render operation

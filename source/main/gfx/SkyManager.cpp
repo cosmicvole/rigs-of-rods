@@ -37,9 +37,9 @@ using namespace Ogre;
 SkyManager::SkyManager() : mCaelumSystem(0), lc(0)
 {
     // Initialise CaelumSystem.
-    mCaelumSystem = new Caelum::CaelumSystem (
-        RoR::App::GetOgreSubsystem()->GetOgreRoot(), 
-        gEnv->sceneManager, 
+    mCaelumSystem = new Caelum::CaelumSystem(
+        RoR::App::GetOgreSubsystem()->GetOgreRoot(),
+        gEnv->sceneManager,
         Caelum::CaelumSystem::CAELUM_COMPONENTS_DEFAULT
     );
     mCaelumSystem->attachViewport(RoR::App::GetOgreSubsystem()->GetViewport());
@@ -52,7 +52,7 @@ SkyManager::SkyManager() : mCaelumSystem(0), lc(0)
     */
 
     // Register caelum as a listener.
-    RoR::App::GetOgreSubsystem()->GetRenderWindow()->addListener (mCaelumSystem);
+    RoR::App::GetOgreSubsystem()->GetRenderWindow()->addListener(mCaelumSystem);
     RoR::App::GetOgreSubsystem()->GetOgreRoot()->addFrameListener(mCaelumSystem);
 }
 
@@ -63,7 +63,7 @@ SkyManager::~SkyManager()
     mCaelumSystem = nullptr;
 }
 
-void SkyManager::notifyCameraChanged(Camera *cam)
+void SkyManager::notifyCameraChanged(Camera* cam)
 {
     if (mCaelumSystem)
         mCaelumSystem->notifyCameraChanged(cam);
@@ -77,13 +77,15 @@ void SkyManager::forceUpdate(float dt)
 
 void SkyManager::detectUpdate()
 {
-    if (!mCaelumSystem || !gEnv->terrainManager) return;
+    if (!mCaelumSystem || !gEnv->terrainManager)
+        return;
     Caelum::LongReal c = mCaelumSystem->getUniversalClock()->getJulianDay();
 
-    if(c - lc > 0.001f)
+    if (c - lc > 0.001f)
     {
-        TerrainGeometryManager *gm = gEnv->terrainManager->getGeometryManager();
-        if(gm) gm->updateLightMap();
+        TerrainGeometryManager* gm = gEnv->terrainManager->getGeometryManager();
+        if (gm)
+            gm->updateLightMap();
     }
 
     lc = c;
@@ -94,7 +96,7 @@ void SkyManager::loadScript(String script, int fogStart, int fogEnd)
     // load the caelum config
     try
     {
-        Caelum::CaelumPlugin::getSingleton().loadCaelumSystemFromScript (mCaelumSystem, script);
+        Caelum::CaelumPlugin::getSingleton().loadCaelumSystemFromScript(mCaelumSystem, script);
 
         // overwrite some settings
 #ifdef CAELUM_VERSION_SEC
@@ -102,7 +104,7 @@ void SkyManager::loadScript(String script, int fogStart, int fogEnd)
         if (fogStart != -1 && fogEnd != -1 && fogStart < fogEnd)
         {
             // setting farclip (hacky)
-            gEnv->mainCamera->setFarClipDistance(fogEnd/0.8);
+            gEnv->mainCamera->setFarClipDistance(fogEnd / 0.8);
             // custom boundaries
             mCaelumSystem->setManageSceneFog(FOG_LINEAR);
             mCaelumSystem->setManageSceneFogStart(fogStart);
@@ -110,14 +112,21 @@ void SkyManager::loadScript(String script, int fogStart, int fogEnd)
         }
         else if (gEnv->mainCamera->getFarClipDistance() > 0)
         {
-            if(fogStart != -1 && fogEnd != -1){ LOG("CaelumFogStart must be smaller then CaelumFogEnd. Ignoring boundaries.");} 
-            else if(fogStart != -1 || fogEnd != -1){ LOG("You always need to define both boundaries (CaelumFogStart AND CaelumFogEnd). Ignoring boundaries.");}
+            if (fogStart != -1 && fogEnd != -1)
+            {
+                LOG("CaelumFogStart must be smaller then CaelumFogEnd. Ignoring boundaries.");
+            }
+            else if (fogStart != -1 || fogEnd != -1)
+            {
+                LOG("You always need to define both boundaries (CaelumFogStart AND CaelumFogEnd). Ignoring boundaries.");
+            }
             // non infinite farclip
             Real farclip = gEnv->mainCamera->getFarClipDistance();
             mCaelumSystem->setManageSceneFog(FOG_LINEAR);
-            mCaelumSystem->setManageSceneFogStart(farclip*0.7);
-            mCaelumSystem->setManageSceneFogEnd(farclip*0.9);
-        } else
+            mCaelumSystem->setManageSceneFogStart(farclip * 0.7);
+            mCaelumSystem->setManageSceneFogEnd(farclip * 0.9);
+        }
+        else
         {
             // no fog in infinite farclip
             mCaelumSystem->setManageSceneFog(FOG_NONE);
@@ -139,8 +148,8 @@ void SkyManager::loadScript(String script, int fogStart, int fogEnd)
 
         // enforcing update, so shadows are set correctly before creating the terrain
         forceUpdate(0.1);
-
-    } catch(Exception& e)
+    }
+    catch (Exception& e)
     {
         LOG("exception upon loading sky script: " + e.getFullDescription());
     }
@@ -153,7 +162,7 @@ void SkyManager::setTimeFactor(Real factor)
     mCaelumSystem->getUniversalClock()->setTimeScale(factor);
 }
 
-Light *SkyManager::getMainLight()
+Light* SkyManager::getMainLight()
 {
     if (mCaelumSystem && mCaelumSystem->getSun())
         return mCaelumSystem->getSun()->getMainLight();
@@ -172,11 +181,11 @@ String SkyManager::getPrettyTime()
     int minute;
     Caelum::LongReal second;
     Caelum::Astronomy::getGregorianDateTimeFromJulianDay(mCaelumSystem->getJulianDay()
-    , ignore, ignore, ignore, hour, minute, second);
-    
-    return StringConverter::toString( hour, 2, '0' )
-    + ":" + StringConverter::toString( minute, 2, '0' )
-    + ":" + StringConverter::toString( (int)second, 2, '0' );
+        , ignore, ignore, ignore, hour, minute, second);
+
+    return StringConverter::toString(hour, 2, '0')
+        + ":" + StringConverter::toString(minute, 2, '0')
+        + ":" + StringConverter::toString((int)second, 2, '0');
 }
 
 #endif //USE_CAELUM

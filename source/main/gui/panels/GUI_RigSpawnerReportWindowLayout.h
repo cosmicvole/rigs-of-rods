@@ -11,12 +11,9 @@
 #include "ForwardDeclarations.h"
 #include "BaseLayout.h"
 
-namespace RoR
-{
+namespace RoR {
+namespace GUI {
 
-namespace GUI
-{
-    
 ATTRIBUTE_CLASS_LAYOUT(RigSpawnerReportWindowLayout, "RigSpawnerReportWindow.layout");
 class RigSpawnerReportWindowLayout : public wraps::BaseLayout
 {
@@ -42,6 +39,5 @@ protected:
 };
 
 } // namespace GUI
-
 } // namespace RoR
 

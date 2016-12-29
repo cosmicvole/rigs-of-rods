@@ -130,7 +130,7 @@ public:
     int getGearRange();
     void setGear(int v);
     void setGearRange(int v);
-    
+
     // stall engine
     void stop();
 
@@ -152,7 +152,7 @@ public:
     int getAutoShift();
     int getNumGears() { return gearsRatio.size() - 2; };
     int getNumGearsRanges() { return getNumGears() / 6 + 1; };
-    TorqueCurve *getTorqueCurve() { return torqueCurve; };
+    TorqueCurve* getTorqueCurve() { return torqueCurve; };
     void autoSetAcc(float val);
     void autoShiftDown();
     void autoShiftSet(int mode);
@@ -163,7 +163,7 @@ public:
     * Changes gear by a relative offset. Plays sounds.
     */
     void shift(int val);
-    
+
     /**
     * Changes gear to given value. Plays sounds.
     * @see BeamEngine::shift
@@ -182,12 +182,32 @@ public:
     */
     void updateAudio(int doUpdate);
 
-    enum autoswitch {REAR, NEUTRAL, DRIVE, TWO, ONE, MANUALMODE};
-    enum turbomode {OLD, NEW};
+    enum autoswitch
+    {
+        REAR,
+        NEUTRAL,
+        DRIVE,
+        TWO,
+        ONE,
+        MANUALMODE
+    };
+
+    enum turbomode
+    {
+        OLD,
+        NEW
+    };
 
 protected:
 
-    enum shiftmodes {AUTOMATIC, SEMIAUTO, MANUAL, MANUAL_STICK, MANUAL_RANGES};
+    enum shiftmodes
+    {
+        AUTOMATIC,
+        SEMIAUTO,
+        MANUAL,
+        MANUAL_STICK,
+        MANUAL_RANGES
+    };
 
     // gear stuff
     float refWheelRevolutions; //!< Gears; estimated wheel revolutions based on current vehicle speed along the long axis
@@ -257,7 +277,7 @@ protected:
     // turbo
     //Yeah i know, a bit dirty
     int turboVer;
-    #define MAXTURBO 4
+#define MAXTURBO 4
     float curTurboRPM[MAXTURBO];
     float turboInertiaFactor;
     int numTurbos;
@@ -276,10 +296,9 @@ protected:
     float minRPM_antilag;
     float rnd_antilag_chance;
     float antilag_power_factor;
-    
 
     // air pressure
-    TorqueCurve *torqueCurve;
+    TorqueCurve* torqueCurve;
     float apressure;
 
     int automode; //!< Transmission mode (@see enum BeamEngine::shiftmodes)

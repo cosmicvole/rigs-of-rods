@@ -1,29 +1,27 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
-Copyright 2013-2014 Petr Ohlidal
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
+    Copyright 2013+     Petr Ohlidal & contributors
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
-@file   GUI_VehicleDescription.cpp
-@author Moncef Ben Slimane
-@date   11/2014
-*/
+/// @file
+/// @author Moncef Ben Slimane
+/// @date   11/2014
 
 #include "GUI_VehicleDescription.h"
 
@@ -37,7 +35,6 @@ along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 #include "Language.h"
 
 #include <MyGUI.h>
-
 
 using namespace RoR;
 using namespace GUI;
@@ -63,7 +60,8 @@ void CLASS::LoadText()
 {
     Beam* currTruck = BeamFactory::getSingleton().getCurrentTruck();
 
-    if (currTruck == nullptr) return;
+    if (currTruck == nullptr)
+        return;
 
     m_vehicle_title->setMaxTextLength(33);
     m_vehicle_title->setCaptionWithReplacing(currTruck->getTruckName());
@@ -98,7 +96,8 @@ void CLASS::LoadText()
     int filledCommands = 0;
     for (int i = 1; i < MAX_COMMANDS && filledCommands < COMMANDS_VISIBLE; i += 2)
     {
-        if (currTruck->commandkey[i].beams.empty() || currTruck->commandkey[i].description == "hide") continue;
+        if (currTruck->commandkey[i].beams.empty() || currTruck->commandkey[i].description == "hide")
+            continue;
 
         filledCommands++;
         char commandID[256] = {};
@@ -112,8 +111,10 @@ void CLASS::LoadText()
         Ogre::String keyb = RoR::App::GetInputEngine()->getEventCommand(eventID);
 
         // cut off expl
-        if (keya.size() > 6 && keya.substr(0, 5) == "EXPL+") keya = keya.substr(5);
-        if (keyb.size() > 6 && keyb.substr(0, 5) == "EXPL+") keyb = keyb.substr(5);
+        if (keya.size() > 6 && keya.substr(0, 5) == "EXPL+")
+            keya = keya.substr(5);
+        if (keyb.size() > 6 && keyb.substr(0, 5) == "EXPL+")
+            keyb = keyb.substr(5);
 
         keyStr = keya + "/" + keyb;
 

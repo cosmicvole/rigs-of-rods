@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2016 Petr Ohlidal & contributors.
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -19,11 +19,9 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
-    @file   RigDef_Parser.cpp
-    @author Petr Ohlidal
-    @date   12/2013
-*/
+/// @file
+/// @author Petr Ohlidal
+/// @date   12/2013
 
 #include "RigDef_Parser.h"
 

@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2015 Petr Ohlidal
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -19,11 +19,10 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** 
-* @file
-* @brief Core data structures for simulation.
-* @author created on 30th of April 2010 by Thomas Fischer 
-*/
+/// @file
+/// @author Thomas Fischer
+/// @date   30th of April 2010
+/// @brief Core data structures for simulation.
 
 #pragma once
 
@@ -167,21 +166,21 @@ enum {
 };
 
 enum {
-    SHOCK_FLAG_NORMAL            = BITMASK(1),
-    SHOCK_FLAG_INVISIBLE        = BITMASK(2),
-    SHOCK_FLAG_LACTIVE            = BITMASK(3),
-    SHOCK_FLAG_RACTIVE            = BITMASK(4),
-    SHOCK_FLAG_ISSHOCK2            = BITMASK(5),
-    SHOCK_FLAG_SOFTBUMP            = BITMASK(6),
-    SHOCK_FLAG_ISTRIGGER        = BITMASK(7),
-    SHOCK_FLAG_TRG_BLOCKER        = BITMASK(8),
-    SHOCK_FLAG_TRG_CMD_SWITCH    = BITMASK(9),
-    SHOCK_FLAG_TRG_CMD_BLOCKER    = BITMASK(10),
-    SHOCK_FLAG_TRG_BLOCKER_A    = BITMASK(11),
-    SHOCK_FLAG_TRG_HOOK_UNLOCK     = BITMASK(12),
-    SHOCK_FLAG_TRG_HOOK_LOCK       = BITMASK(13),
-    SHOCK_FLAG_TRG_CONTINUOUS    = BITMASK(14),
-    SHOCK_FLAG_TRG_ENGINE        = BITMASK(15)
+    SHOCK_FLAG_NORMAL			= BITMASK(1),
+    SHOCK_FLAG_INVISIBLE		= BITMASK(2),
+    SHOCK_FLAG_LACTIVE			= BITMASK(3),
+    SHOCK_FLAG_RACTIVE			= BITMASK(4),
+    SHOCK_FLAG_ISSHOCK2			= BITMASK(5),
+    SHOCK_FLAG_SOFTBUMP			= BITMASK(6),
+    SHOCK_FLAG_ISTRIGGER		= BITMASK(7),
+    SHOCK_FLAG_TRG_BLOCKER		= BITMASK(8),
+    SHOCK_FLAG_TRG_CMD_SWITCH	= BITMASK(9),
+    SHOCK_FLAG_TRG_CMD_BLOCKER	= BITMASK(10),
+    SHOCK_FLAG_TRG_BLOCKER_A	= BITMASK(11),
+    SHOCK_FLAG_TRG_HOOK_UNLOCK 	= BITMASK(12),
+    SHOCK_FLAG_TRG_HOOK_LOCK   	= BITMASK(13),
+    SHOCK_FLAG_TRG_CONTINUOUS	= BITMASK(14),
+    SHOCK_FLAG_TRG_ENGINE		= BITMASK(15)
 };
 
 enum {

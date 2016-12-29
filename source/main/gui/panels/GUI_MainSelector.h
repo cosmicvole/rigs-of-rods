@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2015 Petr Ohlidal
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -19,24 +19,20 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma once
+/// @file
+/// @author Moncef Ben Slimane
+/// @date   11/2014
 
-/** 
-    @file   GUI_MultiplayerSelector.h
-    @author Moncef Ben Slimane
-    @date   11/2014
-*/
+#pragma once
 
 #include "ForwardDeclarations.h"
 #include "GUI_MainSelectorLayout.h"
-
 
 namespace RoR {
 namespace GUI {
 
 class MainSelector : public MainSelectorLayout
 {
-
 public:
     MainSelector();
     ~MainSelector();
@@ -48,8 +44,8 @@ public:
     void Reset();
     void Cancel();
 
-    CacheEntry *GetSelectedEntry() { return m_selected_entry; }
-    Skin *GetSelectedSkin() { return m_selected_skin; }
+    CacheEntry* GetSelectedEntry() { return m_selected_entry; }
+    Skin* GetSelectedSkin() { return m_selected_skin; }
     std::vector<Ogre::String> GetVehicleConfigs() { return m_vehicle_configs; }
 
 private:
@@ -64,7 +60,7 @@ private:
     void EventListChangePositionModelListAccept(MyGUI::ListPtr _sender, size_t _index);
     void EventMouseButtonClickCancelButton(MyGUI::WidgetPtr _sender);
     void EventMouseButtonClickOkButton(MyGUI::WidgetPtr _sender);
-    void EventSearchTextChange(MyGUI::EditBox *_sender);
+    void EventSearchTextChange(MyGUI::EditBox* _sender);
     void EventSearchTextGotFocus(MyGUI::WidgetPtr _sender, MyGUI::WidgetPtr oldWidget);
     void NotifyWindowChangeCoord(MyGUI::Window* _sender);
     void ResizePreviewImage();
@@ -75,22 +71,22 @@ private:
     void OnCategorySelected(int categoryID);
     void OnEntrySelected(int entryID);
     void OnSelectionDone();
-    size_t SearchCompare(Ogre::String searchString, CacheEntry *ce);
+    size_t SearchCompare(Ogre::String searchString, CacheEntry* ce);
 
-    void UpdateControls(CacheEntry *entry);
+    void UpdateControls(CacheEntry* entry);
     void SetPreviewImage(Ogre::String texture);
     void FrameEntered(float dt);
 
-    CacheEntry*                m_selected_entry;
-    LoaderType                 m_loader_type;
-    Ogre::String               m_preview_image_texture;
-    Skin*                      m_selected_skin;
-    bool                       m_selection_done;
-    std::vector<CacheEntry>    m_entries;
-    std::vector<Ogre::String>  m_vehicle_configs;
-    std::vector<Skin *>        m_current_skins;
-    bool                       m_keys_bound;
-    RoR::SkinManager*          m_skin_manager;
+    CacheEntry* m_selected_entry;
+    LoaderType m_loader_type;
+    Ogre::String m_preview_image_texture;
+    Skin* m_selected_skin;
+    bool m_selection_done;
+    std::vector<CacheEntry> m_entries;
+    std::vector<Ogre::String> m_vehicle_configs;
+    std::vector<Skin *> m_current_skins;
+    bool m_keys_bound;
+    RoR::SkinManager* m_skin_manager;
 };
 
 } // namespace GUI

@@ -1,22 +1,23 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
+
 // "Depth of Field" demo for Ogre
 // Copyright (C) 2006  Christian Lindequist Larsen
 //
@@ -26,11 +27,11 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Ogre.h>
 #ifdef ROR_USE_OGRE_1_9
-#    include <Overlay/OgreOverlayManager.h>
-#    include <Overlay/OgreOverlay.h>
+#	include <Overlay/OgreOverlayManager.h>
+#	include <Overlay/OgreOverlay.h>
 #else
-#    include <OgreOverlayManager.h>
-#    include <OgreOverlayElement.h>
+#	include <OgreOverlayManager.h>
+#	include <OgreOverlayElement.h>
 #endif
 
 #include "Application.h"
@@ -56,7 +57,7 @@ DepthOfFieldEffect::DepthOfFieldEffect() :
 {
     mWidth = RoR::App::GetOgreSubsystem()->GetViewport()->getActualWidth();
     mHeight = RoR::App::GetOgreSubsystem()->GetViewport()->getActualHeight();
-    
+
     mDepthTexture.setNull();
     mDepthMaterial.setNull();
 
@@ -96,7 +97,7 @@ void DepthOfFieldEffect::createDepthRenderTexture()
 {
     // Create the depth render texture
     mDepthTexture = TextureManager::getSingleton().createManual(
-        "DoF_Depth",ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+        "DoF_Depth", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
         TEX_TYPE_2D, mWidth, mHeight,
         0, PF_L8, TU_RENDERTARGET);
 
@@ -111,19 +112,6 @@ void DepthOfFieldEffect::createDepthRenderTexture()
     mDepthMaterial = MaterialManager::getSingleton().getByName("DoF_Depth");
     mDepthMaterial->load(); // needs to be loaded manually
     mDepthTechnique = mDepthMaterial->getBestTechnique();
-
-    // Create a custom render queue invocation sequence for the depth render texture
-    //RenderQueueInvocationSequence* invocationSequence = Root::getSingleton().createRenderQueueInvocationSequence("DoF_Depth");
-
-    // Add a render queue invocation to the sequence, and disable shadows for it
-    /*
-    RenderQueueInvocation* invocation = invocationSequence->add(RENDER_QUEUE_MAIN, "main");
-    invocation->setSuppressShadows(true);
-    //invocation->setSuppressRenderStateChanges(true);
-    invocation->setSolidsOrganisation(QueuedRenderableCollection::OM_SORT_ASCENDING);
-    // Set the render queue invocation sequence for the depth render texture viewport
-    mDepthViewport->setRenderQueueInvocationSequenceName("DoF_Depth");
-    */
 
     mDepthViewport->setShadowsEnabled(false);
     mDepthViewport->setOverlaysEnabled(false);
@@ -173,15 +161,11 @@ void DepthOfFieldEffect::notifyMaterialSetup(uint32 passId, MaterialPtr& materia
     {
     case BlurPass:
         {
-            //float pixelSize[2] = {
-            //    1.0f / (gEnv->ogreViewPort->getActualWidth() / BLUR_DIVISOR),
-            //    1.0f / (gEnv->ogreViewPort->getActualHeight() / BLUR_DIVISOR)};
-
             // Adjust fragment program parameters
-            Ogre::Vector3 ps = Ogre::Vector3(1.0f / (mWidth / BLUR_DIVISOR),1.0f / (mHeight / BLUR_DIVISOR), 1.0f);
-            float pixelSize[3] = { ps.x, ps.y, ps.z };
+            Ogre::Vector3 ps = Ogre::Vector3(1.0f / (mWidth / BLUR_DIVISOR), 1.0f / (mHeight / BLUR_DIVISOR), 1.0f);
+            float pixelSize[3] = {ps.x, ps.y, ps.z};
             GpuProgramParametersSharedPtr fragParams = material->getBestTechnique()->getPass(0)->getFragmentProgramParameters();
-            if ((!fragParams.isNull())&&(fragParams->_findNamedConstantDefinition("pixelSize")))
+            if ((!fragParams.isNull()) && (fragParams->_findNamedConstantDefinition("pixelSize")))
                 fragParams->setNamedConstant("pixelSize", pixelSize, 1, 3);
 
             break;
@@ -202,10 +186,10 @@ void DepthOfFieldEffect::notifyMaterialSetup(uint32 passId, MaterialPtr& materia
             // Adjust fragment program parameters
             GpuProgramParametersSharedPtr fragParams =
                 material->getBestTechnique()->getPass(0)->getFragmentProgramParameters();
-            if ((!fragParams.isNull())&&(fragParams->_findNamedConstantDefinition("pixelSizeScene")))
-                fragParams->setNamedConstant("pixelSizeScene", pixelSizeScene,1,3);
-            if ((!fragParams.isNull())&&(fragParams->_findNamedConstantDefinition("pixelSizeBlur")))
-                fragParams->setNamedConstant("pixelSizeBlur", pixelSizeBlur,1,3);
+            if ((!fragParams.isNull()) && (fragParams->_findNamedConstantDefinition("pixelSizeScene")))
+                fragParams->setNamedConstant("pixelSizeScene", pixelSizeScene, 1, 3);
+            if ((!fragParams.isNull()) && (fragParams->_findNamedConstantDefinition("pixelSizeBlur")))
+                fragParams->setNamedConstant("pixelSizeBlur", pixelSizeBlur, 1, 3);
 
             break;
         }
@@ -214,14 +198,13 @@ void DepthOfFieldEffect::notifyMaterialSetup(uint32 passId, MaterialPtr& materia
 
 void DepthOfFieldEffect::preViewportUpdate(const Ogre::RenderTargetViewportEvent& evt)
 {
-
     float dofParams[4] = {mNearDepth, mFocalDepth, mFarDepth, mFarBlurCutoff};
 
     // Adjust fragment program parameters for depth pass
     GpuProgramParametersSharedPtr fragParams =
         mDepthTechnique->getPass(0)->getFragmentProgramParameters();
-    if ((!fragParams.isNull())&&(fragParams->_findNamedConstantDefinition("dofParams")))
-        fragParams->setNamedConstant("dofParams", dofParams,1,4);        
+    if ((!fragParams.isNull()) && (fragParams->_findNamedConstantDefinition("dofParams")))
+        fragParams->setNamedConstant("dofParams", dofParams, 1, 4);
 
     evt.source->setVisibilityMask(~DEPTHMAP_DISABLED);
 
@@ -238,7 +221,7 @@ void DepthOfFieldEffect::postViewportUpdate(const Ogre::RenderTargetViewportEven
 }
 
 bool DepthOfFieldEffect::renderableQueued(Ogre::Renderable* rend, Ogre::uint8 groupID,
-                Ogre::ushort priority, Ogre::Technique** ppTech, Ogre::RenderQueue* pQueue)
+    Ogre::ushort priority, Ogre::Technique** ppTech, Ogre::RenderQueue* pQueue)
 {
     // Replace the technique of all renderables
     *ppTech = mDepthTechnique;
@@ -258,10 +241,6 @@ DOFManager::DOFManager()
 
     RoR::App::GetOgreSubsystem()->GetOgreRoot()->addFrameListener(this);
 
-    //mRaySceneQuery = gEnv->sceneManager->createRayQuery(Ogre::Ray());
-    //mRaySceneQuery->setSortByDistance(true);
-    //mRaySceneQuery->setQueryMask(queryMask);
-
     debugNode = 0;
     if (BSETTING("DOFDebug", false))
     {
@@ -271,7 +250,7 @@ DOFManager::DOFManager()
         overlay->show();
 
         debugNode = gEnv->sceneManager->getRootSceneNode()->createChildSceneNode();
-        Entity *ent = gEnv->sceneManager->createEntity("sphere.mesh");
+        Entity* ent = gEnv->sceneManager->createEntity("sphere.mesh");
         debugNode->attachObject(ent);
         debugNode->setScale(0.5, 0.5, 0.5);
     }
@@ -305,7 +284,8 @@ void DOFManager::setEnabled(bool enabled)
         // turn on
         mDepthOfFieldEffect->setEnabled(true);
         RoR::App::GetOgreSubsystem()->GetOgreRoot()->addFrameListener(this);
-    } else if (!enabled && mDepthOfFieldEffect->getEnabled())
+    }
+    else if (!enabled && mDepthOfFieldEffect->getEnabled())
     {
         // turn off
         mDepthOfFieldEffect->setEnabled(false);
@@ -329,7 +309,8 @@ void DOFManager::zoomView(float delta)
 
 void DOFManager::Aperture(float delta)
 {
-    if (mFocusMode == Pinhole) return;
+    if (mFocusMode == Pinhole)
+        return;
     Real fStop = mLens->getFStop();
     fStop += delta;
     fStop = std::max(1.0f, std::min(fStop, 22.0f));
@@ -341,7 +322,7 @@ void DOFManager::moveFocus(float delta)
     mLens->setFocalDistance(mLens->getFocalDistance() + delta);
 }
 
-void  DOFManager::setZoom(float f)
+void DOFManager::setZoom(float f)
 {
     Real fieldOfView = Degree(f).valueRadians();
     fieldOfView = std::max(0.1f, std::min(fieldOfView, 2.0f));
@@ -349,19 +330,20 @@ void  DOFManager::setZoom(float f)
     gEnv->mainCamera->setFOVy(Radian(fieldOfView));
 }
 
-void  DOFManager::setLensFOV(Radian fov)
+void DOFManager::setLensFOV(Radian fov)
 {
     mLens->setFieldOfView(fov);
 }
 
-void  DOFManager::setAperture(float f)
+void DOFManager::setAperture(float f)
 {
-    if (mFocusMode == Pinhole) return;
+    if (mFocusMode == Pinhole)
+        return;
     f = std::max(0.5f, std::min(f, 12.0f));
     mLens->setFStop(f);
 }
 
-void  DOFManager::setFocus(float f)
+void DOFManager::setFocus(float f)
 {
     mLens->setFocalDistance(f);
 }
@@ -371,7 +353,7 @@ bool DOFManager::frameStarted(const FrameEvent& evt)
     // Focusing
     switch (mFocusMode)
     {
-        case Auto:
+    case Auto:
         {
             // TODO: Replace with accurate ray/triangle collision detection
             Real currentFocalDistance = mLens->getFocalDistance();
@@ -385,10 +367,11 @@ bool DOFManager::frameStarted(const FrameEvent& evt)
                 Vector3 lookAt(Vector3::ZERO);
 
                 Beam* currTruck = BeamFactory::getSingleton().getCurrentTruck();
-                if ( currTruck )
+                if (currTruck)
                 {
                     lookAt = currTruck->getPosition();
-                } else if (gEnv->player)
+                }
+                else if (gEnv->player)
                 {
                     lookAt = gEnv->player->getPosition();
                 }
@@ -396,43 +379,14 @@ bool DOFManager::frameStarted(const FrameEvent& evt)
                 targetFocalDistance = gEnv->mainCamera->getPosition().distance(lookAt) / 2.0f; // Needs further investigation
 
                 setLensFOV(Radian(gEnv->mainCamera->getFOVy()));
-
-                /*
-                targetFocalDistance = currentFocalDistance;
-
-                // Ryan Booker's (eyevee99) ray scene query auto focus
-                Ray focusRay;
-                focusRay.setOrigin(camera->getDerivedPosition());
-                focusRay.setDirection(camera->getDerivedDirection());
-                Vector3 v;
-                Vector3 vn;
-                
-                mRaySceneQuery->setRay(focusRay);
-                Ogre::RaySceneQueryResult &qryResult = mRaySceneQuery->execute();
-                for (Ogre::RaySceneQueryResult::iterator it = qryResult.begin();it != qryResult.end(); it++)
-                {
-                    if (it->worldFragment)
-                    {
-                        if (debugNode) debugNode->setPosition(it->worldFragment->singleIntersection + Vector3(0.5,0,0));
-                        targetFocalDistance = (gEnv->mainCamera->getPosition() - it->worldFragment->singleIntersection).length();
-                        break;
-                    } else
-                    {
-                        // this wont work since we would need to go down to the polygon level :(
-                        //if (debugNode) debugNode->setPosition(focusRay.getPoint(it->distance));
-                        //targetFocalDistance = it->distance;
-                        //break;
-                    }
-
-                }
-                //*/
             }
 
             // Slowly adjust the focal distance (emulate auto focus motor)
             if (currentFocalDistance < targetFocalDistance)
             {
                 mLens->setFocalDistance(std::min(currentFocalDistance + mAutoSpeed * evt.timeSinceLastFrame, targetFocalDistance));
-            } else if (currentFocalDistance > targetFocalDistance)
+            }
+            else if (currentFocalDistance > targetFocalDistance)
             {
                 mLens->setFocalDistance(std::max(currentFocalDistance - mAutoSpeed * evt.timeSinceLastFrame, targetFocalDistance));
             }
@@ -440,9 +394,9 @@ bool DOFManager::frameStarted(const FrameEvent& evt)
             break;
         }
 
-        case Manual:
-            //we set the values elsewhere
-            break;
+    case Manual:
+        //we set the values elsewhere
+        break;
     }
 
     // Update Depth of Field effect
@@ -454,7 +408,8 @@ bool DOFManager::frameStarted(const FrameEvent& evt)
         float nearDepth, focalDepth, farDepth;
         mLens->recalculateDepthOfField(nearDepth, focalDepth, farDepth);
         mDepthOfFieldEffect->setFocalDepths(nearDepth, focalDepth, farDepth);
-    } else
+    }
+    else
     {
         mDepthOfFieldEffect->setEnabled(false);
     }

@@ -17,16 +17,16 @@ class DynamicLines : public DynamicRenderable
 
 public:
     /// Constructor - see setOperationType() for description of argument.
-    DynamicLines(char* materialname, OperationType opType=Ogre::RenderOperation::OT_LINE_STRIP);
+    DynamicLines(char* materialname, OperationType opType = Ogre::RenderOperation::OT_LINE_STRIP);
     virtual ~DynamicLines();
 
     /// Add a point to the point list
-    void addPoint(const Ogre::Vector3 &p);
+    void addPoint(const Ogre::Vector3& p);
     /// Add a point to the point list
     void addPoint(Real x, Real y, Real z);
 
     /// Change the location of an existing point in the point list
-    void setPoint(unsigned short index, const Vector3 &value);
+    void setPoint(unsigned short index, const Vector3& value);
 
     /// Return the location of an existing point in the point list
     const Vector3& getPoint(unsigned short index) const;
@@ -63,6 +63,5 @@ private:
     std::vector<Vector3> mPoints;
     bool mDirty;
 };
-
 
 #endif

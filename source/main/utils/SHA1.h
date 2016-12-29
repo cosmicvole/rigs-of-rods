@@ -32,8 +32,7 @@
         34AA973C D4C4DAA4 F61EEB2B DBAD2731 6534016F
 */
 
-#ifndef __SHA1_H_
-#define __SHA1_H_
+#pragma once
 
 #include "RoRPrerequisites.h"
 
@@ -76,12 +75,12 @@
 
 typedef union
 {
-    uint8_t  c[64];
+    uint8_t c[64];
     uint32_t l[16];
 } SHA1_WORKSPACE_BLOCK;
 
-namespace RoR
-{
+namespace RoR {
+
 class CSHA1 : public ZeroedMemoryAllocator
 {
 public:
@@ -102,16 +101,16 @@ public:
     uint32_t m_state[5];
     uint32_t m_count[2];
     uint32_t __reserved1[1];
-    uint8_t  m_buffer[64];
-    uint8_t  m_digest[20];
+    uint8_t m_buffer[64];
+    uint8_t m_digest[20];
     uint32_t __reserved2[3];
 
     void Reset();
 
     // Update the hash value
-    void UpdateHash(uint8_t *data, uint32_t len);
+    void UpdateHash(uint8_t* data, uint32_t len);
 #ifdef SHA1_UTILITY_FUNCTIONS
-    bool HashFile(char *szFileName);
+    bool HashFile(char* szFileName);
 #endif
 
     // Finalize hash and report
@@ -119,18 +118,18 @@ public:
 
     // Report functions: as pre-formatted and raw data
 #ifdef SHA1_UTILITY_FUNCTIONS
-    void ReportHash(char *szReport, unsigned char uReportType = REPORT_HEX);
+    void ReportHash(char* szReport, unsigned char uReportType = REPORT_HEX);
 #endif
-    void GetHash(uint8_t *puDest);
+    void GetHash(uint8_t* puDest);
 
 private:
     // Private SHA-1 transformation
-    void Transform(uint32_t *state, uint8_t *buffer);
+    void Transform(uint32_t* state, uint8_t* buffer);
 
     // Member variables
     uint8_t m_workspace[64];
-    SHA1_WORKSPACE_BLOCK *m_block; // SHA1 pointer to the byte array above
+    SHA1_WORKSPACE_BLOCK* m_block; // SHA1 pointer to the byte array above
 };
-}; //namespace RigsOfRods
 
-#endif // __SHA1_H_
+}; //namespace RoR
+

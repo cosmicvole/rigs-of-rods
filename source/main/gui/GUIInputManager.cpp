@@ -1,22 +1,23 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
+
 #ifdef USE_MYGUI
 #include "GUIInputManager.h"
 
@@ -32,22 +33,22 @@ MyGUI::Char translateWin32Text(MyGUI::KeyCode kc)
     static WCHAR deadKey = 0;
 
     BYTE keyState[256];
-    HKL  layout = GetKeyboardLayout(0);
-    if ( GetKeyboardState(keyState) == 0 )
+    HKL layout = GetKeyboardLayout(0);
+    if (GetKeyboardState(keyState) == 0)
         return 0;
 
     int code = *((int*)&kc);
     unsigned int vk = MapVirtualKeyEx((UINT)code, 3, layout);
-    if ( vk == 0 )
+    if (vk == 0)
         return 0;
 
-    WCHAR buff[3] = { 0, 0, 0 };
+    WCHAR buff[3] = {0, 0, 0};
     int ascii = ToUnicodeEx(vk, (UINT)code, keyState, buff, 3, 0, layout);
-    if (ascii == 1 && deadKey != '\0' )
+    if (ascii == 1 && deadKey != '\0')
     {
         // A dead key is stored and we have just converted a character key
         // Combine the two into a single character
-        WCHAR wcBuff[3] = { buff[0], deadKey, '\0' };
+        WCHAR wcBuff[3] = {buff[0], deadKey, '\0'};
         WCHAR out[3];
 
         deadKey = '\0';
@@ -65,19 +66,26 @@ MyGUI::Char translateWin32Text(MyGUI::KeyCode kc)
         // Convert a non-combining diacritical mark into a combining diacritical mark
         // Combining versions range from 0x300 to 0x36F; only 5 (for French) have been mapped below
         // http://www.fileformat.info/info/unicode/block/combining_diacritical_marks/images.htm
-        switch(buff[0])    {
+        switch (buff[0])
+        {
         case 0x5E: // Circumflex accent: �
-            deadKey = 0x302; break;
+            deadKey = 0x302;
+            break;
         case 0x60: // Grave accent: �
-            deadKey = 0x300; break;
+            deadKey = 0x300;
+            break;
         case 0xA8: // Diaeresis: �
-            deadKey = 0x308; break;
+            deadKey = 0x308;
+            break;
         case 0xB4: // Acute accent: �
-            deadKey = 0x301; break;
+            deadKey = 0x301;
+            break;
         case 0xB8: // Cedilla: �
-            deadKey = 0x327; break;
+            deadKey = 0x327;
+            break;
         default:
-            deadKey = buff[0]; break;
+            deadKey = buff[0];
+            break;
         }
     }
 
@@ -86,7 +94,7 @@ MyGUI::Char translateWin32Text(MyGUI::KeyCode kc)
 #endif
 
 GUIInputManager::GUIInputManager() :
-      height(0)
+    height(0)
     , lastMouseMoveTime(0)
     , mCursorX(0)
     , mCursorY(0)
@@ -118,7 +126,7 @@ bool GUIInputManager::mouseMoved(const OIS::MouseEvent& _arg)
 
     if (handled)
     {
-        MyGUI::Widget *w = MyGUI::InputManager::getInstance().getMouseFocusWidget();
+        MyGUI::Widget* w = MyGUI::InputManager::getInstance().getMouseFocusWidget();
         // hack for console, we want to use the mouse through that control
         if (w && w->getName().substr(0, 7) == "Console")
             handled = false;
@@ -134,7 +142,7 @@ bool GUIInputManager::mouseMoved(const OIS::MouseEvent& _arg)
 
     if (!handled)
     {
-        RoR::SceneMouse *sm = RoR::App::GetSceneMouse();
+        RoR::SceneMouse* sm = RoR::App::GetSceneMouse();
         if (sm)
         {
             // not handled by gui
@@ -146,7 +154,6 @@ bool GUIInputManager::mouseMoved(const OIS::MouseEvent& _arg)
                 return true;
             }
         }
-
     }
 
     mCursorX = _arg.state.X.abs;
@@ -172,7 +179,7 @@ bool GUIInputManager::mousePressed(const OIS::MouseEvent& _arg, OIS::MouseButton
 
     if (handled)
     {
-        MyGUI::Widget *w = MyGUI::InputManager::getInstance().getMouseFocusWidget();
+        MyGUI::Widget* w = MyGUI::InputManager::getInstance().getMouseFocusWidget();
         // hack for console, we want to use the mouse through that control
         if (w && w->getName().substr(0, 7) == "Console")
             handled = false;
@@ -188,8 +195,9 @@ bool GUIInputManager::mousePressed(const OIS::MouseEvent& _arg, OIS::MouseButton
 
     if (!handled)
     {
-        RoR::SceneMouse *sm = RoR::App::GetSceneMouse();
-        if (sm) return sm->mousePressed(_arg, _id);
+        RoR::SceneMouse* sm = RoR::App::GetSceneMouse();
+        if (sm)
+            return sm->mousePressed(_arg, _id);
     }
     return handled;
 }
@@ -201,10 +209,9 @@ bool GUIInputManager::mouseReleased(const OIS::MouseEvent& _arg, OIS::MouseButto
     // fallback, handle by GUI, then by RoR::SceneMouse
     bool handled = MyGUI::InputManager::getInstance().injectMouseRelease(mCursorX, mCursorY, MyGUI::MouseButton::Enum(_id));
 
-
     if (handled)
     {
-        MyGUI::Widget *w = MyGUI::InputManager::getInstance().getMouseFocusWidget();
+        MyGUI::Widget* w = MyGUI::InputManager::getInstance().getMouseFocusWidget();
         // hack for console, we want to use the mouse through that control
         if (w && w->getName().substr(0, 7) == "Console")
             handled = false;
@@ -220,8 +227,9 @@ bool GUIInputManager::mouseReleased(const OIS::MouseEvent& _arg, OIS::MouseButto
 
     if (!handled)
     {
-        RoR::SceneMouse *sm = RoR::App::GetSceneMouse();
-        if (sm) return sm->mouseReleased(_arg, _id);
+        RoR::SceneMouse* sm = RoR::App::GetSceneMouse();
+        if (sm)
+            return sm->mouseReleased(_arg, _id);
     }
     return handled;
 }
@@ -234,8 +242,8 @@ bool GUIInputManager::keyPressed(const OIS::KeyEvent& _arg)
 
     if (scan_code > 70 && scan_code < 84)
     {
-        static MyGUI::Char nums[13] = { 55, 56, 57, 45, 52, 53, 54, 43, 49, 50, 51, 48, 46 };
-        text = nums[scan_code-71];
+        static MyGUI::Char nums[13] = {55, 56, 57, 45, 52, 53, 54, 43, 49, 50, 51, 48, 46};
+        text = nums[scan_code - 71];
     }
     else if (key == MyGUI::KeyCode::Divide)
     {
@@ -247,13 +255,13 @@ bool GUIInputManager::keyPressed(const OIS::KeyEvent& _arg)
         text = translateWin32Text(key);
 #endif
     }
-    
+
     // fallback, handle by GUI, then by RoR::SceneMouse
     bool handled = MyGUI::InputManager::getInstance().injectKeyPress(key, text);
 
     if (handled)
     {
-        MyGUI::Widget *w = MyGUI::InputManager::getInstance().getKeyFocusWidget();
+        MyGUI::Widget* w = MyGUI::InputManager::getInstance().getKeyFocusWidget();
         // hack for console, we want to use the mouse through that control
         if (w && w->getName().substr(0, 7) == "Console" && w->getName() != "ConsoleInput")
             handled = false;
@@ -261,8 +269,9 @@ bool GUIInputManager::keyPressed(const OIS::KeyEvent& _arg)
 
     if (!handled)
     {
-        RoR::SceneMouse *sm = RoR::App::GetSceneMouse();
-        if (sm) return sm->keyPressed(_arg);
+        RoR::SceneMouse* sm = RoR::App::GetSceneMouse();
+        if (sm)
+            return sm->keyPressed(_arg);
     }
 
     return handled;
@@ -275,7 +284,7 @@ bool GUIInputManager::keyReleased(const OIS::KeyEvent& _arg)
 
     if (handled)
     {
-        MyGUI::Widget *w = MyGUI::InputManager::getInstance().getKeyFocusWidget();
+        MyGUI::Widget* w = MyGUI::InputManager::getInstance().getKeyFocusWidget();
         // hack for console, we want to use the mouse through that control
         if (w && w->getName().substr(0, 7) == "Console" && w->getName() != "ConsoleInput")
             handled = false;
@@ -283,8 +292,9 @@ bool GUIInputManager::keyReleased(const OIS::KeyEvent& _arg)
 
     if (!handled)
     {
-        RoR::SceneMouse *sm = RoR::App::GetSceneMouse();
-        if (sm) return sm->keyReleased(_arg);
+        RoR::SceneMouse* sm = RoR::App::GetSceneMouse();
+        if (sm)
+            return sm->keyReleased(_arg);
     }
 
     return handled;

@@ -1,23 +1,27 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
+    Copyright 2013+     Petr Ohlidal & contributors
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
-// created: 26th of March 2011, thomas fischer thomas{AT}thomasfischer{DOT}biz
+
+/// @file
+/// @author Thomas Fischer (thomas{AT}thomasfischer{DOT}biz)
+/// @date   26th of March 2011
 
 #ifdef USE_MUMBLE
 
@@ -75,7 +79,8 @@ void MumbleIntegration::initMumble()
 
 void MumbleIntegration::update(Ogre::Vector3 cameraPos, Ogre::Vector3 cameraDir, Ogre::Vector3 cameraUp, Ogre::Vector3 avatarPos, Ogre::Vector3 avatarDir, Ogre::Vector3 avatarUp)
 {
-    if (! lm) return;
+    if (! lm)
+        return;
 
     if (lm->uiVersion != 2)
     {

@@ -2,7 +2,6 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2016 Petr Ohlidal
 
     For more information, see http://www.rigsofrods.org/
 
@@ -12,11 +11,11 @@
 
     Rigs of Rods is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "ChatSystem.h"
@@ -44,7 +43,6 @@ void SendStreamSetup()
     RoR::Networking::AddLocalStream(&reg, sizeof(stream_register_t));
 
     m_stream_id = reg.origin_streamid;
-
 }
 #endif // USE_SOCKETW
 
@@ -55,16 +53,18 @@ Ogre::UTFString GetColouredName(Ogre::UTFString nick, int colour_number)
     sprintf(tmp, "#%02X%02X%02X", (unsigned int)(col_val.r * 255.0f), (unsigned int)(col_val.g * 255.0f), (unsigned int)(col_val.b * 255.0f));
 
     // replace # with X in nickname so the user cannot fake the colour
-    for (unsigned int i=0; i<nick.size(); i++)
-        if (nick[i] == '#') nick[i] = 'X';
+    for (unsigned int i = 0; i < nick.size(); i++)
+        if (nick[i] == '#')
+            nick[i] = 'X';
 
     return tryConvertUTF(tmp) + nick;
 }
 
 #ifdef USE_SOCKETW
-void ReceiveStreamData(unsigned int type, int source, char *buffer)
+void ReceiveStreamData(unsigned int type, int source, char* buffer)
 {
-    if (type != MSG2_UTF_CHAT && type != MSG2_UTF_PRIVCHAT) return;
+    if (type != MSG2_UTF_CHAT && type != MSG2_UTF_PRIVCHAT)
+        return;
 
     Ogre::UTFString msg = tryConvertUTF(buffer);
 
@@ -73,12 +73,14 @@ void ReceiveStreamData(unsigned int type, int source, char *buffer)
         if (source == -1)
         {
             // server said something
-        } else if (source == RoR::Networking::GetUID())
+        }
+        else if (source == RoR::Networking::GetUID())
         {
             // our message bounced back :D
             Ogre::UTFString local_username = GetColouredName(RoR::Networking::GetUsername(), RoR::Networking::GetUserColor());
             msg = local_username + RoR::Color::NormalColour + ": " + msg;
-        } else
+        }
+        else
         {
             user_info_t user;
             if (RoR::Networking::GetUserInfo(source, user))
@@ -86,13 +88,15 @@ void ReceiveStreamData(unsigned int type, int source, char *buffer)
                 msg = GetColouredName(user.username, user.colournum) + RoR::Color::NormalColour + ": " + msg;
             }
         }
-    } else if (type == MSG2_UTF_PRIVCHAT)
+    }
+    else if (type == MSG2_UTF_PRIVCHAT)
     {
         if (source == -1)
         {
             // server said something
             msg = RoR::Color::WhisperColour + _L(" [whispered] ") + RoR::Color::NormalColour + msg;
-        } else
+        }
+        else
         {
             user_info_t user;
             if (RoR::Networking::GetUserInfo(source, user))
@@ -120,7 +124,7 @@ void HandleStreamData(std::vector<RoR::Networking::recv_packet_t> packet_buffer)
 void SendChat(Ogre::UTFString chatline)
 {
 #ifdef USE_SOCKETW
-    const char *utf8_line = chatline.asUTF8_c_str();
+    const char* utf8_line = chatline.asUTF8_c_str();
     RoR::Networking::AddPacket(m_stream_id, MSG2_UTF_CHAT, (unsigned int)strlen(utf8_line), (char *)utf8_line);
 #endif // USE_SOCKETW
 }
@@ -129,8 +133,8 @@ void SendPrivateChat(int target_uid, Ogre::UTFString chatline, Ogre::UTFString t
 {
 #ifdef USE_SOCKETW
     char buffer[MAX_MESSAGE_LENGTH] = {0};
-    
-    const char *chat_msg = (const char *)chatline.asUTF8_c_str();
+
+    const char* chat_msg = (const char *)chatline.asUTF8_c_str();
 
     // format: int of UID, then chat message
     memcpy(buffer, &target_uid, sizeof(int));

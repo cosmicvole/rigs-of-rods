@@ -19,12 +19,10 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** 
-    @file   CacheSystem.h
-    @author Thomas Fischer
-    @date   21th of May 2008
-    @brief  Caches information about installed mods (vehicles, terrains...)
-*/
+/// @file
+/// @author Thomas Fischer
+/// @date   21th of May 2008
+/// @brief  Caches information about installed mods (vehicles, terrains...)
 
 #pragma once
 
@@ -40,8 +38,8 @@
 
 struct Category_Entry
 {
-    Ogre::String title;                    //!< Category title
-    int number;                            //!< Category number
+    Ogre::String title; //!< Category title
+    int number;         //!< Category number
 };
 
 struct AuthorInfo
@@ -73,18 +71,18 @@ public:
     Ogre::String uniqueid;              //!< file's unique id
     Ogre::String guid;                  //!< global unique id
     int version;                        //!< file's version
-    Ogre::String fext;                    //!< file's extension
-    Ogre::String type;                    //!< Resource Type, FileSystem or Zip
-    Ogre::String dirname;                //!< mostly, archive name
-    Ogre::String hash;                    //!< file's hash
+    Ogre::String fext;                  //!< file's extension
+    Ogre::String type;                  //!< Resource Type, FileSystem or Zip
+    Ogre::String dirname;               //!< mostly, archive name
+    Ogre::String hash;                  //!< file's hash
     bool resourceLoaded;                //!< loaded?
-    int number;                            //!< mod number
-    std::time_t filetime;                //!< filetime
-    bool changedornew;                    //!< is it added or changed during this runtime?
-    bool deleted;                        //!< is this mod deleted?
-    int usagecounter;                    //!< how much it was used already
+    int number;                         //!< mod number
+    std::time_t filetime;               //!< filetime
+    bool changedornew;                  //!< is it added or changed during this runtime?
+    bool deleted;                       //!< is this mod deleted?
+    int usagecounter;                   //!< how much it was used already
     std::vector<AuthorInfo> authors;    //!< authors
-    Ogre::String filecachename;            //!< preview image filename
+    Ogre::String filecachename;         //!< preview image filename
 
     // following all TRUCK detail information:
     Ogre::String description;
@@ -207,7 +205,7 @@ protected:
 
     void checkForNewKnownFiles();
 
-    void addFile(Ogre::FileInfo f, Ogre::String ext);    // adds a file to entries
+    void addFile(Ogre::FileInfo f, Ogre::String ext);	// adds a file to entries
     void addFile(Ogre::String filename, Ogre::String archiveType, Ogre::String archiveDirectory, Ogre::String ext);
 
     // reads all advanced information out of the entry's file
@@ -217,11 +215,11 @@ protected:
     /// Checks if update is needed
     CacheValidityState IsCacheValid();
     Ogre::String filenamesSHA1();             // generates the hash over the whole content
-    bool loadCache();                          // loads cache config file, new format
+    bool loadCache();                         // loads cache config file, new format
     Ogre::String getCacheConfigFilename(bool full); // returns filename of the cache file
     int incrementalCacheUpdate();             // tries to update parts of the Cache only
 
-    void generateFileCache(CacheEntry &entry, Ogre::String directory=Ogre::String());    // generates a new cache
+    void generateFileCache(CacheEntry &entry, Ogre::String directory=Ogre::String());	// generates a new cache
     void deleteFileCache(char *filename); // removed files from cache
     void writeGeneratedCache();
     
@@ -274,9 +272,9 @@ protected:
     Ogre::String location;
     Ogre::String configlocation;
 
-    Ogre::String currentSHA1;    //!< stores sha1 over the content
-    int rgcounter;                //!< resource group counter, used to track the resource groups created
-    int modcounter;                //!< counter the number of mods
+    Ogre::String currentSHA1;   //!< stores sha1 over the content
+    int rgcounter;              //!< resource group counter, used to track the resource groups created
+    int modcounter;             //!< counter the number of mods
     
     std::vector<Ogre::String> known_extensions; //!< the extensions we track in the cache system
 

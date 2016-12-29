@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2016 Petr Ohlidal & contributors
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -19,11 +19,9 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
-    @file
-    @author Moncef Ben Slimane
-    @date   11/2014
-*/
+/// @file
+/// @author Moncef Ben Slimane
+/// @date   11/2014
 
 #include "GUI_MultiplayerSelector.h"
 

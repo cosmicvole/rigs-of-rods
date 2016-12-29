@@ -25,7 +25,7 @@ public:
     @param useIndices Specifies whether to use indices to determine the
             vertices to use as input. */
     void initialize(Ogre::RenderOperation::OperationType operationType,
-                    bool useIndices);
+        bool useIndices);
 
     /// Implementation of Ogre::SimpleRenderable
     virtual Ogre::Real getBoundingRadius(void) const;

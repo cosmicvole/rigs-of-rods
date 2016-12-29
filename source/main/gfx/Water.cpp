@@ -37,7 +37,7 @@ Plane waterPlane;
 Plane bottomPlane;
 Plane reflectionPlane;
 Plane refractionPlane;
-SceneManager *waterSceneMgr;
+SceneManager* waterSceneMgr;
 
 const int Water::WAVEREZ;
 const int Water::MAX_WAVETRAINS;
@@ -73,8 +73,8 @@ public:
         waterSceneMgr->getRenderQueue()->getQueueGroup(RENDER_QUEUE_MAIN)->setShadowsEnabled(false);
         // Hide plane
         pPlaneEnt->setVisible(false);
-
     }
+
     void postRenderTargetUpdate(const RenderTargetEvent& evt)
     {
         // Show plane
@@ -87,13 +87,13 @@ RefractionTextureListener mRefractionListener;
 ReflectionTextureListener mReflectionListener;
 //End ugly code
 
-Water::Water(const Ogre::ConfigFile &mTerrainConfig) :
+Water::Water(const Ogre::ConfigFile& mTerrainConfig) :
     maxampl(0),
     free_wavetrain(0),
     visible(true),
     mScale(1.0f),
     vRtt1(0),
-    vRtt2(0), 
+    vRtt2(0),
     mRenderCamera(gEnv->mainCamera),
     pWaterNode(0),
     framecounter(0),
@@ -115,30 +115,32 @@ Water::Water(const Ogre::ConfigFile &mTerrainConfig) :
 
     char line[1024] = {};
     std::string filepath = RoR::App::GetSysConfigDir() + PATH_SLASH + "wavefield.cfg";
-    FILE *fd = fopen(filepath.c_str(), "r");
+    FILE* fd = fopen(filepath.c_str(), "r");
     if (fd)
     {
         while (!feof(fd))
         {
-            int res = fscanf(fd," %[^\n\r]",line);
-            if (line[0] == ';') continue;
-            float wl,amp,mx,dir;
-            res = sscanf(line,"%f, %f, %f, %f",&wl,&amp,&mx,&dir);
-            if (res < 4) continue;
-            wavetrains[free_wavetrain].wavelength=wl;
-            wavetrains[free_wavetrain].amplitude=amp;
-            wavetrains[free_wavetrain].maxheight=mx;
-            wavetrains[free_wavetrain].direction=dir/57.0;
-            wavetrains[free_wavetrain].dir_sin=sin(wavetrains[free_wavetrain].direction);
-            wavetrains[free_wavetrain].dir_cos=cos(wavetrains[free_wavetrain].direction);
+            int res = fscanf(fd, " %[^\n\r]", line);
+            if (line[0] == ';')
+                continue;
+            float wl, amp, mx, dir;
+            res = sscanf(line, "%f, %f, %f, %f", &wl, &amp, &mx, &dir);
+            if (res < 4)
+                continue;
+            wavetrains[free_wavetrain].wavelength = wl;
+            wavetrains[free_wavetrain].amplitude = amp;
+            wavetrains[free_wavetrain].maxheight = mx;
+            wavetrains[free_wavetrain].direction = dir / 57.0;
+            wavetrains[free_wavetrain].dir_sin = sin(wavetrains[free_wavetrain].direction);
+            wavetrains[free_wavetrain].dir_cos = cos(wavetrains[free_wavetrain].direction);
             free_wavetrain++;
         }
         fclose(fd);
     }
-    for (int i=0; i<free_wavetrain; i++)
+    for (int i = 0; i < free_wavetrain; i++)
     {
-        wavetrains[i].wavespeed=1.25*sqrt(wavetrains[i].wavelength);
-        maxampl+=wavetrains[i].maxheight;
+        wavetrains[i].wavespeed = 1.25 * sqrt(wavetrains[i].wavelength);
+        maxampl += wavetrains[i].maxheight;
     }
 
     this->processWater();
@@ -146,7 +148,6 @@ Water::Water(const Ogre::ConfigFile &mTerrainConfig) :
 
 Water::~Water()
 {
-
     if (mRefractCam != nullptr)
     {
         gEnv->sceneManager->destroyCamera(mRefractCam);
@@ -198,7 +199,7 @@ Water::~Water()
 
     if (wbuffer)
     {
-        free (wbuffer);
+        free(wbuffer);
         wbuffer = nullptr;
     }
 }
@@ -226,7 +227,7 @@ void Water::processWater()
             if (!GpuProgramManager::getSingleton().isSyntaxSupported("arbfp1") &&
                 !GpuProgramManager::getSingleton().isSyntaxSupported("ps_2_0") &&
                 !GpuProgramManager::getSingleton().isSyntaxSupported("ps_1_4")
-                )
+            )
             {
                 OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Your card does not support advanced fragment programs, "
                     "so cannot run Water effects. Sorry!",
@@ -238,7 +239,7 @@ void Water::processWater()
         reflectionPlane.normal = Vector3::UNIT_Y;
         reflectionPlane.d = - 0.15;
         refractionPlane.normal = -Vector3::UNIT_Y;
-        refractionPlane.d =  0.15;
+        refractionPlane.d = 0.15;
 
         if (full_gfx)
         {
@@ -256,7 +257,6 @@ void Water::processWater()
                 vRtt1->setClearEveryFrame(true);
                 vRtt1->setBackgroundColour(fade);
                 //            v->setBackgroundColour( ColourValue::Black );
-
 
                 MaterialPtr mat = MaterialManager::getSingleton().getByName("Examples/FresnelReflectionRefraction");
                 mat->getTechnique(0)->getPass(0)->getTextureUnitState(2)->setTextureName("Refraction");
@@ -352,7 +352,7 @@ void Water::processWater()
         ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
         bottomPlane,
         mapSize.x * mScale, mapSize.z * mScale, 1, 1, true, 1, 1, 1, Vector3::UNIT_Z);
-    Entity *pE = gEnv->sceneManager->createEntity("bplane", "BottomPlane");
+    Entity* pE = gEnv->sceneManager->createEntity("bplane", "BottomPlane");
     pE->setMaterialName("tracks/seabottom");
     pE->setCastShadows(false);
 
@@ -364,12 +364,13 @@ void Water::processWater()
     //setup for waves
     wbuf = mprt->sharedVertexData->vertexBufferBinding->getBuffer(0);
 
-    if (wbuf->getSizeInBytes() == (WAVEREZ + 1)*(WAVEREZ + 1) * 32)
+    if (wbuf->getSizeInBytes() == (WAVEREZ + 1) * (WAVEREZ + 1) * 32)
     {
         wbuffer = (float*)malloc(wbuf->getSizeInBytes());
         wbuf->readData(0, wbuf->getSizeInBytes(), wbuffer);
     }
-    else wbuffer = 0;
+    else
+        wbuffer = 0;
 }
 
 bool Water::allowUnderWater()
@@ -386,16 +387,16 @@ void Water::setVisible(bool value)
         pWaterNode->setVisible(value);
     if (pBottomNode)
         pBottomNode->setVisible(value);
-
 }
 
 void Water::setFadeColour(ColourValue ambient)
 {
     // update the viewports background colour!
-    if (vRtt1) vRtt1->setBackgroundColour(ambient);
-    if (vRtt2) vRtt2->setBackgroundColour(ambient);
+    if (vRtt1)
+        vRtt1->setBackgroundColour(ambient);
+    if (vRtt2)
+        vRtt2->setBackgroundColour(ambient);
 }
-
 
 void Water::moveTo(float centerheight)
 {
@@ -408,39 +409,40 @@ void Water::moveTo(float centerheight)
 
 void Water::showWave(Vector3 refpos)
 {
-    if (!wbuffer) return;
+    if (!wbuffer)
+        return;
 
     float xScaled = mapSize.x * mScale;
     float zScaled = mapSize.z * mScale;
 
-    for (int pz=0; pz<WAVEREZ+1; pz++)
+    for (int pz = 0; pz < WAVEREZ + 1; pz++)
     {
-        for (int px=0; px<WAVEREZ+1; px++)
+        for (int px = 0; px < WAVEREZ + 1; px++)
         {
-            wbuffer[(pz*(WAVEREZ+1)+px)*8+1] = getHeightWaves(refpos + Vector3(xScaled*0.5-(float)px * xScaled / WAVEREZ, 0, (float)pz * zScaled / WAVEREZ - zScaled * 0.5)) - wHeight;
+            wbuffer[(pz * (WAVEREZ + 1) + px) * 8 + 1] = getHeightWaves(refpos + Vector3(xScaled * 0.5 - (float)px * xScaled / WAVEREZ, 0, (float)pz * zScaled / WAVEREZ - zScaled * 0.5)) - wHeight;
         }
     }
 
     //normals
-    for (int pz=0; pz<WAVEREZ+1; pz++)
+    for (int pz = 0; pz < WAVEREZ + 1; pz++)
     {
-        for (int px=0; px<WAVEREZ+1; px++)
+        for (int px = 0; px < WAVEREZ + 1; px++)
         {
-            int left  = std::max(0, px-1);
-            int right = std::min(px+1, WAVEREZ);
-            int up    = std::max(0, pz-1);
-            int down  = std::min(pz+1, WAVEREZ);
+            int left = std::max(0, px - 1);
+            int right = std::min(px + 1, WAVEREZ);
+            int up = std::max(0, pz - 1);
+            int down = std::min(pz + 1, WAVEREZ);
 
-            Vector3 normal = (Vector3(wbuffer+((pz*(WAVEREZ+1)+left)*8))-Vector3(wbuffer+((pz*(WAVEREZ+1)+right)*8))).crossProduct(Vector3(wbuffer+((up*(WAVEREZ+1)+px)*8))-Vector3(wbuffer+((down*(WAVEREZ+1)+px)*8)));
+            Vector3 normal = (Vector3(wbuffer + ((pz * (WAVEREZ + 1) + left) * 8)) - Vector3(wbuffer + ((pz * (WAVEREZ + 1) + right) * 8))).crossProduct(Vector3(wbuffer + ((up * (WAVEREZ + 1) + px) * 8)) - Vector3(wbuffer + ((down * (WAVEREZ + 1) + px) * 8)));
             normal.normalise();
 
-            wbuffer[(pz*(WAVEREZ+1)+px)*8+3] = normal.x;
-            wbuffer[(pz*(WAVEREZ+1)+px)*8+4] = normal.y;
-            wbuffer[(pz*(WAVEREZ+1)+px)*8+5] = normal.z;
+            wbuffer[(pz * (WAVEREZ + 1) + px) * 8 + 3] = normal.x;
+            wbuffer[(pz * (WAVEREZ + 1) + px) * 8 + 4] = normal.y;
+            wbuffer[(pz * (WAVEREZ + 1) + px) * 8 + 5] = normal.z;
         }
     }
 
-    wbuf->writeData(0, (WAVEREZ+1)*(WAVEREZ+1)*32, wbuffer, true);
+    wbuf->writeData(0, (WAVEREZ + 1) * (WAVEREZ + 1) * 32, wbuffer, true);
 }
 
 bool Water::isCameraUnderWater()
@@ -456,7 +458,7 @@ void Water::update()
 {
     if (!visible || !mRenderCamera)
         return;
-    
+
     if (pWaterNode)
     {
         Vector3 cameraPos(mRenderCamera->getPosition().x, wHeight, mRenderCamera->getPosition().z);
@@ -465,13 +467,13 @@ void Water::update()
         Ray lineOfSight(mRenderCamera->getPosition(), mRenderCamera->getDirection());
         Plane waterPlane(Vector3::UNIT_Y, Vector3::UNIT_Y * wHeight);
 
-        std::pair< bool, Real > intersection = lineOfSight.intersects(waterPlane);
+        std::pair<bool, Real> intersection = lineOfSight.intersects(waterPlane);
 
         if (intersection.first && intersection.second > 0.0f)
             sightPos = lineOfSight.getPoint(intersection.second);
 
         Real offset = std::min(cameraPos.distance(sightPos), std::min(mapSize.x, mapSize.z) * 0.5f);
-        
+
         Vector3 waterPos = cameraPos + (sightPos - cameraPos).normalisedCopy() * offset;
         Vector3 bottomPos = Vector3(waterPos.x, wbHeight, waterPos.z);
 
@@ -481,7 +483,8 @@ void Water::update()
             pBottomNode->setPosition(bottomPos);
             ForceUpdate = false; //Happens only once
         }
-        if (RoR::App::GetGfxWaterUseWaves() && RoR::App::GetActiveMpState() == RoR::App::MP_STATE_DISABLED) showWave(pWaterNode->getPosition());
+        if (RoR::App::GetGfxWaterUseWaves() && RoR::App::GetActiveMpState() == RoR::App::MP_STATE_DISABLED)
+            showWave(pWaterNode->getPosition());
     }
 
     bool underwater = isCameraUnderWater();
@@ -493,34 +496,11 @@ void Water::update()
         lastWaterMode = underwater;
     }
 
-#if 0
-    static ColourValue savedFogColor;
-    static int savedFogMode=0;
-    static float savedFogStart, savedFogEnd, savedFogDensity;
-    if (underwater && underWaterModeChanged)
-    {
-        /*
-        // TODO!
-        savedFogColor = gEnv->sceneManager->getFogColour();
-        savedFogMode  = gEnv->sceneManager->getFogMode();
-        savedFogStart = gEnv->sceneManager->getFogStart();
-        savedFogEnd   = gEnv->sceneManager->getFogEnd();
-        savedFogDensity = gEnv->sceneManager->getFogDensity();
-        ColourValue fogColour = ColourValue(0.2,0.28,0.8);
-        gEnv->sceneManager->setFog(FOG_LINEAR, fogColour, 0, 5, 10);
-        */
-    } else if(!underwater && underWaterModeChanged)
-    {
-        // TODO!
-        //gEnv->sceneManager->setFog((FogMode)savedFogMode, savedFogColor, savedFogDensity, savedFogStart, savedFogEnd);
-    }
-#endif
-
     framecounter++;
     const auto gfx_type = App::GetGfxWaterMode();
     if (gfx_type == App::GFX_WATER_FULL_FAST)
     {
-        if (framecounter%2)
+        if (framecounter % 2)
         {
             mReflectCam->setOrientation(mRenderCamera->getOrientation());
             mReflectCam->setPosition(mRenderCamera->getPosition());
@@ -534,12 +514,8 @@ void Water::update()
             mRefractCam->setFOVy(mRenderCamera->getFOVy());
             rttTex1->update();
         }
-
-        //if(underwater && underWaterModeChanged)
-        //    pPlaneEnt->setMaterialName("Examples/FresnelReflectionRefractioninverted");
-        //else if(!underwater && underWaterModeChanged)
-        //    pPlaneEnt->setMaterialName("Examples/FresnelReflectionRefraction");
-    } else if (gfx_type == App::GFX_WATER_FULL_HQ)
+    }
+    else if (gfx_type == App::GFX_WATER_FULL_HQ)
     {
         mReflectCam->setOrientation(mRenderCamera->getOrientation());
         mReflectCam->setPosition(mRenderCamera->getPosition());
@@ -549,12 +525,6 @@ void Water::update()
         mRefractCam->setPosition(mRenderCamera->getPosition());
         mRefractCam->setFOVy(mRenderCamera->getFOVy());
         rttTex1->update();
-
-        //if(underwater && underWaterModeChanged)
-        //    pPlaneEnt->setMaterialName("Examples/FresnelReflectionRefractioninverted");
-        //else if(!underwater && underWaterModeChanged)
-        //    pPlaneEnt->setMaterialName("Examples/FresnelReflectionRefraction");
-
     }
     else if (gfx_type == App::GFX_WATER_REFLECT)
     {
@@ -567,8 +537,10 @@ void Water::update()
 
 void Water::prepareShutdown()
 {
-    if (rttTex1) rttTex1->removeListener(&mRefractionListener);
-    if (rttTex2) rttTex2->removeListener(&mReflectionListener);
+    if (rttTex1)
+        rttTex1->removeListener(&mRefractionListener);
+    if (rttTex2)
+        rttTex2->removeListener(&mReflectionListener);
 }
 
 float Water::getHeight()
@@ -599,7 +571,7 @@ float Water::getHeightWaves(Vector3 pos)
     // we will store the result in this variable, init it with the default height
     float result = wHeight;
     // now walk through all the wave trains. One 'train' is one sin/cos set that will generate once wave. All the trains together will sum up, so that they generate a 'rough' sea
-    for (int i=0; i<free_wavetrain; i++)
+    for (int i = 0; i < free_wavetrain; i++)
     {
         // calculate the amplitude that this wave will have. wavetrains[i].amplitude is read from the config
         // upper limit: prevent too big waves by setting an upper limit
@@ -631,15 +603,17 @@ bool Water::isUnderWater(Vector3 pos)
 
 Vector3 Water::getVelocity(Vector3 pos)
 {
-    if (!RoR::App::GetGfxWaterUseWaves() || RoR::App::GetActiveMpState() == RoR::App::MP_STATE_CONNECTED) return Vector3::ZERO;
+    if (!RoR::App::GetGfxWaterUseWaves() || RoR::App::GetActiveMpState() == RoR::App::MP_STATE_CONNECTED)
+        return Vector3::ZERO;
 
     float waveheight = getWaveHeight(pos);
 
-    if (pos.y > wHeight + maxampl) return Vector3::ZERO;
-    
+    if (pos.y > wHeight + maxampl)
+        return Vector3::ZERO;
+
     Vector3 result(Vector3::ZERO);
 
-    for (int i=0; i<free_wavetrain; i++)
+    for (int i = 0; i < free_wavetrain; i++)
     {
         float amp = std::min(wavetrains[i].amplitude * waveheight, wavetrains[i].maxheight);
         float speed = Math::TWO_PI * amp / (wavetrains[i].wavelength / wavetrains[i].wavespeed);
@@ -658,29 +632,30 @@ void Water::updateReflectionPlane(float h)
     //if (mpair.first) h=ra.getPoint(mpair.second).y;
 
     bool underwater = isCameraUnderWater();
-    if(underwater)
+    if (underwater)
     {
         reflectionPlane.normal = -Vector3::UNIT_Y;
         refractionPlane.normal = Vector3::UNIT_Y;
-        reflectionPlane.d = h+0.15;
-        refractionPlane.d = -h+0.15;
+        reflectionPlane.d = h + 0.15;
+        refractionPlane.d = -h + 0.15;
         waterPlane.d = -h;
-    } else
+    }
+    else
     {
         reflectionPlane.normal = Vector3::UNIT_Y;
         refractionPlane.normal = -Vector3::UNIT_Y;
-        reflectionPlane.d = -h+0.15;
-        refractionPlane.d = h+0.15;
+        reflectionPlane.d = -h + 0.15;
+        refractionPlane.d = h + 0.15;
         waterPlane.d = -h;
     }
 
-    if (mRefractCam) mRefractCam->enableCustomNearClipPlane(refractionPlane);
+    if (mRefractCam)
+        mRefractCam->enableCustomNearClipPlane(refractionPlane);
     if (mReflectCam)
     {
         mReflectCam->enableReflection(waterPlane);
         mReflectCam->enableCustomNearClipPlane(reflectionPlane);
     };
-
 }
 
 void Water::setSunPosition(Vector3)
@@ -688,7 +663,7 @@ void Water::setSunPosition(Vector3)
     // not used here!
 }
 
-void Water::setCamera(Ogre::Camera *cam)
+void Water::setCamera(Ogre::Camera* cam)
 {
     mRenderCamera = cam;
 }
@@ -706,6 +681,6 @@ float Water::getWaveHeight(Vector3 pos)
     //  (mapsize.z * mScale) / 2 = terrain height / 2
     // calculate distance to the center of the terrain and divide by 3.000.000
     float waveheight = (pos - Vector3((mapSize.x * mScale) * 0.5, wHeight, (mapSize.z * mScale) * 0.5)).squaredLength() / 3000000.0;
-    
+
     return waveheight;
 }

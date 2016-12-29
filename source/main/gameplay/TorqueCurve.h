@@ -1,21 +1,21 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #pragma once
@@ -25,13 +25,11 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "RoRPrerequisites.h"
 
-/**
- * @file TorqueCurve.h
- * @version 1
- * @brief torquecurve loader.
- * @authors flypiper
- * @authors Thomas Fischer (thomas{AT}rigsofrods{DOT}com)
- */
+/// @file
+/// @version 1
+/// @brief torquecurve loader.
+/// @authors flypiper
+/// @authors Thomas Fischer (thomas{AT}rigsofrods{DOT}com)
 
 /**
  *  @brief This class loads and processes a torque curve for a truck.
@@ -41,7 +39,7 @@ class TorqueCurve : public ZeroedMemoryAllocator
 public:
     const static Ogre::String customModel;
 
-    TorqueCurve();  //!< Constructor
+    TorqueCurve(); //!< Constructor
     ~TorqueCurve(); //!< Destructor
 
     /**
@@ -62,20 +60,20 @@ public:
     * Creates new torque curve.
     * @return True if created, false if already existed.
     */
-    bool CreateNewCurve(Ogre::String const & name = customModel);
+    bool CreateNewCurve(Ogre::String const& name = customModel);
 
     /**
      * Adds a point to the torque curve graph.
      * @param progress 0 - 1
      * @param model Torque model name (i.e. 'turbodiesel').
      */
-    void AddCurveSample(float rpm, float progress, Ogre::String const & model = customModel);
+    void AddCurveSample(float rpm, float progress, Ogre::String const& model = customModel);
 
     /**
      * Returns the used spline.
      * @return The torque spline used by the truck.
      */
-    Ogre::SimpleSpline *getUsedSpline() { return usedSpline; };
+    Ogre::SimpleSpline* getUsedSpline() { return usedSpline; };
 
     /**
      * Returns the name of the torque model used by the truck.
@@ -88,12 +86,12 @@ public:
      * @param spline Pointer to the spline which should be processed.
      * @return 0 on success, 1 on error
      */
-    int spaceCurveEvenly(Ogre::SimpleSpline *spline);    
+    int spaceCurveEvenly(Ogre::SimpleSpline* spline);
 
 protected:
-    Ogre::SimpleSpline *usedSpline;                        //!< spline which is used for calculating the torque, set by setTorqueModel().
-    Ogre::String usedModel;                                //!< name of the torque model used by the truck.
-    std::map < Ogre::String, Ogre::SimpleSpline > splines; //!< container were all torque curve splines are stored in.
+    Ogre::SimpleSpline* usedSpline; //!< spline which is used for calculating the torque, set by setTorqueModel().
+    Ogre::String usedModel; //!< name of the torque model used by the truck.
+    std::map<Ogre::String, Ogre::SimpleSpline> splines; //!< container were all torque curve splines are stored in.
 
     /**
      * Loads default torque models from the 'torque_models.cfg' file.

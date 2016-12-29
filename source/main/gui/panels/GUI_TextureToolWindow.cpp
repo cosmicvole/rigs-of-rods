@@ -1,22 +1,23 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
+
 #ifdef USE_MYGUI
 
 #include "GUI_TextureToolWindow.h"
@@ -44,10 +45,10 @@ TextureToolWindow::TextureToolWindow()
     ((MyGUI::Window*)mMainWidget)->eventWindowButtonPressed += MyGUI::newDelegate(this, &TextureToolWindow::notifyWindowPressed);
 
     mBtnSavePNG->setCaption(_L("Save as PNG"));
-    mBtnSavePNG->eventMouseButtonClick  += MyGUI::newDelegate(this, &TextureToolWindow::eventClickSavePNGButton);
+    mBtnSavePNG->eventMouseButtonClick += MyGUI::newDelegate(this, &TextureToolWindow::eventClickSavePNGButton);
 
     mBtnSaveRAW->setCaption(_L("Save Raw"));
-    mBtnSaveRAW->eventMouseButtonClick  += MyGUI::newDelegate(this, &TextureToolWindow::eventClickSaveRAWButton);
+    mBtnSaveRAW->eventMouseButtonClick += MyGUI::newDelegate(this, &TextureToolWindow::eventClickSaveRAWButton);
 
     mCBo->eventComboAccept += MyGUI::newDelegate(this, &TextureToolWindow::eventSelectTexture);
     mCBo->eventComboChangePosition += MyGUI::newDelegate(this, &TextureToolWindow::eventSelectTexture2);
@@ -89,11 +90,12 @@ void TextureToolWindow::fillCombo()
 #ifdef ROR_USE_OGRE_1_9
         TexturePtr txt(it.getNext().staticCast<Texture>());
 #else
-        TexturePtr txt(it.getNext());
+		TexturePtr txt(it.getNext());
 #endif
-        
-        if (dynamicOnly && ((txt->getUsage() & TU_STATIC) != 0)) continue;
-        
+
+        if (dynamicOnly && ((txt->getUsage() & TU_STATIC) != 0))
+            continue;
+
         mCBo->addItem(txt->getName());
     }
 
@@ -105,46 +107,47 @@ void TextureToolWindow::fillCombo()
     }
 }
 
-
 void TextureToolWindow::hide()
 {
     ((MyGUI::Window*)mMainWidget)->setVisibleSmooth(false);
 }
 
-void TextureToolWindow::saveTexture( String texName, bool usePNG )
+void TextureToolWindow::saveTexture(String texName, bool usePNG)
 {
     try
     {
         TexturePtr tex = TextureManager::getSingleton().getByName(texName);
-        if (tex.isNull()) return;
+        if (tex.isNull())
+            return;
 
         Image img;
         tex->convertToImage(img);
 
         // Save to disk!
         String outname = App::GetSysUserDir() + PATH_SLASH + texName;
-        if (usePNG) outname += ".png";
+        if (usePNG)
+            outname += ".png";
 
         img.save(outname);
 
         UTFString msg = _L("saved texture as ") + outname;
         RoR::App::GetConsole()->putMessage(Console::CONSOLE_MSGTYPE_INFO, Console::CONSOLE_MSGTYPE_INFO, msg, "information.png");
     }
-    catch(Exception &e)
+    catch (Exception& e)
     {
         UTFString str = "Exception while saving image: " + e.getFullDescription();
         RoR::App::GetConsole()->putMessage(Console::CONSOLE_MSGTYPE_INFO, Console::CONSOLE_MSGTYPE_INFO, str, "error.png");
     }
 }
 
-void TextureToolWindow::updateControls( String texName )
+void TextureToolWindow::updateControls(String texName)
 {
     try
     {
         bool exists = TextureManager::getSingleton().resourceExists(texName);
         if (!exists)
         {
-            mTxt->setCaption(convertToMyGUIString("Texture not found:\n"+texName));
+            mTxt->setCaption(convertToMyGUIString("Texture not found:\n" + texName));
             mBtnSavePNG->setEnabled(false);
             return;
         }
@@ -152,7 +155,7 @@ void TextureToolWindow::updateControls( String texName )
         TexturePtr tex = TextureManager::getSingleton().getByName(texName);
         if (tex.isNull())
         {
-            mTxt->setCaption(convertToMyGUIString("Error loading texture:\n"+texName));
+            mTxt->setCaption(convertToMyGUIString("Error loading texture:\n" + texName));
             mBtnSavePNG->setEnabled(false);
             return;
         }
@@ -168,17 +171,21 @@ void TextureToolWindow::updateControls( String texName )
         if (tex->getNumMipmaps() > 0)
             str += "#00aa00mipmaps: #000000" + TOSTRING(tex->getNumMipmaps()) + "\n";
 
-        String typeStr="";
-        switch(tex->getTextureType())
+        String typeStr = "";
+        switch (tex->getTextureType())
         {
-        case TEX_TYPE_1D:  typeStr = "1D"; break;
-        case TEX_TYPE_2D:  typeStr = "2D"; break;
-        case TEX_TYPE_3D:  typeStr = "3D"; break;
-        case TEX_TYPE_CUBE_MAP:  typeStr = "Cube Map"; break;
+        case TEX_TYPE_1D: typeStr = "1D";
+            break;
+        case TEX_TYPE_2D: typeStr = "2D";
+            break;
+        case TEX_TYPE_3D: typeStr = "3D";
+            break;
+        case TEX_TYPE_CUBE_MAP: typeStr = "Cube Map";
+            break;
         }
         str += "#00aa00type: #000000" + typeStr + "\n";
 
-        String usageStr="";
+        String usageStr = "";
         if (tex->getUsage() & TU_STATIC)
             usageStr += "static,\n";
         if (tex->getUsage() & TU_DYNAMIC)
@@ -202,29 +209,27 @@ void TextureToolWindow::updateControls( String texName )
         if (tex->getDepth() > 1)
             str += "#00aa00depth: #000000" + TOSTRING(tex->getDepth()) + "\n";
 
-
         mTxt->setCaption(convertToMyGUIString(str));
         mImage->setImageTexture(texName);
         mBtnSavePNG->setEnabled(true);
     }
-    catch(Exception &e)
+    catch (Exception& e)
     {
         UTFString str = "Exception while opening texture:" + e.getFullDescription();
         RoR::App::GetConsole()->putMessage(Console::CONSOLE_MSGTYPE_INFO, Console::CONSOLE_MSGTYPE_INFO, str, "error.png");
     }
 }
 
-void TextureToolWindow::eventSelectTexture2( MyGUI::ComboBoxPtr _sender, size_t _index )
+void TextureToolWindow::eventSelectTexture2(MyGUI::ComboBoxPtr _sender, size_t _index)
 {
     updateControls(mCBo->getItemNameAt(_index));
 }
 
-void TextureToolWindow::eventClickDynamicButton( MyGUI::WidgetPtr _sender )
+void TextureToolWindow::eventClickDynamicButton(MyGUI::WidgetPtr _sender)
 {
     mChkDynamic->setStateSelected(!mChkDynamic->getStateSelected());
     fillCombo();
 }
-
 
 void TextureToolWindow::notifyWindowPressed(MyGUI::Window* _widget, const std::string& _name)
 {
@@ -233,17 +238,17 @@ void TextureToolWindow::notifyWindowPressed(MyGUI::Window* _widget, const std::s
         hide();
 }
 
-void TextureToolWindow::eventClickSavePNGButton( MyGUI::WidgetPtr _sender )
+void TextureToolWindow::eventClickSavePNGButton(MyGUI::WidgetPtr _sender)
 {
     saveTexture(mCBo->getItemNameAt(mCBo->getIndexSelected()), true);
 }
 
-void TextureToolWindow::eventClickSaveRAWButton( MyGUI::WidgetPtr _sender )
+void TextureToolWindow::eventClickSaveRAWButton(MyGUI::WidgetPtr _sender)
 {
     saveTexture(mCBo->getItemNameAt(mCBo->getIndexSelected()), false);
 }
 
-void TextureToolWindow::eventSelectTexture( MyGUI::WidgetPtr _sender )
+void TextureToolWindow::eventSelectTexture(MyGUI::WidgetPtr _sender)
 {
     updateControls(mCBo->getItemNameAt(mCBo->getIndexSelected()));
 }

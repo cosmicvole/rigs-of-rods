@@ -13,20 +13,17 @@
 
     Rigs of Rods is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
-    @file   VehicleAI.h
-    @brief  Simple waypoint AI
-    @author AnotherFoxGuy
-    @date   03/2016
-*/
-
+/// @file   VehicleAI.h
+/// @brief  Simple waypoint AI
+/// @author AnotherFoxGuy
+/// @date   03/2016
 
 #pragma once
 
@@ -36,7 +33,7 @@
 #include "scriptdictionary/scriptdictionary.h"
 
 /**
-*    Enum with AI events
+*	Enum with AI events
 */
 enum Ai_events
 {
@@ -47,14 +44,13 @@ enum Ai_events
 };
 
 /**
-*    Enum with AI values that can be set.
+*	Enum with AI values that can be set.
 */
 enum Ai_values
 {
     AI_SPEED,
     AI_POWER
 };
-
 
 class VehicleAI : public ZeroedMemoryAllocator
 {
@@ -117,7 +113,6 @@ public:
      *  @see Ai_values
      */
     void SetValueAtWaypoint(Ogre::String& id, int& value_id, float& value);
-
 
 private:
     /**

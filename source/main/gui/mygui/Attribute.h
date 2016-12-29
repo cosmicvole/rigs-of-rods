@@ -1,92 +1,91 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
-/*!
-    @file
-    @author        Albert Semenov
-    @date        10/2009
-    @module
-*/
+
+/// @file
+/// @author Albert Semenov
+/// @date   10/2009
 
 #pragma once
-#ifndef __ATTRIBUTE_H__
-#define __ATTRIBUTE_H__
 
 #include "RoRPrerequisites.h"
 
-namespace attribute
+namespace attribute {
+
+// класс обертка для удаления данных из статического вектора
+template <typename Type>
+struct DataHolder
 {
-
-    // ГЄГ«Г Г±Г± Г®ГЎГҐГ°ГІГЄГ  Г¤Г«Гї ГіГ¤Г Г«ГҐГ­ГЁГї Г¤Г Г­Г­Г»Гµ ГЁГ§ Г±ГІГ ГІГЁГ·ГҐГ±ГЄГ®ГЈГ® ГўГҐГЄГІГ®Г°Г 
-    template <typename Type>
-    struct DataHolder
+    ~DataHolder()
     {
-        ~DataHolder()
-        {
-            for (typename Type::iterator item=data.begin(); item!=data.end(); ++item)
-                delete (*item).first;
-        }
+        for (typename Type::iterator item = data.begin(); item != data.end(); ++item)
+            delete (*item).first;
+    }
 
-        Type data;
-    };
+    Type data;
+};
 
-    // ГЁГ­ГІГҐГ°ГґГҐГ©Г± Г¤Г«Гї Г®ГЎГҐГ°ГІГЄГЁ ГЇГ®Г«Гї
-    template <typename OwnerType, typename SetterType>
-    struct Field
+// интерфейс для обертки поля
+template <typename OwnerType, typename SetterType>
+struct Field
+{
+    virtual void set(OwnerType* _target, typename SetterType::BaseValueType* _value) = 0;
+};
+
+// шаблон для обертки поля
+template <typename OwnerType, typename FieldType, typename SetterType>
+struct FieldHolder : public Field<OwnerType, SetterType>
+{
+    FieldHolder(FieldType* OwnerType::* offset) : m_offset(offset)
     {
-        virtual void set(OwnerType* _target, typename SetterType::BaseValueType* _value) = 0;
-    };
+    }
 
-    // ГёГ ГЎГ«Г®Г­ Г¤Г«Гї Г®ГЎГҐГ°ГІГЄГЁ ГЇГ®Г«Гї
-    template <typename OwnerType, typename FieldType, typename SetterType>
-    struct FieldHolder : public Field<OwnerType, SetterType>
+    FieldType* OwnerType::* const m_offset;
+
+    virtual void set(OwnerType* _target, typename SetterType::BaseValueType* _value)
     {
-        FieldHolder(FieldType* OwnerType::* offset) : m_offset(offset) {  }
-        FieldType* OwnerType::* const m_offset;
+        _target ->* m_offset = SetterType::template convert<FieldType>(_value);
+        //                  _target->*m_offset = (_value == 0 ? 0 : _value->castType<int>::template(false));//SetterType::convert<FieldType>(_value);
+    }
+};
 
-        virtual void set(OwnerType* _target, typename SetterType::BaseValueType* _value)
-        {
-                  _target->*m_offset = SetterType::template convert<FieldType>(_value);
-                  //                  _target->*m_offset = (_value == 0 ? 0 : _value->castType<int>::template(false));//SetterType::convert<FieldType>(_value);
-        }
-    };
+// шаблон для атрибута поля
+template <typename OwnerType, typename ValueType, typename SetterType>
+struct AttributeField
+{
+    typedef std::pair<Field<OwnerType, SetterType>*, ValueType> BindPair;
+    typedef std::vector<BindPair> VectorBindPair;
 
-    // ГёГ ГЎГ«Г®Г­ Г¤Г«Гї Г ГІГ°ГЁГЎГіГІГ  ГЇГ®Г«Гї
-    template <typename OwnerType, typename ValueType, typename SetterType>
-    struct AttributeField
+    template <typename FieldType>
+    AttributeField(FieldType* OwnerType::* _offset, const ValueType& _value)
     {
-        typedef std::pair<Field<OwnerType, SetterType>*, ValueType> BindPair;
-        typedef std::vector<BindPair> VectorBindPair;
+        getData().push_back(BindPair(new FieldHolder<OwnerType, FieldType, SetterType>(_offset), _value));
+    }
 
-        template <typename FieldType>
-        AttributeField(FieldType* OwnerType::* _offset, const ValueType& _value)
-        {
-            getData().push_back(BindPair(new FieldHolder<OwnerType, FieldType, SetterType>(_offset), _value));
-        }
-        static VectorBindPair& getData()
-        {
-            static DataHolder<VectorBindPair> data;
-            return data.data;
-        }
-    };
+    static VectorBindPair& getData()
+    {
+        static DataHolder<VectorBindPair> data;
+        return data.data;
+    }
+};
 
-    // Г¬Г ГЄГ°Г®Г± Г¤Г«Гї ГЁГ­Г±ГІГ Г­Г±ГЁГ°Г®ГўГ Г­ГЁГї Г ГІГ°ГЁГЎГіГІГ  ГЇГ®Г«Гї
+// макрос для инстансирования атрибута поля
 #define DECLARE_ATTRIBUTE_FIELD(_name, _type, _setter) \
     template <typename OwnerType, typename ValueType = _type, typename SetterType = _setter> \
     struct _name : public attribute::AttributeField<OwnerType, ValueType, SetterType> \
@@ -96,7 +95,7 @@ namespace attribute
             AttributeField<OwnerType, ValueType, SetterType>(_offset, _value) { } \
     }
 
-    // Г¬Г ГЄГ°Г®Г± Г¤Г«Гї ГЁГ­Г±ГІГ Г­Г±ГЁГ°Г®ГўГ Г­ГЁГї ГЅГЄГ§ГҐГ¬ГЇГ«ГїГ°Г  Г ГІГ°ГЁГЎГіГІГ 
+// макрос для инстансирования экземпляра атрибута
 #define ATTRIBUTE_FIELD(_attribute, _class, _field, _value) \
     struct _attribute##_##_field \
     { \
@@ -106,8 +105,7 @@ namespace attribute
         } \
     } _attribute##_##_field
 
-
-    // ГёГ ГЎГ«Г®Г­ Г¤Г«Гї Г ГІГ°ГЁГЎГіГІГ  ГЄГ«Г Г±Г±Г 
+    // шаблон для атрибута класса
     template <typename Type, typename ValueType>
     struct ClassAttribute
     {
@@ -115,6 +113,7 @@ namespace attribute
         {
             getData() = _value;
         }
+
         static ValueType& getData()
         {
             static ValueType data;
@@ -122,7 +121,7 @@ namespace attribute
         }
     };
 
-    // Г¬Г ГЄГ°Г®Г± Г¤Г«Гї ГЁГ­Г±ГІГ Г­Г±ГЁГ°Г®ГўГ Г­ГЁГї Г ГІГ°ГЁГЎГіГІГ  ГЄГ«Г Г±Г±Г 
+    // макрос для инстансирования атрибута класса
 #define DECLARE_ATTRIBUTE_CLASS(_name, _type) \
     template <typename Type, typename ValueType = _type> \
     struct _name : public attribute::ClassAttribute<_name<Type>, ValueType> \
@@ -131,10 +130,10 @@ namespace attribute
             ClassAttribute<_name<Type>, ValueType>(_value) { } \
     }
 
-    // Г¬Г ГЄГ°Г®Г± Г¤Г«Гї ГЁГ­Г±ГІГ Г­Г±ГЁГ°Г®ГўГ Г­ГЁГї ГЅГЄГ§ГҐГ¬ГЇГ«ГїГ°Г  ГЄГ«Г Г±Г±Г 
+    // макрос для инстансирования экземпляра класса
 #define ATTRIBUTE_CLASS(_attribute, _class, _value) \
     class _class; \
     static attribute::_attribute<_class> _attribute##_##_class(_value)
-}
 
-#endif // __ATTRIBUTE_H__
+
+} // namespace attribute

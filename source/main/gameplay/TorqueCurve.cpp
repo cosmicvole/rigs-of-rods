@@ -1,21 +1,21 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "TorqueCurve.h"
@@ -41,7 +41,8 @@ TorqueCurve::~TorqueCurve()
 
 Real TorqueCurve::getEngineTorque(Real rpmRatio)
 {
-    if (!usedSpline) return 1.0f; //return a good value upon error?
+    if (!usedSpline)
+        return 1.0f; //return a good value upon error?
     return usedSpline->interpolate(rpmRatio).y;
 }
 
@@ -53,7 +54,8 @@ int TorqueCurve::loadDefaultTorqueModels()
     try
     {
         group = ResourceGroupManager::getSingleton().findGroupContainingResource("torque_models.cfg");
-    } catch(...)
+    }
+    catch (...)
     {
     }
     // emit a warning if we did not found the file
@@ -73,7 +75,7 @@ int TorqueCurve::loadDefaultTorqueModels()
         line = RoR::Utils::SanitizeUtf8String(ds->getLine());
         StringUtil::trim(line);
 
-        if (line.empty() || line[0]==';')
+        if (line.empty() || line[0] == ';')
             continue;
 
         Ogre::StringVector args = StringUtil::split(line, ",");
@@ -103,7 +105,7 @@ int TorqueCurve::processLine(Ogre::StringVector args, String model)
     // parse the data
     float pointx = StringConverter::parseReal(args[0]);
     float pointy = StringConverter::parseReal(args[1]);
-    Vector3 point = Vector3(pointx,pointy,0);
+    Vector3 point = Vector3(pointx, pointy, 0);
 
     // find the spline to attach the points
     if (splines.find(model) == splines.end())
@@ -121,7 +123,7 @@ int TorqueCurve::processLine(Ogre::StringVector args, String model)
     return 0;
 }
 
-bool TorqueCurve::CreateNewCurve(Ogre::String const & name)
+bool TorqueCurve::CreateNewCurve(Ogre::String const& name)
 {
     if (splines.find(name) != splines.end())
     {
@@ -137,7 +139,7 @@ bool TorqueCurve::CreateNewCurve(Ogre::String const & name)
     return true;
 }
 
-void TorqueCurve::AddCurveSample(float rpm, float progress, Ogre::String const & model)
+void TorqueCurve::AddCurveSample(float rpm, float progress, Ogre::String const& model)
 {
     /* attach the points to the spline */
     splines[model].addPoint(Ogre::Vector3(rpm, progress, 0));
@@ -158,9 +160,10 @@ int TorqueCurve::setTorqueModel(String name)
     return 0;
 }
 
-int TorqueCurve::spaceCurveEvenly(Ogre::SimpleSpline *spline)
+int TorqueCurve::spaceCurveEvenly(Ogre::SimpleSpline* spline)
 {
-    if (!spline) return 2;
+    if (!spline)
+        return 2;
 
     SimpleSpline tmpSpline = *spline;
     Real points = tmpSpline.getNumPoints();
@@ -171,13 +174,14 @@ int TorqueCurve::spaceCurveEvenly(Ogre::SimpleSpline *spline)
         spline->clear();
         Real minDistance = tmpSpline.getPoint(1).x - tmpSpline.getPoint(0).x;
         // looking for the minimum distance (spacing) in the current spline
-        for (int i=2; i < points; i++)
+        for (int i = 2; i < points; i++)
         {
             Real distance = tmpSpline.getPoint(i).x - tmpSpline.getPoint(i - 1).x;
             minDistance = std::min(distance, minDistance);
         }
         // the rpm points must be in an ascending order, as the points should be added at the end of the spline
-        if (minDistance < 0) return 1;
+        if (minDistance < 0)
+            return 1;
         // first(smallest)- and last(greatest) rpm
         Vector3 minPoint = tmpSpline.getPoint(0);
         Vector3 maxPoint = tmpSpline.getPoint(points - 1);
@@ -191,7 +195,7 @@ int TorqueCurve::spaceCurveEvenly(Ogre::SimpleSpline *spline)
                 pointIndex++;
             // interpolate(linear)
             Real newPoint = tmpSpline.getPoint(pointIndex - 1).y + (tmpSpline.getPoint(pointIndex).y - tmpSpline.getPoint(pointIndex - 1).y) /
-                (tmpSpline.getPoint(pointIndex).x - tmpSpline.getPoint(pointIndex - 1).x) * (rpmPoint-tmpSpline.getPoint(pointIndex - 1).x);
+                (tmpSpline.getPoint(pointIndex).x - tmpSpline.getPoint(pointIndex - 1).x) * (rpmPoint - tmpSpline.getPoint(pointIndex - 1).x);
             spline->addPoint(Vector3(rpmPoint, newPoint, 0));
             rpmPoint += minDistance;
         }

@@ -1,26 +1,25 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
+
 #pragma once
-#ifndef __TerrainObjectManager_H_
-#define __TerrainObjectManager_H_
 
 #include "RoRPrerequisites.h"
 
@@ -37,14 +36,14 @@ class TerrainObjectManager : public ZeroedMemoryAllocator
 {
 public:
 
-    TerrainObjectManager(TerrainManager *terrainManager);
+    TerrainObjectManager(TerrainManager* terrainManager);
     ~TerrainObjectManager();
 
     void loadObjectConfigFile(Ogre::String filename);
 
-    void loadObject(const Ogre::String &name, const Ogre::Vector3 &pos, const Ogre::Vector3 &rot, Ogre::SceneNode *bakeNode, const Ogre::String &instancename, const Ogre::String &type, bool enable_collisions = true, int scripthandler = -1, bool uniquifyMaterial = false);
+    void loadObject(const Ogre::String& name, const Ogre::Vector3& pos, const Ogre::Vector3& rot, Ogre::SceneNode* bakeNode, const Ogre::String& instancename, const Ogre::String& type, bool enable_collisions = true, int scripthandler = -1, bool uniquifyMaterial = false);
     void moveObjectVisuals(const Ogre::String& instancename, const Ogre::Vector3& pos);
-    void unloadObject(const Ogre::String &instancename);
+    void unloadObject(const Ogre::String& instancename);
 
     void loadPreloadedTrucks();
     bool hasPreloadedTrucks() { return !truck_preload.empty(); };
@@ -67,7 +66,7 @@ public:
         Ogre::Vector3 rotation;
         Ogre::Vector3 initial_position;
         Ogre::Vector3 initial_rotation;
-        Ogre::SceneNode *node;
+        Ogre::SceneNode* node;
     } object_t;
 
     std::vector<object_t> getObjects() { return objects; };
@@ -76,21 +75,21 @@ public:
 
 protected:
 
-    TerrainManager *terrainManager;
+    TerrainManager* terrainManager;
 
     typedef struct
     {
-        Ogre::Entity *ent;
-        Ogre::SceneNode *node;
-        Ogre::AnimationState *anim;
+        Ogre::Entity* ent;
+        Ogre::SceneNode* node;
+        Ogre::AnimationState* anim;
         float speedfactor;
     } animated_object_t;
 
-    Ogre::StaticGeometry *bakesg;
-    ProceduralManager *proceduralManager;
+    Ogre::StaticGeometry* bakesg;
+    ProceduralManager* proceduralManager;
 
-    Road *road;
-    Ogre::SceneNode *bakeNode;
+    Road* road;
+    Ogre::SceneNode* bakeNode;
 
     typedef struct
     {
@@ -111,12 +110,12 @@ protected:
 #ifdef USE_PAGED
     typedef struct
     {
-        Forests::PagedGeometry *geom;
-        void *loader;
+        Forests::PagedGeometry* geom;
+        void* loader;
     } paged_geometry_t;
 
     std::vector<paged_geometry_t> pagedGeometry;
-    Forests::TreeLoader2D *treeLoader;
+    Forests::TreeLoader2D* treeLoader;
 #endif //USE_PAGED
 
     localizer_t localizers[64];
@@ -129,18 +128,17 @@ protected:
 
     typedef struct loadedObject_t
     {
-        Ogre::SceneNode *sceneNode;
+        Ogre::SceneNode* sceneNode;
         Ogre::String instanceName;
         bool enabled;
-        std::vector <int> collBoxes;
-        std::vector <int> collTris;
+        std::vector<int> collBoxes;
+        std::vector<int> collTris;
     } loadedObject_t;
 
-    std::map< std::string, loadedObject_t> loadedObjects;
+    std::map<std::string, loadedObject_t> loadedObjects;
 
-    std::vector< object_t > objects;
+    std::vector<object_t> objects;
 
     void proceduralTests();
 };
 
-#endif // __TerrainObjectManager_H_

@@ -19,11 +19,11 @@
     along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** 
-    @file   OgreSubsystem.cpp
-    @author Petr Ohlidal
-    @date   05/2014
-*/
+
+/// @file   OgreSubsystem.cpp
+/// @author Petr Ohlidal
+/// @date   05/2014
+
 
 #include "OgreSubsystem.h"
 

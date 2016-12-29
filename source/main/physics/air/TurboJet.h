@@ -1,26 +1,24 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #pragma once
-#ifndef __Turbojet_H_
-#define __Turbojet_H_
 
 #include "RoRPrerequisites.h"
 #include "AeroEngine.h"
@@ -31,7 +29,7 @@ class Turbojet: public AeroEngine, public ZeroedMemoryAllocator
 
 public:
 
-    Turbojet(char* propname, int tnumber, int trucknum, node_t *nd, int tnodefront, int tnodeback, int tnoderef, float tmaxdrythrust, bool treversable, bool tafterburnable, float tafterburnthrust, float diskdiam, float nozdiam, float nozlength, bool disable_smoke, bool heathaze, MaterialFunctionMapper *mfm, Skin *usedSkin, MaterialReplacer *mr);
+    Turbojet(char* propname, int tnumber, int trucknum, node_t* nd, int tnodefront, int tnodeback, int tnoderef, float tmaxdrythrust, bool treversable, bool tafterburnable, float tafterburnthrust, float diskdiam, float nozdiam, float nozlength, bool disable_smoke, bool heathaze, MaterialFunctionMapper* mfm, Skin* usedSkin, MaterialReplacer* mr);
     ~Turbojet();
 
     void flipStart();
@@ -42,19 +40,19 @@ public:
     void updateForces(float dt, int doUpdate);
     void updateVisuals();
 
-    Ogre::Vector3 getAxis() {return axis;};
+    Ogre::Vector3 getAxis() { return axis; };
 
-    bool getIgnition() {return ignition;};
-    bool getWarmup() {return warmup;};
-    bool isFailed() {return failed;};
-    float getAfterburner() {return (float)afterburner;};
+    bool getIgnition() { return ignition; };
+    bool getWarmup() { return warmup; };
+    bool isFailed() { return failed; };
+    float getAfterburner() { return (float)afterburner; };
     float getRPM() { return rpm; };
     float getRPMpc() { return rpm; };
-    float getRadius() {return radius;};
+    float getRadius() { return radius; };
     float getThrottle();
-    float getpropwash() {return propwash;};
-    int getNoderef() {return nodeback;};
-    int getType() {return AEROENGINE_TYPE_TURBOJET;};
+    float getpropwash() { return propwash; };
+    int getNoderef() { return nodeback; };
+    int getType() { return AEROENGINE_TYPE_TURBOJET; };
 
     bool afterburnable;
 
@@ -62,11 +60,11 @@ private:
 
     Ogre::ParticleSystem* heathazePS;
     Ogre::ParticleSystem* smokePS;
-    Ogre::SceneNode *absnode;
-    Ogre::SceneNode *nzsnode;
+    Ogre::SceneNode* absnode;
+    Ogre::SceneNode* nzsnode;
     Ogre::Vector3 axis;
-    Ogre::Entity *nozzleMesh;
-    Ogre::Entity *flameMesh;
+    Ogre::Entity* nozzleMesh;
+    Ogre::Entity* flameMesh;
     bool afterburner;
     bool failed;
     bool heathaze;
@@ -96,8 +94,6 @@ private:
     int src_id;
     int thr_id;
     int trucknum;
-    node_t *nodes;
-    Ogre::SceneNode *smokeNode;
+    node_t* nodes;
+    Ogre::SceneNode* smokeNode;
 };
-
-#endif // __Turbojet_H_

@@ -1,23 +1,28 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005-2012 Pierre-Michel Ricordel
-Copyright 2007-2012 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2012 Pierre-Michel Ricordel
+    Copyright 2007-2012 Thomas Fischer
+    Copyright 2013+     Petr Ohlidal & contributors
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
-// created on 24th of February 2009 by Thomas Fischer
+
+/// @file
+/// @author Thomas Fischer
+/// @date   24th of February 2009
+
 #include "ScriptEngine.h"
 
 // AS addons start
@@ -238,7 +243,7 @@ void ScriptEngine::init()
             return;
         } else if (result == AngelScript::asNOT_SUPPORTED)
         {
-            SLOG("    The arguments are not supported, e.g. asCALL_GENERIC.");
+            SLOG("	The arguments are not supported, e.g. asCALL_GENERIC.");
             return;
         }
         SLOG("Unkown error while setting up message callback");
@@ -723,12 +728,12 @@ int ScriptEngine::addFunction(const String &arg)
         
         // compare the id of the newly added function with the special functions
         if ( funcId == mod->GetFunctionIdByDecl("void frameStep(float)") )
-        {    
+        {	
             if (frameStepFunctionPtr < 0) frameStepFunctionPtr = funcId;
             callbacks["frameStep"].push_back(funcId);
         }
         else if ( funcId == mod->GetFunctionIdByDecl("void wheelEvents(int, string, string, string)") )
-        {    
+        {	
             if (wheelEventFunctionPtr < 0) wheelEventFunctionPtr = funcId;
             callbacks["wheelEvents"].push_back(funcId);
         }
@@ -738,12 +743,12 @@ int ScriptEngine::addFunction(const String &arg)
             callbacks["eventCallback"].push_back(funcId);
         }
         else if ( funcId == mod->GetFunctionIdByDecl("void defaultEventCallback(int, string, string, int)") )
-        {    
+        {	
             if (defaultEventCallbackFunctionPtr < 0) defaultEventCallbackFunctionPtr = funcId;
             callbacks["defaultEventCallback"].push_back(funcId);
         }
         else if ( funcId == mod->GetFunctionIdByDecl("void on_terrain_loading(string lines)") )
-        {    
+        {	
             callbacks["on_terrain_loading"].push_back(funcId);
         }
     }

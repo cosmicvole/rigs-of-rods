@@ -205,10 +205,8 @@ set( SOURCE_FILES
   physics/water/Buoyance.{h,cpp}
   physics/water/ScrewProp.{h,cpp}
   resources/CacheSystem.{h,cpp}
-  resources/CacheSystemTable.h
   resources/ContentManager.{h,cpp}
   resources/rig_def_fileformat/RigDef_File.{h,cpp}
-  resources/rig_def_fileformat/RigDef_Limits.h
   resources/rig_def_fileformat/RigDef_Node.{h,cpp}
   resources/rig_def_fileformat/RigDef_Parser.{h,cpp}
   resources/rig_def_fileformat/RigDef_Prerequisites.h
@@ -320,6 +318,9 @@ if(WIN32)
   endif()
   if(ROR_USE_MOFILEREADER)
     copy_lib_files_for_target(${BINNAME} MoFileReader)
+  endif()
+  if(ROR_USE_CRASHRPT)		
+    copy_lib_files_for_target(${BINNAME} CrashRpt)		
   endif()
 else()
   copy_files_for_target("${BINNAME}" "${ROR_BINTOOL_DIR}/*")
@@ -443,6 +444,7 @@ setup_lib(PAGED)
 setup_lib(CAELUM)
 setup_lib(ANGELSCRIPT)
 setup_lib(JSONCPP)
+setup_lib(CRASHRPT)
 
 if(ROR_USE_ANGELSCRIPT)
   # CLEAR_FPU_STACK prevents angelscript from breaking our physics engine

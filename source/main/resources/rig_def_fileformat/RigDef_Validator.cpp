@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2014 Petr Ohlidal
+    Copyright 2013+     Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -12,22 +12,20 @@
 
     Rigs of Rods is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/**
-    @file   RigDef_Validator.cpp
-    @author Petr Ohlidal
-    @date   12/2013
-*/
+/// @file
+/// @author Petr Ohlidal
+/// @date   12/2013
 
 #include "RigDef_Validator.h"
 
-#include "RigDef_Limits.h"
+#include "BeamConstants.h"
 
 #define CHECK_SECTION_IN_ALL_MODULES(_CLASS_, _FIELD_, _FUNCTION_) \
 { \
@@ -373,22 +371,22 @@ bool Validator::CheckCommand(RigDef::Command2 & def)
 {
     bool ok = true;
 
-    if (def.extend_key > Limits::MAX_COMMANDS)
+    if (def.extend_key > MAX_COMMANDS)
     {
         std::stringstream msg;
         msg << "Section 'commands' or 'commands2': Invalid 'extend_key': ";
         msg << def.extend_key;
-        msg << "; valid range is <0 - " << Limits::MAX_COMMANDS << ">"; 
+        msg << "; valid range is <0 - " << MAX_COMMANDS << ">";
         AddMessage(Message::TYPE_ERROR, msg.str());
         ok = false;
     }
 
-    if (def.contract_key > Limits::MAX_COMMANDS)
+    if (def.contract_key > MAX_COMMANDS)
     {
         std::stringstream msg;
         msg << "Section 'commands' or 'commands2': Invalid 'contract_key': ";
         msg << def.contract_key;
-        msg << "; valid range is <0 - " << Limits::MAX_COMMANDS << ">"; 
+        msg << "; valid range is <0 - " << MAX_COMMANDS << ">";
         AddMessage(Message::TYPE_ERROR, msg.str());
         ok = false;
     }
@@ -435,11 +433,11 @@ bool Validator::CheckTrigger(RigDef::Trigger & def)
         if (! trigger_blocker && ! inv_trigger_blocker && ! hook_toggle )
         {
             /* Make the full check */
-            if (def.shortbound_trigger_action < 1 || def.shortbound_trigger_action > Limits::MAX_COMMANDS)
+            if (def.shortbound_trigger_action < 1 || def.shortbound_trigger_action > MAX_COMMANDS)
             {
                 std::stringstream msg;
                 msg << "Wrong parameter 'shortbound_trigger_action': " << def.shortbound_trigger_action;
-                msg << "; Alloved range is <0 - " << Limits::MAX_COMMANDS << ">. ";
+                msg << "; Alloved range is <0 - " << MAX_COMMANDS << ">. ";
                 msg << "Trigger deactivated.";
                 AddMessage(Message::TYPE_ERROR, msg.str());
                 ok = false;
@@ -452,7 +450,7 @@ bool Validator::CheckTrigger(RigDef::Trigger & def)
             {
                 std::stringstream msg;
                 msg << "Wrong parameter 'shortbound_trigger_action': " << def.shortbound_trigger_action;
-                msg << "; Alloved range is <0 - " << Limits::MAX_COMMANDS << ">. ";
+                msg << "; Alloved range is <0 - " << MAX_COMMANDS << ">. ";
                 msg << "Trigger deactivated.";
                 AddMessage(Message::TYPE_ERROR, msg.str());
                 ok = false;
@@ -461,7 +459,7 @@ bool Validator::CheckTrigger(RigDef::Trigger & def)
             {
                 std::stringstream msg;
                 msg << "Wrong parameter 'longbound_trigger_action': " << def.longbound_trigger_action;
-                msg << "; Alloved range is <0 - " << Limits::MAX_COMMANDS << ">. ";
+                msg << "; Alloved range is <0 - " << MAX_COMMANDS << ">. ";
                 msg << "Trigger deactivated.";
                 AddMessage(Message::TYPE_ERROR, msg.str());
                 ok = false;
