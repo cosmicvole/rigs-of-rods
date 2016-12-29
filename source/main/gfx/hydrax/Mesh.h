@@ -3,7 +3,7 @@
 This source file is part of Hydrax.
 Visit ---
 
-Copyright (C) 2008 Xavier VerguÌn Gonz·lez <xavierverguin@hotmail.com>
+Copyright (C) 2008 Xavier Vergu√≠n Gonz√°lez <xavierverguin@hotmail.com>
                                            <xavyiy@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -32,7 +32,7 @@ http://www.gnu.org/copyleft/lesser.txt.
 
 namespace Hydrax
 {
-	class Hydrax;
+    class Hydrax;
 
     /** Class wich contains all funtions/variables related to
         Hydrax water mesh
@@ -40,103 +40,103 @@ namespace Hydrax
     class Mesh
     {
     public:
-		/** Vertex struct for position, normals and uv data.
-		 */
-		struct POS_NORM_UV_VERTEX
-		{
-			float x,y,z;
-			float nx,ny,nz;
-			float tu,tv;
-		};
+        /** Vertex struct for position, normals and uv data.
+         */
+        struct POS_NORM_UV_VERTEX
+        {
+            float x,y,z;
+            float nx,ny,nz;
+            float tu,tv;
+        };
 
-		/** Vertex struct for position and normals data.
-		 */
-		struct POS_NORM_VERTEX
-		{
-			float x,y,z;
-			float nx,ny,nz;
-		};
+        /** Vertex struct for position and normals data.
+         */
+        struct POS_NORM_VERTEX
+        {
+            float x,y,z;
+            float nx,ny,nz;
+        };
 
-		/** Vertex struct for position and uv data.
-		 */
-		struct POS_UV_VERTEX
-		{
-			float x,y,z;
-			float tu,tv;
-		};
+        /** Vertex struct for position and uv data.
+         */
+        struct POS_UV_VERTEX
+        {
+            float x,y,z;
+            float tu,tv;
+        };
 
-		/** Vertex struct for position data.
-		 */
-		struct POS_VERTEX
-		{
-			float x,y,z;
-		};
+        /** Vertex struct for position data.
+         */
+        struct POS_VERTEX
+        {
+            float x,y,z;
+        };
 
-		/** Mesh vertex type enum
-		 */
-		enum VertexType
-		{
-			VT_POS_NORM_UV = 0,
-			VT_POS_NORM    = 1,
-			VT_POS_UV      = 2,
-			VT_POS         = 3,
-		};
+        /** Mesh vertex type enum
+         */
+        enum VertexType
+        {
+            VT_POS_NORM_UV = 0,
+            VT_POS_NORM    = 1,
+            VT_POS_UV      = 2,
+            VT_POS         = 3,
+        };
 
-		/** Base Hydrax mesh options
-		 */
-		struct Options
-		{
-			/** Constructor
-			 */
-			Options()
-				: MeshComplexity(128)
-				, MeshSize(Size(0))
-				, MeshStrength(10)
-				, MeshVertexType(VT_POS_NORM_UV)
-			{
-			}
+        /** Base Hydrax mesh options
+         */
+        struct Options
+        {
+            /** Constructor
+             */
+            Options()
+                : MeshComplexity(128)
+                , MeshSize(Size(0))
+                , MeshStrength(10)
+                , MeshVertexType(VT_POS_NORM_UV)
+            {
+            }
 
-			/** Constructor
-			    @param meshComplexity Grid complexity
-			    @param meshSize grid size (X/Z) world space.
-				@param meshVertexType Mesh::VertexType
-			 */
-			Options(const int &meshComplexity, const Size &meshSize, const VertexType &meshVertexType)
-				: MeshComplexity(meshComplexity)
-				, MeshSize(meshSize)
-				, MeshStrength(10)
-				, MeshVertexType(meshVertexType)
-			{
-			}
+            /** Constructor
+                @param meshComplexity Grid complexity
+                @param meshSize grid size (X/Z) world space.
+                @param meshVertexType Mesh::VertexType
+             */
+            Options(const int &meshComplexity, const Size &meshSize, const VertexType &meshVertexType)
+                : MeshComplexity(meshComplexity)
+                , MeshSize(meshSize)
+                , MeshStrength(10)
+                , MeshVertexType(meshVertexType)
+            {
+            }
 
-			/** Constructor
-			    @param meshComplexity Grid complexity
-			    @param meshSize grid size (X/Z) world space.
-				@param meshStrength Water strength(Y axis multiplier)
-				@param meshVertexType Mesh::VertexType
-			 */
-			Options(const int &meshComplexity, const Size &meshSize, const float &meshStrength, const VertexType &meshVertexType)
-				: MeshComplexity(meshComplexity)
-				, MeshSize(meshSize)
-				, MeshStrength(meshStrength)
-				, MeshVertexType(meshVertexType)
-			{
-			}
+            /** Constructor
+                @param meshComplexity Grid complexity
+                @param meshSize grid size (X/Z) world space.
+                @param meshStrength Water strength(Y axis multiplier)
+                @param meshVertexType Mesh::VertexType
+             */
+            Options(const int &meshComplexity, const Size &meshSize, const float &meshStrength, const VertexType &meshVertexType)
+                : MeshComplexity(meshComplexity)
+                , MeshSize(meshSize)
+                , MeshStrength(meshStrength)
+                , MeshVertexType(meshVertexType)
+            {
+            }
 
-			/// Mesh complexity
-			int MeshComplexity;
-			/// Grid size (X/Z) world space.
-			Size MeshSize;
-			/// Water strength
-			float MeshStrength;
-			/// Vertex type
-			VertexType MeshVertexType;
-		};
+            /// Mesh complexity
+            int MeshComplexity;
+            /// Grid size (X/Z) world space.
+            Size MeshSize;
+            /// Water strength
+            float MeshStrength;
+            /// Vertex type
+            VertexType MeshVertexType;
+        };
 
         /** Constructor
             @param h Hydrax pointer
          */
-		Mesh(Hydrax *h);
+        Mesh(Hydrax *h);
 
         /** Destructor
          */
@@ -144,7 +144,7 @@ namespace Hydrax
 
         /** Update options
             @param Options Mesh options
-			@remarks Call it before create(...)
+            @remarks Call it before create(...)
          */
         void setOptions(const Options &Options);
 
@@ -158,40 +158,40 @@ namespace Hydrax
          */
         void create();
 
-		/** Remove all resources
-		 */
-		void remove();
+        /** Remove all resources
+         */
+        void remove();
 
-		/** Update geomtry
-		    @param numVer Number of vertices
-			@param verArray Vertices array
-			@return false If number of vertices do not correspond.
-		 */
-		bool updateGeometry(const int &numVer, void* verArray);
+        /** Update geomtry
+            @param numVer Number of vertices
+            @param verArray Vertices array
+            @return false If number of vertices do not correspond.
+         */
+        bool updateGeometry(const int &numVer, void* verArray);
 
-		/** Get if a Position point is inside of the grid
-		    @param Position World-space point
-			@return true if Position point is inside of the grid, else false.
-		 */
-		bool isPointInGrid(const Ogre::Vector2 &Position);
+        /** Get if a Position point is inside of the grid
+            @param Position World-space point
+            @return true if Position point is inside of the grid, else false.
+         */
+        bool isPointInGrid(const Ogre::Vector2 &Position);
 
-		/** Get the [0,1] range x/y grid position from a 2D world space x/z point
-		    @param Position World-space point
-			@return (-1,-1) if the point isn't in the grid.
-		 */
-		Ogre::Vector2 getGridPosition(const Ogre::Vector2 &Position);
+        /** Get the [0,1] range x/y grid position from a 2D world space x/z point
+            @param Position World-space point
+            @return (-1,-1) if the point isn't in the grid.
+         */
+        Ogre::Vector2 getGridPosition(const Ogre::Vector2 &Position);
 
-	    /** Get the object-space position from world-space position
-		    @param WorldSpacePosition Position in world coords
-			@return Position in object-space
-		 */
-		const Ogre::Vector3 getObjectSpacePosition(const Ogre::Vector3& WorldSpacePosition) const;
+        /** Get the object-space position from world-space position
+            @param WorldSpacePosition Position in world coords
+            @return Position in object-space
+         */
+        const Ogre::Vector3 getObjectSpacePosition(const Ogre::Vector3& WorldSpacePosition) const;
 
-		/** Get the world-space position from object-space position
-		    @param ObjectSpacePosition Position in object coords
-			@return Position in world-space
-		 */
-		const Ogre::Vector3 getWorldSpacePosition(const Ogre::Vector3& ObjectSpacePosition) const;
+        /** Get the world-space position from object-space position
+            @param ObjectSpacePosition Position in object coords
+            @return Position in world-space
+         */
+        const Ogre::Vector3 getWorldSpacePosition(const Ogre::Vector3& ObjectSpacePosition) const;
 
         /** Get mesh
             @return Mesh
@@ -218,28 +218,28 @@ namespace Hydrax
         }
 
         /** Get options
-		    @return Mesh options
-		 */
-		inline const Options& getOptions() const
-		{
-			return mOptions;
-		}
+            @return Mesh options
+         */
+        inline const Options& getOptions() const
+        {
+            return mOptions;
+        }
 
-		/** Get mesh size
-		    @return Mesh size
-		 */
-		inline const Size& getSize() const
-		{
-			return mOptions.MeshSize;
-		}
+        /** Get mesh size
+            @return Mesh size
+         */
+        inline const Size& getSize() const
+        {
+            return mOptions.MeshSize;
+        }
 
-		/** Get vertex type
-		    return Mesh vertex type
-		 */
-		inline const VertexType& getVertexType() const
-		{
-			return mOptions.MeshVertexType;
-		}
+        /** Get vertex type
+            return Mesh vertex type
+         */
+        inline const VertexType& getVertexType() const
+        {
+            return mOptions.MeshVertexType;
+        }
 
         /** Get number of faces
             @return Number of faces
@@ -265,7 +265,7 @@ namespace Hydrax
             return mMaterialName;
         }
 
-		/** Get hardware vertex buffer reference
+        /** Get hardware vertex buffer reference
             @return Ogre::HardwareVertexBufferSharedPtr reference
          */
         inline Ogre::HardwareVertexBufferSharedPtr &getHardwareVertexBuffer()
@@ -273,39 +273,39 @@ namespace Hydrax
             return mVertexBuffer;
         }
 
-		/** Get hardware index buffer reference
-		    @return Ogre::HardwareIndexBufferSharedPtr reference
-		 */
-		inline Ogre::HardwareIndexBufferSharedPtr &getHardwareIndexBuffer()
-		{
-			return mIndexBuffer;
-		}
+        /** Get hardware index buffer reference
+            @return Ogre::HardwareIndexBufferSharedPtr reference
+         */
+        inline Ogre::HardwareIndexBufferSharedPtr &getHardwareIndexBuffer()
+        {
+            return mIndexBuffer;
+        }
 
-		/** Get the Ogre::SceneNode pointer where Hydrax mesh is attached
-		    @return Ogre::SceneNode*
-		 */
-		inline Ogre::SceneNode* getSceneNode()
-		{
-			return mSceneNode;
-		}
+        /** Get the Ogre::SceneNode pointer where Hydrax mesh is attached
+            @return Ogre::SceneNode*
+         */
+        inline Ogre::SceneNode* getSceneNode()
+        {
+            return mSceneNode;
+        }
 
-		/** Is _createGeometry() called?
-		    @return true if created() have been already called
-		 */
-		inline const bool& isCreated() const
-		{
-			return mCreated;
-		}
+        /** Is _createGeometry() called?
+            @return true if created() have been already called
+         */
+        inline const bool& isCreated() const
+        {
+            return mCreated;
+        }
 
     private:
-		/** Create mesh geometry
-		 */
-		void _createGeometry();
+        /** Create mesh geometry
+         */
+        void _createGeometry();
 
         /// Mesh options
         Options mOptions;
-		/// Is _createGeometry() called?
-		bool mCreated;
+        /// Is _createGeometry() called?
+        bool mCreated;
         /// Ogre::MeshPtr
         Ogre::MeshPtr mMesh;
         /// Ogre::Submesh pointer
@@ -322,14 +322,14 @@ namespace Hydrax
         /// Index buffer
         Ogre::HardwareIndexBufferSharedPtr  mIndexBuffer;
 
-		/// Ogre::SceneNode pointer
-		Ogre::SceneNode* mSceneNode;
+        /// Ogre::SceneNode pointer
+        Ogre::SceneNode* mSceneNode;
 
         /// Material name
         Ogre::String mMaterialName;
 
         /// Hydrax pointer
-		Hydrax *mHydrax;
+        Hydrax *mHydrax;
     };
 }
 

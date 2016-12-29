@@ -27,20 +27,20 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 class MaterialReplacer : public ZeroedMemoryAllocator
 {
 public:
-	MaterialReplacer() {};
-	~MaterialReplacer() {};
+    MaterialReplacer() {};
+    ~MaterialReplacer() {};
 
-	void replaceMeshMaterials(Ogre::Entity *e);
-	
-	int addMaterialReplace(Ogre::String from, Ogre::String to);
-	
-	int hasReplacementForMaterial(Ogre::String material);
-	
-	Ogre::String getReplacementForMaterial(Ogre::String material);
-	
+    void replaceMeshMaterials(Ogre::Entity *e);
+    
+    int addMaterialReplace(Ogre::String from, Ogre::String to);
+    
+    int hasReplacementForMaterial(Ogre::String material);
+    
+    Ogre::String getReplacementForMaterial(Ogre::String material);
+    
 
 protected:
-	std::map<Ogre::String, Ogre::String> replaceMaterials;
+    std::map<Ogre::String, Ogre::String> replaceMaterials;
 };
 
 #endif //MATERIALREPLACER_H__

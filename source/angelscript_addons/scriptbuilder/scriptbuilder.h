@@ -47,101 +47,101 @@ typedef int (*INCLUDECALLBACK_t)(const char *include, const char *from, CScriptB
 class CScriptBuilder
 {
 public:
-	CScriptBuilder();
+    CScriptBuilder();
 
-	// Start a new module
-	int StartNewModule(asIScriptEngine *engine, const char *moduleName);
+    // Start a new module
+    int StartNewModule(asIScriptEngine *engine, const char *moduleName);
 
-	// Load a script section from a file on disk
-	int AddSectionFromFile(const char *filename);
+    // Load a script section from a file on disk
+    int AddSectionFromFile(const char *filename);
 
-	// Load a script section from memory
-	int AddSectionFromMemory(const char *scriptCode,
-							 const char *sectionName = "");
+    // Load a script section from memory
+    int AddSectionFromMemory(const char *scriptCode,
+                             const char *sectionName = "");
 
-	// Build the added script sections
-	int BuildModule();
+    // Build the added script sections
+    int BuildModule();
 
-	// Returns the current module
-	asIScriptModule *GetModule();
+    // Returns the current module
+    asIScriptModule *GetModule();
 
-	// Register the callback for resolving include directive
-	void SetIncludeCallback(INCLUDECALLBACK_t callback, void *userParam);
+    // Register the callback for resolving include directive
+    void SetIncludeCallback(INCLUDECALLBACK_t callback, void *userParam);
 
-	// Add a pre-processor define for conditional compilation
-	void DefineWord(const char *word);
+    // Add a pre-processor define for conditional compilation
+    void DefineWord(const char *word);
 
 #if AS_PROCESS_METADATA == 1
-	// Get metadata declared for class types and interfaces
-	const char *GetMetadataStringForType(int typeId);
+    // Get metadata declared for class types and interfaces
+    const char *GetMetadataStringForType(int typeId);
 
-	// Get metadata declared for functions
-	const char *GetMetadataStringForFunc(int funcId);
+    // Get metadata declared for functions
+    const char *GetMetadataStringForFunc(int funcId);
 
-	// Get metadata declared for global variables
-	const char *GetMetadataStringForVar(int varIdx);
+    // Get metadata declared for global variables
+    const char *GetMetadataStringForVar(int varIdx);
 
-	// Get metadata declared for class variables
-	const char *GetMetadataStringForTypeProperty(int typeId, int varIdx);
+    // Get metadata declared for class variables
+    const char *GetMetadataStringForTypeProperty(int typeId, int varIdx);
 
-	// Get metadata declared for class functions
-	const char *GetMetadataStringForTypeMethod(int typeId, int methodIdx);
+    // Get metadata declared for class functions
+    const char *GetMetadataStringForTypeMethod(int typeId, int methodIdx);
 #endif
 
 protected:
-	void ClearAll();
-	int  Build();
-	int  ProcessScriptSection(const char *script, const char *sectionname);
-	virtual int  LoadScriptSection(const char *filename) = 0;
-	bool IncludeIfNotAlreadyIncluded(const char *filename);
+    void ClearAll();
+    int  Build();
+    int  ProcessScriptSection(const char *script, const char *sectionname);
+    virtual int  LoadScriptSection(const char *filename) = 0;
+    bool IncludeIfNotAlreadyIncluded(const char *filename);
 
-	int  SkipStatement(int pos);
+    int  SkipStatement(int pos);
 
-	int  ExcludeCode(int start);
-	void OverwriteCode(int start, int len);
+    int  ExcludeCode(int start);
+    void OverwriteCode(int start, int len);
 
-	asIScriptEngine           *engine;
-	asIScriptModule           *module;
-	std::string                modifiedScript;
+    asIScriptEngine           *engine;
+    asIScriptModule           *module;
+    std::string                modifiedScript;
 
-	INCLUDECALLBACK_t  includeCallback;
-	void              *callbackParam;
+    INCLUDECALLBACK_t  includeCallback;
+    void              *callbackParam;
 
 #if AS_PROCESS_METADATA == 1
-	int  ExtractMetadataString(int pos, std::string &outMetadata);
-	int  ExtractDeclaration(int pos, std::string &outDeclaration, int &outType);
+    int  ExtractMetadataString(int pos, std::string &outMetadata);
+    int  ExtractDeclaration(int pos, std::string &outDeclaration, int &outType);
 
-	// Temporary structure for storing metadata and declaration
-	struct SMetadataDecl
-	{
-		SMetadataDecl(std::string m, std::string d, int t, std::string c) : metadata(m), declaration(d), type(t), parentClass(c) {}
-		std::string metadata;
-		std::string declaration;
-		int         type;
-		std::string parentClass;
-	};
+    // Temporary structure for storing metadata and declaration
+    struct SMetadataDecl
+    {
+        SMetadataDecl(std::string m, std::string d, int t, std::string c) : metadata(m), declaration(d), type(t), parentClass(c) {}
+        std::string metadata;
+        std::string declaration;
+        int         type;
+        std::string parentClass;
+    };
 
-	struct SClassMetadata
-	{
-		SClassMetadata(const std::string& aName) : className(aName) {}
-		std::string className;
-		std::map<int, std::string> funcMetadataMap;
-		std::map<int, std::string> varMetadataMap;
-	};
+    struct SClassMetadata
+    {
+        SClassMetadata(const std::string& aName) : className(aName) {}
+        std::string className;
+        std::map<int, std::string> funcMetadataMap;
+        std::map<int, std::string> varMetadataMap;
+    };
 
-	std::string currentClass;
+    std::string currentClass;
 
-	std::vector<SMetadataDecl> foundDeclarations;
+    std::vector<SMetadataDecl> foundDeclarations;
 
-	std::map<int, std::string> typeMetadataMap;
-	std::map<int, std::string> funcMetadataMap;
-	std::map<int, std::string> varMetadataMap;
-	std::map<int, SClassMetadata> classMetadataMap;
+    std::map<int, std::string> typeMetadataMap;
+    std::map<int, std::string> funcMetadataMap;
+    std::map<int, std::string> varMetadataMap;
+    std::map<int, SClassMetadata> classMetadataMap;
 #endif
 
-	std::set<std::string>      includedScripts;
+    std::set<std::string>      includedScripts;
 
-	std::set<std::string>      definedWords;
+    std::set<std::string>      definedWords;
 };
 
 END_AS_NAMESPACE

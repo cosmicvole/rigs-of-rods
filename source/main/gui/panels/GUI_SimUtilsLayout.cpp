@@ -14,7 +14,7 @@ using namespace GUI;
 
 SimUtilsLayout::SimUtilsLayout(MyGUI::Widget* _parent)
 {
-	initialiseByAttributes(this, _parent);
+    initialiseByAttributes(this, _parent);
 }
 
 SimUtilsLayout::~SimUtilsLayout()

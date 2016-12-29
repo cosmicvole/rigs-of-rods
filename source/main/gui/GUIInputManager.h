@@ -30,7 +30,7 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 
 class GUIInputManager
 {
-	friend class InputEngine;
+    friend class InputEngine;
 
 public:
 
@@ -41,7 +41,7 @@ public:
 
     void setMousePosition(int _x, int _y);
 
-	float getLastMouseMoveTime() { return lastMouseMoveTime->getMilliseconds(); };
+    float getLastMouseMoveTime() { return lastMouseMoveTime->getMilliseconds(); };
 
 protected:
 
@@ -55,10 +55,10 @@ protected:
 
 private:
 
-	Ogre::Timer *lastMouseMoveTime;
+    Ogre::Timer *lastMouseMoveTime;
     int mCursorX, mCursorY, width, height;
-	
-	void activateGUI();
+    
+    void activateGUI();
 };
 
 #endif // __GUI_InputManager_H_

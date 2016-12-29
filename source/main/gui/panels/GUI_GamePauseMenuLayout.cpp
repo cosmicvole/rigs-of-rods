@@ -14,7 +14,7 @@ using namespace GUI;
 
 GamePauseMenuLayout::GamePauseMenuLayout(MyGUI::Widget* _parent)
 {
-	initialiseByAttributes(this, _parent);
+    initialiseByAttributes(this, _parent);
 }
 
 GamePauseMenuLayout::~GamePauseMenuLayout()

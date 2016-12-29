@@ -42,55 +42,55 @@ class GameSettings: public GameSettingsLayout
 {
 
 public:
-	GameSettings();
-	~GameSettings();
+    GameSettings();
+    ~GameSettings();
 
-	void Show();
-	void Hide(bool isMenu = true);
+    void Show();
+    void Hide(bool isMenu = true);
 
     void SetVisible(bool v);
     bool IsVisible();
-	
+    
 private:
-	//Basic things
-	void notifyWindowButtonPressed(MyGUI::WidgetPtr _sender, const std::string& _name);
-	void CheckAndInit();
-	void UpdateControls();
-	void SaveSettings();
+    //Basic things
+    void notifyWindowButtonPressed(MyGUI::WidgetPtr _sender, const std::string& _name);
+    void CheckAndInit();
+    void UpdateControls();
+    void SaveSettings();
 
-	//Buttons
-	void eventMouseButtonClickSaveButton(MyGUI::WidgetPtr _sender);
-	void eventMouseButtonClickRegenCache(MyGUI::WidgetPtr _sender);
-	void eventMouseButtonClickClearCache(MyGUI::WidgetPtr _sender);
+    //Buttons
+    void eventMouseButtonClickSaveButton(MyGUI::WidgetPtr _sender);
+    void eventMouseButtonClickRegenCache(MyGUI::WidgetPtr _sender);
+    void eventMouseButtonClickClearCache(MyGUI::WidgetPtr _sender);
 
-	//Checkboxes
-	void OnCheckboxPlain(MyGUI::WidgetPtr _sender);
-	void OnCheckboxRestartNotice(MyGUI::WidgetPtr _sender);
+    //Checkboxes
+    void OnCheckboxPlain(MyGUI::WidgetPtr _sender);
+    void OnCheckboxRestartNotice(MyGUI::WidgetPtr _sender);
 
-	//Sliders
-	void OnVolumeSlider(MyGUI::ScrollBar* _sender, size_t _position);
-	void OnFPSLimiterSlider(MyGUI::ScrollBar* _sender, size_t _position);
-	void OnSightRangeSlider(MyGUI::ScrollBar* _sender, size_t _position);
+    //Sliders
+    void OnVolumeSlider(MyGUI::ScrollBar* _sender, size_t _position);
+    void OnFPSLimiterSlider(MyGUI::ScrollBar* _sender, size_t _position);
+    void OnSightRangeSlider(MyGUI::ScrollBar* _sender, size_t _position);
 
-	//Key mapping things
-	void OnTabChange(MyGUI::TabControl* _sender, size_t _index);
-	void LoadKeyMap();
-	void OnKeymapTypeChange(MyGUI::ComboBox* _sender, size_t _index);
-	// FIXME: void OnReMapPress(MyGUI::WidgetPtr _sender);
-	void FrameEntered(float dt);
-	bool startCounter;
-	unsigned long endTime;
-	Ogre::String LastKeyCombo;
+    //Key mapping things
+    void OnTabChange(MyGUI::TabControl* _sender, size_t _index);
+    void LoadKeyMap();
+    void OnKeymapTypeChange(MyGUI::ComboBox* _sender, size_t _index);
+    // FIXME: void OnReMapPress(MyGUI::WidgetPtr _sender);
+    void FrameEntered(float dt);
+    bool startCounter;
+    unsigned long endTime;
+    Ogre::String LastKeyCombo;
 
 
-	std::map<int, std::vector<event_trigger_t> > KeyMap;
+    std::map<int, std::vector<event_trigger_t> > KeyMap;
 
-	RoR::ConfigFile m_ogre_cfg;
+    RoR::ConfigFile m_ogre_cfg;
 
-	bool m_is_initialized;
-	bool m_is_keymap_loaded;
-	bool ShowRestartNotice;
-	bool isFrameActivated;
+    bool m_is_initialized;
+    bool m_is_keymap_loaded;
+    bool ShowRestartNotice;
+    bool isFrameActivated;
 };
 
 } // namespace GUI

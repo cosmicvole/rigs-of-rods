@@ -30,18 +30,18 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 class PositionStorage : public ZeroedMemoryAllocator
 {
 protected:
-	Ogre::Vector3 *nodes;
-	bool *usage;
-	int numNodes;
-	int numStorage;
+    Ogre::Vector3 *nodes;
+    bool *usage;
+    int numNodes;
+    int numStorage;
 
 public:
-	PositionStorage(int numNodes, int numStorage);
-	~PositionStorage();
+    PositionStorage(int numNodes, int numStorage);
+    ~PositionStorage();
 
-	Ogre::Vector3 *getStorage(int indexNum);
-	
-	void setUsage(int indexNum, bool use);
-	bool getUsage(int indexNum);
+    Ogre::Vector3 *getStorage(int indexNum);
+    
+    void setUsage(int indexNum, bool use);
+    bool getUsage(int indexNum);
 };
 #endif //__PositionStorage_H__

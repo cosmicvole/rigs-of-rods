@@ -30,21 +30,21 @@ class HDRListener: public Ogre::CompositorInstance::Listener, public ZeroedMemor
 {
 public:
 
-	void notifyViewportSize(int width, int height);
-	void notifyCompositor(Ogre::CompositorInstance* instance);
-	virtual void notifyMaterialSetup(Ogre::uint32 pass_id, Ogre::MaterialPtr &mat);
-	virtual void notifyMaterialRender(Ogre::uint32 pass_id, Ogre::MaterialPtr &mat);
+    void notifyViewportSize(int width, int height);
+    void notifyCompositor(Ogre::CompositorInstance* instance);
+    virtual void notifyMaterialSetup(Ogre::uint32 pass_id, Ogre::MaterialPtr &mat);
+    virtual void notifyMaterialRender(Ogre::uint32 pass_id, Ogre::MaterialPtr &mat);
 
 protected:
 
-	int mVpWidth;
-	int mVpHeight;
-	int mBloomSize;
-	// Array params - have to pack in groups of 4 since this is how Cg generates them
-	// also prevents dependent texture read problems if ops don't require swizzle
-	float mBloomTexWeights[15][4];
-	float mBloomTexOffsetsHorz[15][4];
-	float mBloomTexOffsetsVert[15][4];
+    int mVpWidth;
+    int mVpHeight;
+    int mBloomSize;
+    // Array params - have to pack in groups of 4 since this is how Cg generates them
+    // also prevents dependent texture read problems if ops don't require swizzle
+    float mBloomTexWeights[15][4];
+    float mBloomTexOffsetsHorz[15][4];
+    float mBloomTexOffsetsVert[15][4];
 };
 
 #endif // __HDRListener_H_

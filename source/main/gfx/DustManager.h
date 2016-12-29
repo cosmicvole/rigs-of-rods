@@ -33,22 +33,22 @@ public:
         mEnabled(false),
         m_is_initialised(false)
     {}
-	
+    
     void CheckAndInit();
     void Shutdown();
 
-	DustPool *getGroundModelDustPool(ground_model_t *g);
-	
-	void update();
+    DustPool *getGroundModelDustPool(ground_model_t *g);
+    
+    void update();
 
-	void setVisible(bool visible);
+    void setVisible(bool visible);
 
-	DustPool *getDustPool(Ogre::String name);
-	
+    DustPool *getDustPool(Ogre::String name);
+    
 protected:
 
-	bool mEnabled;
+    bool mEnabled;
     bool m_is_initialised;
-	std::map < Ogre::String , DustPool * > dustpools;
+    std::map < Ogre::String , DustPool * > dustpools;
 };
 

@@ -33,36 +33,36 @@ class TruckHUD : public ZeroedMemoryAllocator
 {
 public:
 
-	TruckHUD();
+    TruckHUD();
 
-	bool update(float dt, Beam *truck, bool visible=true);
-	void show(bool value);
-	bool isVisible();
-	void initTorqueOverlay();
+    bool update(float dt, Beam *truck, bool visible=true);
+    void show(bool value);
+    bool isVisible();
+    void initTorqueOverlay();
 
 protected:
 
-	Ogre::Overlay *truckHUD;
-	float updatetime;
-	int width, border;
+    Ogre::Overlay *truckHUD;
+    float updatetime;
+    int width, border;
 
-	std::map<int, float> avVelos;
-	std::map<int, float> maxNegLatG;
-	std::map<int, float> maxNegSagG;
-	std::map<int, float> maxNegVerG;
-	std::map<int, float> maxPosLatG;
-	std::map<int, float> maxPosSagG;
-	std::map<int, float> maxPosVerG;
-	std::map<int, float> maxVelos;
-	std::map<int, float> minVelos;
+    std::map<int, float> avVelos;
+    std::map<int, float> maxNegLatG;
+    std::map<int, float> maxNegSagG;
+    std::map<int, float> maxNegVerG;
+    std::map<int, float> maxPosLatG;
+    std::map<int, float> maxPosSagG;
+    std::map<int, float> maxPosVerG;
+    std::map<int, float> maxVelos;
+    std::map<int, float> minVelos;
 
-	void checkOverflow(Ogre::OverlayElement* e);
+    void checkOverflow(Ogre::OverlayElement* e);
 
-	static std::unique_ptr<TruckHUD> myInstance;
-	static const unsigned int COMMANDS_VISIBLE = 25;
+    static std::unique_ptr<TruckHUD> myInstance;
+    static const unsigned int COMMANDS_VISIBLE = 25;
 
-	Ogre::String lastTorqueModel; //!< name of the last used torque model, needed to detect a change in the model
-	Ogre::Real lastTorqueRatio; //!< last RPM ratio, used to clear the last torque peak
+    Ogre::String lastTorqueModel; //!< name of the last used torque model, needed to detect a change in the model
+    Ogre::Real lastTorqueRatio; //!< last RPM ratio, used to clear the last torque peak
 
 };
 

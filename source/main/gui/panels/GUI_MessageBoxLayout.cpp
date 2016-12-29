@@ -14,7 +14,7 @@ using namespace GUI;
 
 MessageBoxLayout::MessageBoxLayout(MyGUI::Widget* _parent)
 {
-	initialiseByAttributes(this, _parent);
+    initialiseByAttributes(this, _parent);
 }
 
 MessageBoxLayout::~MessageBoxLayout()

@@ -31,47 +31,47 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace Ogre {
 
-	/** This class defines a ParticleAffector which deflects particles.
-	@remarks
-		This affector (see ParticleAffector) offers a simple (and inaccurate) physical deflection.
-		All particles which hit the plane are reflected.
-	@par
-		The plane is defined by a point (plane_point) and the normal (plane_normal).
-		In addition it is possible to change the strenght of the recoil by using the bounce parameter.
-	*/
-	class FireExtinguisherAffector : public ParticleAffector
-	{
-	public:
-		/** Command object for bounce (see ParamCommand).*/
-		class CmdEffectiveness : public ParamCommand
-		{
-		public:
-			String doGet(const void* target) const;
-			void doSet(void* target, const String& val);
-		};
+    /** This class defines a ParticleAffector which deflects particles.
+    @remarks
+        This affector (see ParticleAffector) offers a simple (and inaccurate) physical deflection.
+        All particles which hit the plane are reflected.
+    @par
+        The plane is defined by a point (plane_point) and the normal (plane_normal).
+        In addition it is possible to change the strenght of the recoil by using the bounce parameter.
+    */
+    class FireExtinguisherAffector : public ParticleAffector
+    {
+    public:
+        /** Command object for bounce (see ParamCommand).*/
+        class CmdEffectiveness : public ParamCommand
+        {
+        public:
+            String doGet(const void* target) const;
+            void doSet(void* target, const String& val);
+        };
 
-		/// Default constructor
-		FireExtinguisherAffector(ParticleSystem* psys);
+        /// Default constructor
+        FireExtinguisherAffector(ParticleSystem* psys);
 
-		/** See ParticleAffector. */
-		void _affectParticles(ParticleSystem* pSystem, Real timeElapsed);
+        /** See ParticleAffector. */
+        void _affectParticles(ParticleSystem* pSystem, Real timeElapsed);
 
-		/** Sets the bounce value of the deflection. */
-		void setEffectiveness(Real effectiveness);
+        /** Sets the bounce value of the deflection. */
+        void setEffectiveness(Real effectiveness);
 
-		/** Gets the bounce value of the deflection. */
-		Real getEffectiveness(void) const;
+        /** Gets the bounce value of the deflection. */
+        Real getEffectiveness(void) const;
 
-		/// Command objects
-		static CmdEffectiveness msEffectivenessCmd;
+        /// Command objects
+        static CmdEffectiveness msEffectivenessCmd;
 
-	protected:
-		// a reference to the extinguishable fire
-		ExtinguishableFireAffectorFactory *mEfaf;
+    protected:
+        // a reference to the extinguishable fire
+        ExtinguishableFireAffectorFactory *mEfaf;
 
-		/// effectiveness factor (1 means as effective as water, everything higher is more effective while anything lower is less effective)
-		Real mEffectiveness;
-	};
+        /// effectiveness factor (1 means as effective as water, everything higher is more effective while anything lower is less effective)
+        Real mEffectiveness;
+    };
 
 }
 

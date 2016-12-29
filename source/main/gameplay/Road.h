@@ -25,48 +25,48 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 
 typedef struct _RoadType
 {
-	char name[256];
-	Ogre::SceneNode *node;
+    char name[256];
+    Ogre::SceneNode *node;
 } RoadType_t;
 
 class Road : public ZeroedMemoryAllocator
 {
-	friend class RoRFrameListener;
+    friend class RoRFrameListener;
 
 public:
 
-	Road(Ogre::Vector3 start);
+    Road(Ogre::Vector3 start);
 
 private:
 
-	void addRoadType(const char* name);
-	void append();
-	void dpitch(float v);
-	void dturn(float v);
-	void preparePending();
-	void reset(Ogre::Vector3 start);
-	void toggleType();	
-	void updatePending();
+    void addRoadType(const char* name);
+    void append();
+    void dpitch(float v);
+    void dturn(float v);
+    void preparePending();
+    void reset(Ogre::Vector3 start);
+    void toggleType();    
+    void updatePending();
 
-	static const unsigned int MAX_RTYPES = 10;
-	RoadType_t rtypes[MAX_RTYPES];
+    static const unsigned int MAX_RTYPES = 10;
+    RoadType_t rtypes[MAX_RTYPES];
 
-	Ogre::SceneNode *tenode;
+    Ogre::SceneNode *tenode;
 
-	Ogre::Vector3 ppos;
-	Ogre::Vector3 protl;
-	Ogre::Vector3 protr;
-	Ogre::Vector3 rpos;
-	Ogre::Vector3 rrot;
+    Ogre::Vector3 ppos;
+    Ogre::Vector3 protl;
+    Ogre::Vector3 protr;
+    Ogre::Vector3 rpos;
+    Ogre::Vector3 rrot;
 
-	float lastpturn;
-	float ppitch;
-	float pturn;
+    float lastpturn;
+    float ppitch;
+    float pturn;
 
-	int cur_rtype;
-	int free_rtype;
+    int cur_rtype;
+    int free_rtype;
 
-	char curtype[256];
+    char curtype[256];
 };
 
 #endif // __Road_H_

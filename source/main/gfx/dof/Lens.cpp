@@ -118,7 +118,7 @@ void Lens::recalculateDepthOfField(Real& _nearDepth, Real& _focalDepth, Real& _f
     _farDepth = farClear + farClear * mFStop;
   } else
   {
-	  // Far depth of field should be infinite
-	  _farDepth = Math::POS_INFINITY;
+      // Far depth of field should be infinite
+      _farDepth = Math::POS_INFINITY;
   }
 }

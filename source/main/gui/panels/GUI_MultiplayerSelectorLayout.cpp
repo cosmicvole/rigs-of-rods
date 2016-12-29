@@ -14,7 +14,7 @@ using namespace GUI;
 
 MultiplayerSelectorLayout::MultiplayerSelectorLayout(MyGUI::Widget* _parent)
 {
-	initialiseByAttributes(this, _parent);
+    initialiseByAttributes(this, _parent);
 }
 
 MultiplayerSelectorLayout::~MultiplayerSelectorLayout()

@@ -14,7 +14,7 @@ using namespace GUI;
 
 MainSelectorLayout::MainSelectorLayout(MyGUI::Widget* _parent)
 {
-	initialiseByAttributes(this, _parent);
+    initialiseByAttributes(this, _parent);
 }
 
 MainSelectorLayout::~MainSelectorLayout()

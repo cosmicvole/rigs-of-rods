@@ -33,99 +33,99 @@ void DustManager::CheckAndInit()
     {
         return;
     }
-	mEnabled = RoR::App::GetGfxParticlesMode() == 1;
+    mEnabled = RoR::App::GetGfxParticlesMode() == 1;
 
-	if (mEnabled)
-	{
-		dustpools["dust"]   = new DustPool("tracks/Dust", 20);
-		dustpools["clump"]  = new DustPool("tracks/Clump", 20);
-		dustpools["sparks"] = new DustPool("tracks/Sparks", 10);
-		dustpools["drip"]   = new DustPool("tracks/Drip", 50);
-		dustpools["splash"] = new DustPool("tracks/Splash", 20);
-		dustpools["ripple"] = new DustPool("tracks/Ripple", 20);
-	}
+    if (mEnabled)
+    {
+        dustpools["dust"]   = new DustPool("tracks/Dust", 20);
+        dustpools["clump"]  = new DustPool("tracks/Clump", 20);
+        dustpools["sparks"] = new DustPool("tracks/Sparks", 10);
+        dustpools["drip"]   = new DustPool("tracks/Drip", 50);
+        dustpools["splash"] = new DustPool("tracks/Splash", 20);
+        dustpools["ripple"] = new DustPool("tracks/Ripple", 20);
+    }
     m_is_initialised = true;
 }
 
 void DustManager::Shutdown()
 {
-	// delete all created dustpools and remove them
-	std::map < Ogre::String , DustPool * >::iterator it;
-	for (it=dustpools.begin(); it!=dustpools.end();it++)
-	{
-		// delete the DustPool instance
-		delete(it->second);
-		it->second = 0;
-	}
-	// then clear the vector
-	dustpools.clear();
+    // delete all created dustpools and remove them
+    std::map < Ogre::String , DustPool * >::iterator it;
+    for (it=dustpools.begin(); it!=dustpools.end();it++)
+    {
+        // delete the DustPool instance
+        delete(it->second);
+        it->second = 0;
+    }
+    // then clear the vector
+    dustpools.clear();
 }
 
 DustPool *DustManager::getGroundModelDustPool(ground_model_t *g)
 {
-	return 0;
+    return 0;
 
-	/*
-	// disabled for now...
-	if (!mEnabled) return 0;
+    /*
+    // disabled for now...
+    if (!mEnabled) return 0;
 
-	// if we have a non particle type, then return 0
-	if (g->fx_type != FX_PARTICLE) return 0;
+    // if we have a non particle type, then return 0
+    if (g->fx_type != FX_PARTICLE) return 0;
 
-	String pname = String(g->particle_name);
-	if (!dustpools.size() || dustpools.find(pname) == dustpools.end())
-	{
-		addNewDustPool(g);
-	}
-	// return the entry we have
-	return dustpools[pname];
-	*/
+    String pname = String(g->particle_name);
+    if (!dustpools.size() || dustpools.find(pname) == dustpools.end())
+    {
+        addNewDustPool(g);
+    }
+    // return the entry we have
+    return dustpools[pname];
+    */
 }
 
 /*
 void DustManager::addNewDustPool(ground_model_t *g)
 {
-	if (!mEnabled) return;
+    if (!mEnabled) return;
 
-	// simple and clean addition of a new dustpool class instance
-	String pname = String(g->particle_name);
-	DustPool *dp = new DustPool(pname,
-								g->fx_particle_amount,
-								g->fx_particle_min_velo,
-								g->fx_particle_max_velo,
-								g->fx_particle_fade,
-								g->fx_particle_timedelta,
-								g->fx_particle_velo_factor,
-								g->fx_particle_ttl,
-								gEnv->ogreSceneManager->getRootSceneNode(),
-								gEnv->ogreSceneManager);
-	dustpools[pname] = dp;
+    // simple and clean addition of a new dustpool class instance
+    String pname = String(g->particle_name);
+    DustPool *dp = new DustPool(pname,
+                                g->fx_particle_amount,
+                                g->fx_particle_min_velo,
+                                g->fx_particle_max_velo,
+                                g->fx_particle_fade,
+                                g->fx_particle_timedelta,
+                                g->fx_particle_velo_factor,
+                                g->fx_particle_ttl,
+                                gEnv->ogreSceneManager->getRootSceneNode(),
+                                gEnv->ogreSceneManager);
+    dustpools[pname] = dp;
 }
 */
 
 void DustManager::update()
 {
-	if (!mEnabled) return;
-	std::map < Ogre::String , DustPool * >::iterator it;
-	for (it=dustpools.begin(); it!=dustpools.end();it++)
-	{
-		it->second->update();
-	}
+    if (!mEnabled) return;
+    std::map < Ogre::String , DustPool * >::iterator it;
+    for (it=dustpools.begin(); it!=dustpools.end();it++)
+    {
+        it->second->update();
+    }
 }
 
 void DustManager::setVisible(bool visible)
 {
-	if (!mEnabled) return;
-	std::map < Ogre::String , DustPool * >::iterator it;
-	for (it=dustpools.begin(); it!=dustpools.end();it++)
-	{
-		it->second->setVisible(visible);
-	}
+    if (!mEnabled) return;
+    std::map < Ogre::String , DustPool * >::iterator it;
+    for (it=dustpools.begin(); it!=dustpools.end();it++)
+    {
+        it->second->setVisible(visible);
+    }
 }
 
 DustPool *DustManager::getDustPool(Ogre::String name)
 {
-	if (dustpools.find(name) == dustpools.end())
-		return 0;
-	return dustpools[name];
+    if (dustpools.find(name) == dustpools.end())
+        return 0;
+    return dustpools[name];
 }

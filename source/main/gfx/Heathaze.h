@@ -30,7 +30,7 @@ class HeatHazeListener : public Ogre::RenderTargetListener, public ZeroedMemoryA
 {
 public:
 
-	HeatHazeListener();
+    HeatHazeListener();
     void preRenderTargetUpdate(const Ogre::RenderTargetEvent& evt);
     void postRenderTargetUpdate(const Ogre::RenderTargetEvent& evt);
 };
@@ -39,16 +39,16 @@ class HeatHaze : public ZeroedMemoryAllocator
 {
 public:
 
-	HeatHaze();
-	void setEnable(bool en);
-	void prepareShutdown();
-	void update();
+    HeatHaze();
+    void setEnable(bool en);
+    void prepareShutdown();
+    void update();
 
 private:
 
-	HeatHazeListener *listener;
-	Ogre::TextureUnitState *tex;
-	Ogre::RenderTexture* rttTex;
+    HeatHazeListener *listener;
+    Ogre::TextureUnitState *tex;
+    Ogre::RenderTexture* rttTex;
 };
 
 #endif // __HeatHaze_H_

@@ -29,7 +29,7 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 // Forward
 namespace Ogre
 {
-	class Overlay;
+    class Overlay;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -42,39 +42,39 @@ class Dashboard : public ZeroedMemoryAllocator
 {
 public:
 
-	Dashboard();
-	~Dashboard();
+    Dashboard();
+    ~Dashboard();
 
-	void setEnable(bool en);
-	void prepareShutdown();
+    void setEnable(bool en);
+    void prepareShutdown();
 
 private:
 
-	DashboardListener *mDashboardListener;
-	Ogre::Camera *mDashCam;
-	Ogre::RenderTexture *rttTex;
+    DashboardListener *mDashboardListener;
+    Ogre::Camera *mDashCam;
+    Ogre::RenderTexture *rttTex;
 };
 
 class DashboardListener : public Ogre::RenderTargetListener, public ZeroedMemoryAllocator
 {
-	friend class Dashboard;
+    friend class Dashboard;
 public:
 
-	DashboardListener();
+    DashboardListener();
 
-	void preRenderTargetUpdate(const Ogre::RenderTargetEvent& evt);
-	void postRenderTargetUpdate(const Ogre::RenderTargetEvent& evt);
+    void preRenderTargetUpdate(const Ogre::RenderTargetEvent& evt);
+    void postRenderTargetUpdate(const Ogre::RenderTargetEvent& evt);
 
 private:
 
-	Ogre::Overlay *blendOverlay;
-	Ogre::Overlay *dashOverlay;
-	Ogre::Overlay *fpsOverlay;
-	Ogre::Overlay *needlesOverlay;
-	Ogre::Overlay *truckHUDOverlay;
-	bool consolevisible;
-	bool fpsDisplayed;
-	bool truckhHUDvisible;
+    Ogre::Overlay *blendOverlay;
+    Ogre::Overlay *dashOverlay;
+    Ogre::Overlay *fpsOverlay;
+    Ogre::Overlay *needlesOverlay;
+    Ogre::Overlay *truckHUDOverlay;
+    bool consolevisible;
+    bool fpsDisplayed;
+    bool truckhHUDvisible;
 };
 
 #endif // __Dashboard_H__

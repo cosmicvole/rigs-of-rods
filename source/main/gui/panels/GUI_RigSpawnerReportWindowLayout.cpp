@@ -14,7 +14,7 @@ using namespace GUI;
 
 RigSpawnerReportWindowLayout::RigSpawnerReportWindowLayout(MyGUI::Widget* _parent)
 {
-	initialiseByAttributes(this, _parent);
+    initialiseByAttributes(this, _parent);
 }
 
 RigSpawnerReportWindowLayout::~RigSpawnerReportWindowLayout()

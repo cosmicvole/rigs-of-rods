@@ -39,45 +39,45 @@ class MpClientList
 {
 public:
 
-	MpClientList();
-	~MpClientList();
+    MpClientList();
+    ~MpClientList();
 
-	void update();
+    void update();
 
-	bool IsVisible();
-	void SetVisible(bool value);
+    bool IsVisible();
+    void SetVisible(bool value);
 
 protected:
 
-	typedef struct player_row_t {
-		MyGUI::StaticImagePtr flagimg;
-		MyGUI::StaticImagePtr statimg;
-		MyGUI::StaticImagePtr usergoimg;
-		MyGUI::StaticImagePtr userTruckOKImg;
-		MyGUI::StaticImagePtr userTruckOKRemoteImg;
-		MyGUI::StaticTextPtr  playername;
-	} player_row_t;
+    typedef struct player_row_t {
+        MyGUI::StaticImagePtr flagimg;
+        MyGUI::StaticImagePtr statimg;
+        MyGUI::StaticImagePtr usergoimg;
+        MyGUI::StaticImagePtr userTruckOKImg;
+        MyGUI::StaticImagePtr userTruckOKRemoteImg;
+        MyGUI::StaticTextPtr  playername;
+    } player_row_t;
 
-	MyGUI::EditPtr msgtext;
-	MyGUI::StaticTextPtr tooltipText;
-	MyGUI::WidgetPtr tooltipPanel, mpPanel;
-	MyGUI::WindowPtr msgwin;
+    MyGUI::EditPtr msgtext;
+    MyGUI::StaticTextPtr tooltipText;
+    MyGUI::WidgetPtr tooltipPanel, mpPanel;
+    MyGUI::WindowPtr msgwin;
 
-	player_row_t player_rows[MAX_PEERS + 1];
+    player_row_t player_rows[MAX_PEERS + 1];
 
-	void clickInfoIcon(MyGUI::WidgetPtr sender);
-	void clickUserGoIcon(MyGUI::WidgetPtr sender);
-	void openToolTip(MyGUI::WidgetPtr sender, const MyGUI::ToolTipInfo &t);
+    void clickInfoIcon(MyGUI::WidgetPtr sender);
+    void clickUserGoIcon(MyGUI::WidgetPtr sender);
+    void openToolTip(MyGUI::WidgetPtr sender, const MyGUI::ToolTipInfo &t);
 
-	MyGUI::WindowPtr netmsgwin;
-	MyGUI::StaticTextPtr netmsgtext;
+    MyGUI::WindowPtr netmsgwin;
+    MyGUI::StaticTextPtr netmsgtext;
 
-	void updateSlot(player_row_t *row, user_info_t c, bool self);
+    void updateSlot(player_row_t *row, user_info_t c, bool self);
 
-	client_t *clients;
-	int lineheight;
+    client_t *clients;
+    int lineheight;
 
-	static const int sidebarWidth = 250;
+    static const int sidebarWidth = 250;
 };
 
 } // namespace GUI

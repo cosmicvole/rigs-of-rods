@@ -30,16 +30,16 @@ class CameraBehaviorVehicle : public CameraBehaviorOrbit
 {
 public:
 
-	CameraBehaviorVehicle();
+    CameraBehaviorVehicle();
 
-	void update(const CameraManager::CameraContext &ctx);
+    void update(const CameraManager::CameraContext &ctx);
 
-	void activate(const CameraManager::CameraContext &ctx, bool reset = true);
-	void reset(const CameraManager::CameraContext &ctx);
+    void activate(const CameraManager::CameraContext &ctx, bool reset = true);
+    void reset(const CameraManager::CameraContext &ctx);
 
-	bool switchBehavior(const CameraManager::CameraContext &ctx) { return true; };
+    bool switchBehavior(const CameraManager::CameraContext &ctx) { return true; };
 
-	bool mousePressed(const CameraManager::CameraContext &ctx, const OIS::MouseEvent& _arg, OIS::MouseButtonID _id);
+    bool mousePressed(const CameraManager::CameraContext &ctx, const OIS::MouseEvent& _arg, OIS::MouseButtonID _id);
 
 protected:
 

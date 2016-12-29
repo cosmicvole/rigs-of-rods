@@ -30,27 +30,27 @@ class CameraBehaviorCharacter : public CameraBehaviorOrbit
 {
 public:
 
-	CameraBehaviorCharacter();
+    CameraBehaviorCharacter();
 
-	void update(const CameraManager::CameraContext &ctx);
+    void update(const CameraManager::CameraContext &ctx);
 
-	bool mouseMoved(const CameraManager::CameraContext &ctx, const OIS::MouseEvent& _arg);
+    bool mouseMoved(const CameraManager::CameraContext &ctx, const OIS::MouseEvent& _arg);
 
-	void activate(const CameraManager::CameraContext &ctx, bool reset = true);
-	void reset(const CameraManager::CameraContext &ctx);
+    void activate(const CameraManager::CameraContext &ctx, bool reset = true);
+    void reset(const CameraManager::CameraContext &ctx);
 
-	bool switchBehavior(const CameraManager::CameraContext &ctx);
+    bool switchBehavior(const CameraManager::CameraContext &ctx);
 
 protected:
 
-	enum CameraModes {
-		CHARACTER_THIRD_PERSON=0,
-		CHARACTER_FIRST_PERSON,
-		CHARACTER_END
-	};
+    enum CameraModes {
+        CHARACTER_THIRD_PERSON=0,
+        CHARACTER_FIRST_PERSON,
+        CHARACTER_END
+    };
 
-	int camMode;
-	Ogre::Vector3 camPositionOffset;
+    int camMode;
+    Ogre::Vector3 camPositionOffset;
 };
 
 #endif // __CAMERA_BEHAVIOR_CHARACTER_ORBIT_H_

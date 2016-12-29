@@ -31,21 +31,21 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 class ColoredTextAreaOverlayElement : public Ogre::TextAreaOverlayElement
 {
 public:
-	ColoredTextAreaOverlayElement(const Ogre::String& name);
-	~ColoredTextAreaOverlayElement(void);
+    ColoredTextAreaOverlayElement(const Ogre::String& name);
+    ~ColoredTextAreaOverlayElement(void);
 
-	void setValueBottom(float Value);
-	void setValueTop(float Value);
-	void setCaption(const Ogre::DisplayString& text);
-	static Ogre::DisplayString StripColors(const Ogre::String& text);
-	static Ogre::ColourValue GetColor(unsigned char ID, float Value = 1.0f);
+    void setValueBottom(float Value);
+    void setValueTop(float Value);
+    void setCaption(const Ogre::DisplayString& text);
+    static Ogre::DisplayString StripColors(const Ogre::String& text);
+    static Ogre::ColourValue GetColor(unsigned char ID, float Value = 1.0f);
 
-	void updateColours(void);
+    void updateColours(void);
 
 protected:
-	std::vector < unsigned char > m_Colors;
-	float m_ValueTop;
-	float m_ValueBottom;
+    std::vector < unsigned char > m_Colors;
+    float m_ValueTop;
+    float m_ValueBottom;
 };
 
 #endif // __ColoredTextAreaOverlayElement_H_

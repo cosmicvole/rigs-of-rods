@@ -28,27 +28,27 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 class IWater
 {
 public:
-	IWater() {};
-	virtual ~IWater() {};
+    IWater() {};
+    virtual ~IWater() {};
 
-	virtual float getHeight() = 0;
-	virtual float getHeightWaves(Ogre::Vector3 pos) = 0;
-	virtual Ogre::Vector3 getVelocity(Ogre::Vector3 pos) = 0;
+    virtual float getHeight() = 0;
+    virtual float getHeightWaves(Ogre::Vector3 pos) = 0;
+    virtual Ogre::Vector3 getVelocity(Ogre::Vector3 pos) = 0;
 
-	virtual void setCamera(Ogre::Camera *cam) = 0;
-	virtual void setFadeColour(Ogre::ColourValue ambient) = 0;
-	virtual void setHeight(float value) = 0;
-	virtual void setSunPosition(Ogre::Vector3) = 0;
-	virtual void setVisible(bool value) = 0;
+    virtual void setCamera(Ogre::Camera *cam) = 0;
+    virtual void setFadeColour(Ogre::ColourValue ambient) = 0;
+    virtual void setHeight(float value) = 0;
+    virtual void setSunPosition(Ogre::Vector3) = 0;
+    virtual void setVisible(bool value) = 0;
 
-	virtual bool isUnderWater(Ogre::Vector3 pos) = 0;
-	virtual bool allowUnderWater() = 0;
-	virtual void framestep(float dt) = 0;
-	virtual void moveTo(float centerheight) = 0;
-	virtual void prepareShutdown() = 0;
-	virtual void showWave(Ogre::Vector3 refpos) = 0;
-	virtual void update() = 0;
-	virtual void updateReflectionPlane(float h) = 0;
+    virtual bool isUnderWater(Ogre::Vector3 pos) = 0;
+    virtual bool allowUnderWater() = 0;
+    virtual void framestep(float dt) = 0;
+    virtual void moveTo(float centerheight) = 0;
+    virtual void prepareShutdown() = 0;
+    virtual void showWave(Ogre::Vector3 refpos) = 0;
+    virtual void update() = 0;
+    virtual void updateReflectionPlane(float h) = 0;
 };
 
 #endif // __I_Water_H_

@@ -32,109 +32,109 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace Ogre {
 
-	// Instantiate statics
-	FireExtinguisherAffector::CmdEffectiveness FireExtinguisherAffector::msEffectivenessCmd;
+    // Instantiate statics
+    FireExtinguisherAffector::CmdEffectiveness FireExtinguisherAffector::msEffectivenessCmd;
 
-	//-----------------------------------------------------------------------
-	FireExtinguisherAffector::FireExtinguisherAffector(ParticleSystem* psys)
-		: ParticleAffector(psys)
-	{
-		mType = "FireExtinguisher";
+    //-----------------------------------------------------------------------
+    FireExtinguisherAffector::FireExtinguisherAffector(ParticleSystem* psys)
+        : ParticleAffector(psys)
+    {
+        mType = "FireExtinguisher";
 
-		// defaults
-		mEffectiveness = 1.0;
-		mEfaf = 0;
+        // defaults
+        mEffectiveness = 1.0;
+        mEfaf = 0;
 
-		// Set up parameters
-		if (createParamDictionary("FireExtinguisherAffector"))
-		{
-			addBaseParameters();
-			// Add extra paramaters
-			ParamDictionary* dict = getParamDictionary();
-			dict->addParameter(ParameterDef("effectiveness",
-				"How effective is your fire extinguisher? Anything higher than one is more effective than water while everything lower than one is less effective than water.",
-				PT_REAL), &msEffectivenessCmd);
-		}
+        // Set up parameters
+        if (createParamDictionary("FireExtinguisherAffector"))
+        {
+            addBaseParameters();
+            // Add extra paramaters
+            ParamDictionary* dict = getParamDictionary();
+            dict->addParameter(ParameterDef("effectiveness",
+                "How effective is your fire extinguisher? Anything higher than one is more effective than water while everything lower than one is less effective than water.",
+                PT_REAL), &msEffectivenessCmd);
+        }
 
-		// get fire affector factory
-		ParticleSystemManager::ParticleAffectorFactoryIterator pafi = ParticleSystemManager::getSingleton().getAffectorFactoryIterator();
-		ParticleAffectorFactory *paf;
+        // get fire affector factory
+        ParticleSystemManager::ParticleAffectorFactoryIterator pafi = ParticleSystemManager::getSingleton().getAffectorFactoryIterator();
+        ParticleAffectorFactory *paf;
 
-		while(pafi.hasMoreElements())
-		{
-			paf = pafi.getNext();
-			if ( paf->getName() == "ExtinguishableFire" )
-			{
-				mEfaf = (ExtinguishableFireAffectorFactory *)paf;
-				break;
-			}	
-		}
-		if (!mEfaf) LOG("ERROR: Couldn't find an ExtinguishableFireAffectorFactory instance. Was it registered in the content manager?");
-	}
-	//-----------------------------------------------------------------------
-	void FireExtinguisherAffector::_affectParticles(ParticleSystem* pSystem, Real timeElapsed)
-	{
-		ExtinguishableFireAffectorFactory::affectorIterator affIt = mEfaf->getAffectorIterator();
-		ExtinguishableFireAffector* fire;
+        while(pafi.hasMoreElements())
+        {
+            paf = pafi.getNext();
+            if ( paf->getName() == "ExtinguishableFire" )
+            {
+                mEfaf = (ExtinguishableFireAffectorFactory *)paf;
+                break;
+            }    
+        }
+        if (!mEfaf) LOG("ERROR: Couldn't find an ExtinguishableFireAffectorFactory instance. Was it registered in the content manager?");
+    }
+    //-----------------------------------------------------------------------
+    void FireExtinguisherAffector::_affectParticles(ParticleSystem* pSystem, Real timeElapsed)
+    {
+        ExtinguishableFireAffectorFactory::affectorIterator affIt = mEfaf->getAffectorIterator();
+        ExtinguishableFireAffector* fire;
 
-		while(affIt.hasMoreElements())
-		{
-			fire = (ExtinguishableFireAffector*)affIt.getNext();
+        while(affIt.hasMoreElements())
+        {
+            fire = (ExtinguishableFireAffector*)affIt.getNext();
 
-			if (fire->isTemplate())
-				continue;
+            if (fire->isTemplate())
+                continue;
 
-			Real squaredRadius = Math::Pow(fire->getRadius(), 2);
-			Vector3 middlePoint = fire->getAbsoluteMiddlePoint();
+            Real squaredRadius = Math::Pow(fire->getRadius(), 2);
+            Vector3 middlePoint = fire->getAbsoluteMiddlePoint();
 
-			ParticleIterator pi = pSystem->_getIterator();
-			Particle *p;
-			int fireHits = 0;
-			while (!pi.end())
-			{
-				p = pi.getNext();
+            ParticleIterator pi = pSystem->_getIterator();
+            Particle *p;
+            int fireHits = 0;
+            while (!pi.end())
+            {
+                p = pi.getNext();
 
-				if ( middlePoint.squaredDistance(p->position) < squaredRadius )
-				{
-					// This particle is inside the fire, dispose of it in the next update
-					p->timeToLive = 0;
-					++fireHits;
-				}
-			}
-			if (fireHits>0)
-			{
-				Real intensity = fire->reduceIntensity(fireHits*mEffectiveness);
-				if (intensity<0) delete fire->getParticleSystem();
-			}
-		}
-	}
-	//-----------------------------------------------------------------------
-	void FireExtinguisherAffector::setEffectiveness(Real effectiveness)
-	{
-		mEffectiveness = effectiveness;
-	}
-	//-----------------------------------------------------------------------
-	Real FireExtinguisherAffector::getEffectiveness(void) const
-	{
-		return mEffectiveness;
-	}
+                if ( middlePoint.squaredDistance(p->position) < squaredRadius )
+                {
+                    // This particle is inside the fire, dispose of it in the next update
+                    p->timeToLive = 0;
+                    ++fireHits;
+                }
+            }
+            if (fireHits>0)
+            {
+                Real intensity = fire->reduceIntensity(fireHits*mEffectiveness);
+                if (intensity<0) delete fire->getParticleSystem();
+            }
+        }
+    }
+    //-----------------------------------------------------------------------
+    void FireExtinguisherAffector::setEffectiveness(Real effectiveness)
+    {
+        mEffectiveness = effectiveness;
+    }
+    //-----------------------------------------------------------------------
+    Real FireExtinguisherAffector::getEffectiveness(void) const
+    {
+        return mEffectiveness;
+    }
 
-	//-----------------------------------------------------------------------
-	//-----------------------------------------------------------------------
-	// Command objects
-	//-----------------------------------------------------------------------
-	//-----------------------------------------------------------------------
-	String FireExtinguisherAffector::CmdEffectiveness::doGet(const void* target) const
-	{
-		return StringConverter::toString(
-			static_cast<const FireExtinguisherAffector*>(target)->getEffectiveness() );
+    //-----------------------------------------------------------------------
+    //-----------------------------------------------------------------------
+    // Command objects
+    //-----------------------------------------------------------------------
+    //-----------------------------------------------------------------------
+    String FireExtinguisherAffector::CmdEffectiveness::doGet(const void* target) const
+    {
+        return StringConverter::toString(
+            static_cast<const FireExtinguisherAffector*>(target)->getEffectiveness() );
 
-	}
-	void FireExtinguisherAffector::CmdEffectiveness::doSet(void* target, const String& val)
-	{
-		static_cast<FireExtinguisherAffector*>(target)->setEffectiveness(
-			StringConverter::parseReal(val));
-	}
+    }
+    void FireExtinguisherAffector::CmdEffectiveness::doSet(void* target, const String& val)
+    {
+        static_cast<FireExtinguisherAffector*>(target)->setEffectiveness(
+            StringConverter::parseReal(val));
+    }
 
 }
 

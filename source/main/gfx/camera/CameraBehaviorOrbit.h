@@ -31,34 +31,34 @@ class CameraBehaviorOrbit : public IBehavior<CameraManager::CameraContext>
 {
 public:
 
-	CameraBehaviorOrbit();
+    CameraBehaviorOrbit();
 
-	void update(const CameraManager::CameraContext &ctx);
+    void update(const CameraManager::CameraContext &ctx);
 
-	void activate(const CameraManager::CameraContext &ctx, bool reset = true) {};
-	void deactivate(const CameraManager::CameraContext &ctx) {};
-	void reset(const CameraManager::CameraContext &ctx);
-	void notifyContextChange(const CameraManager::CameraContext &ctx);
+    void activate(const CameraManager::CameraContext &ctx, bool reset = true) {};
+    void deactivate(const CameraManager::CameraContext &ctx) {};
+    void reset(const CameraManager::CameraContext &ctx);
+    void notifyContextChange(const CameraManager::CameraContext &ctx);
 
-	bool mouseMoved(const CameraManager::CameraContext &ctx, const OIS::MouseEvent& _arg);
-	bool mousePressed(const CameraManager::CameraContext &ctx, const OIS::MouseEvent& _arg, OIS::MouseButtonID _id) { return false; };
-	bool mouseReleased(const CameraManager::CameraContext &ctx, const OIS::MouseEvent& _arg, OIS::MouseButtonID _id) { return false; };
+    bool mouseMoved(const CameraManager::CameraContext &ctx, const OIS::MouseEvent& _arg);
+    bool mousePressed(const CameraManager::CameraContext &ctx, const OIS::MouseEvent& _arg, OIS::MouseButtonID _id) { return false; };
+    bool mouseReleased(const CameraManager::CameraContext &ctx, const OIS::MouseEvent& _arg, OIS::MouseButtonID _id) { return false; };
 
 protected:
 
-	Ogre::Radian camRotX, camRotY;
-	Ogre::Radian camRotXSwivel, camRotYSwivel;
-	Ogre::Radian targetDirection, targetPitch;
-	Ogre::Real camDist, camDistMin, camDistMax, camRatio;
-	Ogre::Vector3 camLookAt;
+    Ogre::Radian camRotX, camRotY;
+    Ogre::Radian camRotXSwivel, camRotYSwivel;
+    Ogre::Radian targetDirection, targetPitch;
+    Ogre::Real camDist, camDistMin, camDistMax, camRatio;
+    Ogre::Vector3 camLookAt;
 
-	bool limitCamMovement;
+    bool limitCamMovement;
 
 private:
 
-	Ogre::Vector3 camLookAtLast;
-	Ogre::Vector3 camLookAtSmooth;
-	Ogre::Vector3 camLookAtSmoothLast;
+    Ogre::Vector3 camLookAtLast;
+    Ogre::Vector3 camLookAtSmooth;
+    Ogre::Vector3 camLookAtSmoothLast;
 };
 
 #endif // __CAMERA_BEHAVIOR_ORBIT_H_

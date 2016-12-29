@@ -65,7 +65,7 @@ using namespace GUI;
 #define MAIN_WIDGET  ((MyGUI::Window*)mMainWidget)
 
 #ifdef _WIN32
-	#define strncasecmp _strnicmp
+    #define strncasecmp _strnicmp
 #endif
 
 static const char* OGRECFG_RENDERSYS  = "Render System";
@@ -84,14 +84,14 @@ CLASS::CLASS():
     ShowRestartNotice(false)
 {
 
-	MyGUI::WindowPtr win = dynamic_cast<MyGUI::WindowPtr>(mMainWidget);
-	win->eventWindowButtonPressed += MyGUI::newDelegate(this, &CLASS::notifyWindowButtonPressed); //The "X" button thing
-	m_key_mapping_window->eventWindowButtonPressed += MyGUI::newDelegate(this, &CLASS::notifyWindowButtonPressed); //The "X" button thing
+    MyGUI::WindowPtr win = dynamic_cast<MyGUI::WindowPtr>(mMainWidget);
+    win->eventWindowButtonPressed += MyGUI::newDelegate(this, &CLASS::notifyWindowButtonPressed); //The "X" button thing
+    m_key_mapping_window->eventWindowButtonPressed += MyGUI::newDelegate(this, &CLASS::notifyWindowButtonPressed); //The "X" button thing
 
-	//Buttons
-	m_savebtn->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::eventMouseButtonClickSaveButton);
-	m_regen_cache->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::eventMouseButtonClickRegenCache);
-	m_clear_cache->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::eventMouseButtonClickClearCache);
+    //Buttons
+    m_savebtn->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::eventMouseButtonClickSaveButton);
+    m_regen_cache->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::eventMouseButtonClickRegenCache);
+    m_clear_cache->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::eventMouseButtonClickClearCache);
 
     // Checkboxes
     INIT_CHECKBOX_NOTICE(m_disable_multithreading)
@@ -123,22 +123,22 @@ CLASS::CLASS():
     INIT_CHECKBOX(m_flexbody_cache_system  )
     INIT_CHECKBOX(m_main_menu_music        )
 
-	// Key mapping
-	m_tabCtrl->eventTabChangeSelect += MyGUI::newDelegate(this, &CLASS::OnTabChange);
-	m_keymap_group->eventComboChangePosition += MyGUI::newDelegate(this, &CLASS::OnKeymapTypeChange);
-	// FIXME: m_change_key->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::OnReMapPress);
-	startCounter = false;
+    // Key mapping
+    m_tabCtrl->eventTabChangeSelect += MyGUI::newDelegate(this, &CLASS::OnTabChange);
+    m_keymap_group->eventComboChangePosition += MyGUI::newDelegate(this, &CLASS::OnKeymapTypeChange);
+    // FIXME: m_change_key->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::OnReMapPress);
+    startCounter = false;
 
-	//Sliders
-	m_volume_slider->eventScrollChangePosition += MyGUI::newDelegate(this, &CLASS::OnVolumeSlider);
-	m_fps_limiter_slider->eventScrollChangePosition += MyGUI::newDelegate(this, &CLASS::OnFPSLimiterSlider);
-	m_sightrange->eventScrollChangePosition += MyGUI::newDelegate(this, &CLASS::OnSightRangeSlider);
+    //Sliders
+    m_volume_slider->eventScrollChangePosition += MyGUI::newDelegate(this, &CLASS::OnVolumeSlider);
+    m_fps_limiter_slider->eventScrollChangePosition += MyGUI::newDelegate(this, &CLASS::OnFPSLimiterSlider);
+    m_sightrange->eventScrollChangePosition += MyGUI::newDelegate(this, &CLASS::OnSightRangeSlider);
 
-	MyGUI::IntSize gui_area = MyGUI::RenderManager::getInstance().getViewSize();
-	mMainWidget->setPosition(gui_area.width/2 - mMainWidget->getWidth()/2, gui_area.height/2 - mMainWidget->getHeight()/2);
-	m_key_mapping_window->setPosition(gui_area.width / 2 - m_key_mapping_window->getWidth() / 2, gui_area.height / 2 - m_key_mapping_window->getHeight() / 2);
+    MyGUI::IntSize gui_area = MyGUI::RenderManager::getInstance().getViewSize();
+    mMainWidget->setPosition(gui_area.width/2 - mMainWidget->getWidth()/2, gui_area.height/2 - mMainWidget->getHeight()/2);
+    m_key_mapping_window->setPosition(gui_area.width / 2 - m_key_mapping_window->getWidth() / 2, gui_area.height / 2 - m_key_mapping_window->getHeight() / 2);
 
-	MAIN_WIDGET->setVisible(false);
+    MAIN_WIDGET->setVisible(false);
 }
 
 CLASS::~CLASS()
@@ -156,44 +156,44 @@ void CLASS::Show()
 
 void CLASS::Hide(bool isMenu)
 {
-	MAIN_WIDGET->setVisibleSmooth(false);
+    MAIN_WIDGET->setVisibleSmooth(false);
     App::GetGuiManager()->SetVisible_GameMainMenu(true);
 }
 
 void CLASS::notifyWindowButtonPressed(MyGUI::WidgetPtr _sender, const std::string& _name)
 {
-	if (_sender == mMainWidget)
-	{
-		if (_name == "close")
+    if (_sender == mMainWidget)
+    {
+        if (_name == "close")
         {
             this->Hide();
         }
-	}
-	else if (_sender == m_key_mapping_window)
-	{
-		if (_name == "close")
-		{
-			if (startCounter)
-				startCounter = false;
+    }
+    else if (_sender == m_key_mapping_window)
+    {
+        if (_name == "close")
+        {
+            if (startCounter)
+                startCounter = false;
 
-			if (isFrameActivated)
-				MyGUI::Gui::getInstance().eventFrameStart -= MyGUI::newDelegate(this, &CLASS::FrameEntered);
+            if (isFrameActivated)
+                MyGUI::Gui::getInstance().eventFrameStart -= MyGUI::newDelegate(this, &CLASS::FrameEntered);
 
-			m_key_mapping_window->setVisibleSmooth(false);
-		}
-	}
+            m_key_mapping_window->setVisibleSmooth(false);
+        }
+    }
 }
 
 void CLASS::eventMouseButtonClickSaveButton(MyGUI::WidgetPtr _sender)
 {
-	SaveSettings();
+    SaveSettings();
 
-	if (ShowRestartNotice == true)
-	{
-		RoR::App::GetGuiManager()->ShowMessageBox("Restart required", "You need to restart the game for few settings to apply. You can still play and restart next time, but the game can glitch out.", true, "Ok", true, false, "");
-	}
+    if (ShowRestartNotice == true)
+    {
+        RoR::App::GetGuiManager()->ShowMessageBox("Restart required", "You need to restart the game for few settings to apply. You can still play and restart next time, but the game can glitch out.", true, "Ok", true, false, "");
+    }
 
-	this->Hide();
+    this->Hide();
 }
 
 void CLASS::CheckAndInit()
@@ -598,49 +598,49 @@ void CLASS::SaveSettings()
         }
         itor.moveNext();
     }
-	Ogre::String err = rs->validateConfigOptions();
-	if (err.length() > 0)
-	{
-		LOG("Ogre config validation error");
-	}
-	else
-	{
-		Ogre::Root::getSingleton().saveConfig();
-	}
+    Ogre::String err = rs->validateConfigOptions();
+    if (err.length() > 0)
+    {
+        LOG("Ogre config validation error");
+    }
+    else
+    {
+        Ogre::Root::getSingleton().saveConfig();
+    }
 
-	// ******* TODO ******** Re-implement
+    // ******* TODO ******** Re-implement
 
-	//Apply fullscreen
-	//Not working correctly
-	/*
-	if (BSETTING("DevMode", false)) //let's disable this for now
-	{
-		if (OgreSettingsMap["Full Screen"].c_str() != ExOgreSettingsMap["Full Screen"].c_str())
-		{
-			Ogre::StringVector args = Ogre::StringUtil::split(OgreSettingsMap["Video Mode"], " ");
+    //Apply fullscreen
+    //Not working correctly
+    /*
+    if (BSETTING("DevMode", false)) //let's disable this for now
+    {
+        if (OgreSettingsMap["Full Screen"].c_str() != ExOgreSettingsMap["Full Screen"].c_str())
+        {
+            Ogre::StringVector args = Ogre::StringUtil::split(OgreSettingsMap["Video Mode"], " ");
 
-			static int org_width = -1, org_height = -1;
-			int width = RoR::App::GetOgreSubsystem()->GetRenderWindow()->getWidth();
-			int height = RoR::App::GetOgreSubsystem()->GetRenderWindow()->getHeight();
-			if (org_width == -1)
-				org_width = width;
-			if (org_height == -1)
-				org_height = height;
-			bool mode = RoR::App::GetOgreSubsystem()->GetRenderWindow()->isFullScreen();
-			if (!mode)
-			{
-				RoR::App::GetOgreSubsystem()->GetRenderWindow()->setFullscreen(true, (int)args[0].c_str(), (int)args[2].c_str());
-				LOG(" ** switched to fullscreen: " + TOSTRING(width) + "x" + TOSTRING(height));
-			}
-			else
-			{
-				RoR::App::GetOgreSubsystem()->GetRenderWindow()->setFullscreen(false, 640, 480);
-				RoR::App::GetOgreSubsystem()->GetRenderWindow()->setFullscreen(false, org_width, org_height);
-				LOG(" ** switched to windowed mode: ");
-			}
-			ShowRestartNotice = false;
-		}
-	}*/
+            static int org_width = -1, org_height = -1;
+            int width = RoR::App::GetOgreSubsystem()->GetRenderWindow()->getWidth();
+            int height = RoR::App::GetOgreSubsystem()->GetRenderWindow()->getHeight();
+            if (org_width == -1)
+                org_width = width;
+            if (org_height == -1)
+                org_height = height;
+            bool mode = RoR::App::GetOgreSubsystem()->GetRenderWindow()->isFullScreen();
+            if (!mode)
+            {
+                RoR::App::GetOgreSubsystem()->GetRenderWindow()->setFullscreen(true, (int)args[0].c_str(), (int)args[2].c_str());
+                LOG(" ** switched to fullscreen: " + TOSTRING(width) + "x" + TOSTRING(height));
+            }
+            else
+            {
+                RoR::App::GetOgreSubsystem()->GetRenderWindow()->setFullscreen(false, 640, 480);
+                RoR::App::GetOgreSubsystem()->GetRenderWindow()->setFullscreen(false, org_width, org_height);
+                LOG(" ** switched to windowed mode: ");
+            }
+            ShowRestartNotice = false;
+        }
+    }*/
 
 } 
 
@@ -649,193 +649,193 @@ void CLASS::SaveSettings()
 
 void CLASS::eventMouseButtonClickRegenCache(MyGUI::WidgetPtr _sender)
 {
-	MAIN_WIDGET->setVisibleSmooth(false);
-	App::GetMainThreadLogic()->RegenCache();
-	MAIN_WIDGET->setVisibleSmooth(true);
-	RoR::App::GetGuiManager()->ShowMessageBox("Cache regenerated", "Cache regenerated succesfully!", true, "Ok", true, false, "");
+    MAIN_WIDGET->setVisibleSmooth(false);
+    App::GetMainThreadLogic()->RegenCache();
+    MAIN_WIDGET->setVisibleSmooth(true);
+    RoR::App::GetGuiManager()->ShowMessageBox("Cache regenerated", "Cache regenerated succesfully!", true, "Ok", true, false, "");
 }
 
 void CLASS::OnTabChange(MyGUI::TabControl* _sender, size_t _index)
 {
-	MyGUI::TabItemPtr tab = _sender->getItemAt(_index);
-	if (!tab) return;
+    MyGUI::TabItemPtr tab = _sender->getItemAt(_index);
+    if (!tab) return;
 
     //## Disabled until keymapping is fixed
-	//if (_index == 6)
-	//	LoadKeyMap();
+    //if (_index == 6)
+    //    LoadKeyMap();
 }
 
 void CLASS::LoadKeyMap()
 {
-	//Cleanup first
-	m_keymapping->removeAllItems();
+    //Cleanup first
+    m_keymapping->removeAllItems();
 
-	KeyMap = App::GetInputEngine()->getEvents();
+    KeyMap = App::GetInputEngine()->getEvents();
 
-	std::map<int, std::vector<event_trigger_t>>::iterator it;
+    std::map<int, std::vector<event_trigger_t>>::iterator it;
 
-	int counter = 0;
-	char curGroup[128] = "";
-	std::map<int, std::vector<event_trigger_t> >::iterator mapIt;
-	std::vector<event_trigger_t>::iterator vecIt;
-	for (mapIt = KeyMap.begin(); mapIt != KeyMap.end(); mapIt++)
-	{
-		std::vector<event_trigger_t> vec = mapIt->second;
+    int counter = 0;
+    char curGroup[128] = "";
+    std::map<int, std::vector<event_trigger_t> >::iterator mapIt;
+    std::vector<event_trigger_t>::iterator vecIt;
+    for (mapIt = KeyMap.begin(); mapIt != KeyMap.end(); mapIt++)
+    {
+        std::vector<event_trigger_t> vec = mapIt->second;
 
-		for (vecIt = vec.begin(); vecIt != vec.end(); vecIt++, counter++)
-		{
-			if (strcmp(vecIt->group, curGroup))
-			{
-				strncpy(curGroup, vecIt->group, 128);
-				// group title:
-				m_keymap_group->addItem(vecIt->group);
-			}
+        for (vecIt = vec.begin(); vecIt != vec.end(); vecIt++, counter++)
+        {
+            if (strcmp(vecIt->group, curGroup))
+            {
+                strncpy(curGroup, vecIt->group, 128);
+                // group title:
+                m_keymap_group->addItem(vecIt->group);
+            }
 
-			if (m_keymap_group->getCaption() == "")
-				m_keymap_group->setIndexSelected(0); //at least select something
+            if (m_keymap_group->getCaption() == "")
+                m_keymap_group->setIndexSelected(0); //at least select something
 
-			std::string prefix = m_keymap_group->getCaption();
-			if (strncasecmp(App::GetInputEngine()->eventIDToName(mapIt->first).c_str(), prefix.c_str(), prefix.length()))
-			{
-				m_keymapping->addItem(App::GetInputEngine()->eventIDToName(mapIt->first).c_str());
-				m_keymapping->setSubItemNameAt(1, m_keymapping->getItemCount() -1, vecIt->configline);
-			}
+            std::string prefix = m_keymap_group->getCaption();
+            if (strncasecmp(App::GetInputEngine()->eventIDToName(mapIt->first).c_str(), prefix.c_str(), prefix.length()))
+            {
+                m_keymapping->addItem(App::GetInputEngine()->eventIDToName(mapIt->first).c_str());
+                m_keymapping->setSubItemNameAt(1, m_keymapping->getItemCount() -1, vecIt->configline);
+            }
 
-			//m_key_name->
-			// print event name
-			//fprintf(f, "%-30s ", eventIDToName(mapIt->first).c_str());
-			// print event type
-			//fprintf(f, "%-20s ", getEventTypeName(vecIt->eventtype).c_str());
+            //m_key_name->
+            // print event name
+            //fprintf(f, "%-30s ", eventIDToName(mapIt->first).c_str());
+            // print event type
+            //fprintf(f, "%-20s ", getEventTypeName(vecIt->eventtype).c_str());
 
-			if (vecIt->eventtype == ET_Keyboard)
-			{
-				//fprintf(f, "%s ", vecIt->configline);
-			}
-		}
-	}
-	m_is_keymap_loaded = true;
-	m_keymapping->setIndexSelected(0);
+            if (vecIt->eventtype == ET_Keyboard)
+            {
+                //fprintf(f, "%s ", vecIt->configline);
+            }
+        }
+    }
+    m_is_keymap_loaded = true;
+    m_keymapping->setIndexSelected(0);
 }
 
 void CLASS::OnKeymapTypeChange(MyGUI::ComboBox* _sender, size_t _index)
 {
-	if (_sender->getCaption() == "")
-		return;
+    if (_sender->getCaption() == "")
+        return;
 
-	//Cleanup first
-	m_keymapping->removeAllItems();
+    //Cleanup first
+    m_keymapping->removeAllItems();
 
-	std::map<int, std::vector<event_trigger_t>>::iterator it;
+    std::map<int, std::vector<event_trigger_t>>::iterator it;
 
-	int counter = 0;
-	std::map<int, std::vector<event_trigger_t> >::iterator mapIt;
-	std::vector<event_trigger_t>::iterator vecIt;
-	for (mapIt = KeyMap.begin(); mapIt != KeyMap.end(); mapIt++)
-	{
-		std::vector<event_trigger_t> vec = mapIt->second;
+    int counter = 0;
+    std::map<int, std::vector<event_trigger_t> >::iterator mapIt;
+    std::vector<event_trigger_t>::iterator vecIt;
+    for (mapIt = KeyMap.begin(); mapIt != KeyMap.end(); mapIt++)
+    {
+        std::vector<event_trigger_t> vec = mapIt->second;
 
-		for (vecIt = vec.begin(); vecIt != vec.end(); vecIt++, counter++)
-		{
-			std::string prefix = _sender->getItemNameAt(_index);
-			if (strncasecmp(App::GetInputEngine()->eventIDToName(mapIt->first).c_str(), prefix.c_str(), prefix.length()))
-			{
-				m_keymapping->addItem(App::GetInputEngine()->eventIDToName(mapIt->first).c_str());
-				m_keymapping->setSubItemNameAt(1, m_keymapping->getItemCount() - 1, vecIt->configline);
-			}
-		}
-	}
-	m_keymapping->setIndexSelected(0);
+        for (vecIt = vec.begin(); vecIt != vec.end(); vecIt++, counter++)
+        {
+            std::string prefix = _sender->getItemNameAt(_index);
+            if (strncasecmp(App::GetInputEngine()->eventIDToName(mapIt->first).c_str(), prefix.c_str(), prefix.length()))
+            {
+                m_keymapping->addItem(App::GetInputEngine()->eventIDToName(mapIt->first).c_str());
+                m_keymapping->setSubItemNameAt(1, m_keymapping->getItemCount() - 1, vecIt->configline);
+            }
+        }
+    }
+    m_keymapping->setIndexSelected(0);
 }
 
 void CLASS::eventMouseButtonClickClearCache(MyGUI::WidgetPtr _sender)
 {
-	// List files in cache
-	RoR::FileSystem::VectorFileInfo cache_files;
-	std::string cache_dir_str = App::GetSysCacheDir() + PATH_SLASH;
-	std::wstring cache_dir_wstr = MyGUI::UString(cache_dir_str).asWStr();
-	RoR::FileSystem::getSystemFileList(cache_files, cache_dir_wstr, L"*.*");
+    // List files in cache
+    RoR::FileSystem::VectorFileInfo cache_files;
+    std::string cache_dir_str = App::GetSysCacheDir() + PATH_SLASH;
+    std::wstring cache_dir_wstr = MyGUI::UString(cache_dir_str).asWStr();
+    RoR::FileSystem::getSystemFileList(cache_files, cache_dir_wstr, L"*.*");
 
-	// Remove files
-	std::for_each(cache_files.begin(), cache_files.end(), [cache_dir_wstr](RoR::FileSystem::FileInfo& file_info) {
-		MyGUI::UString path_to_delete = RoR::FileSystem::concatenatePath(cache_dir_wstr, file_info.name);
-		std::remove(path_to_delete.asUTF8_c_str());
-	});
+    // Remove files
+    std::for_each(cache_files.begin(), cache_files.end(), [cache_dir_wstr](RoR::FileSystem::FileInfo& file_info) {
+        MyGUI::UString path_to_delete = RoR::FileSystem::concatenatePath(cache_dir_wstr, file_info.name);
+        std::remove(path_to_delete.asUTF8_c_str());
+    });
 
-	ShowRestartNotice = true;
-	RoR::App::GetGuiManager()->ShowMessageBox("Cache cleared", "Cache cleared succesfully, you need to restart the game for the changes to apply.", true, "Ok", true, false, "");
+    ShowRestartNotice = true;
+    RoR::App::GetGuiManager()->ShowMessageBox("Cache cleared", "Cache cleared succesfully, you need to restart the game for the changes to apply.", true, "Ok", true, false, "");
 
 }
 
 /* FIXME
 void CLASS::OnReMapPress(MyGUI::WidgetPtr _sender)
 {
-		Ogre::String str_text = "";
-		str_text += "Press any button/Move your joystick axis to map it to this event. \nYou can also close this window to cancel the mapping. \n\n";
-		str_text += "#66FF33 Event: #FFFFFF" + m_keymapping->getSubItemNameAt(0, m_keymapping->getItemIndexSelected()) + "\n";
-		str_text += "#66FF33 Current Key: #FFFFFF" + m_keymapping->getSubItemNameAt(1, m_keymapping->getItemIndexSelected());
-		m_key_mapping_window->setCaptionWithReplacing("Assign new key");
-		m_key_mapping_window_text->setCaptionWithReplacing(str_text);
-		m_key_mapping_window->setVisibleSmooth(true);
+        Ogre::String str_text = "";
+        str_text += "Press any button/Move your joystick axis to map it to this event. \nYou can also close this window to cancel the mapping. \n\n";
+        str_text += "#66FF33 Event: #FFFFFF" + m_keymapping->getSubItemNameAt(0, m_keymapping->getItemIndexSelected()) + "\n";
+        str_text += "#66FF33 Current Key: #FFFFFF" + m_keymapping->getSubItemNameAt(1, m_keymapping->getItemIndexSelected());
+        m_key_mapping_window->setCaptionWithReplacing("Assign new key");
+        m_key_mapping_window_text->setCaptionWithReplacing(str_text);
+        m_key_mapping_window->setVisibleSmooth(true);
 
-		MyGUI::Gui::getInstance().eventFrameStart += MyGUI::newDelegate(this, &CLASS::FrameEntered);
-		isFrameActivated = true;
+        MyGUI::Gui::getInstance().eventFrameStart += MyGUI::newDelegate(this, &CLASS::FrameEntered);
+        isFrameActivated = true;
 
-		m_key_mapping_window_info->setCaptionWithReplacing("");
-		mMainWidget->setEnabledSilent(true);
+        m_key_mapping_window_info->setCaptionWithReplacing("");
+        mMainWidget->setEnabledSilent(true);
 
-		str_text = "";
+        str_text = "";
 }
 */
 
 void CLASS::FrameEntered(float dt)
 {
-	unsigned long Timer = Ogre::Root::getSingleton().getTimer()->getMilliseconds();
+    unsigned long Timer = Ogre::Root::getSingleton().getTimer()->getMilliseconds();
 
-	if (RoR::App::GetInputEngine()->isKeyDown(OIS::KC_RETURN) || RoR::App::GetInputEngine()->isKeyDown(OIS::KC_ESCAPE))
-	{
-		MyGUI::Gui::getInstance().eventFrameStart -= MyGUI::newDelegate(this, &CLASS::FrameEntered);
-		isFrameActivated = false;
+    if (RoR::App::GetInputEngine()->isKeyDown(OIS::KC_RETURN) || RoR::App::GetInputEngine()->isKeyDown(OIS::KC_ESCAPE))
+    {
+        MyGUI::Gui::getInstance().eventFrameStart -= MyGUI::newDelegate(this, &CLASS::FrameEntered);
+        isFrameActivated = false;
 
-		m_key_mapping_window->setVisibleSmooth(false);
-		return;
-	}
+        m_key_mapping_window->setVisibleSmooth(false);
+        return;
+    }
 
-	std::string combo;
-	int keys = RoR::App::GetInputEngine()->getCurrentKeyCombo(&combo);
-	if (keys != 0)
-	{
-		endTime = Timer + 5000;
-		startCounter = true;
-		LastKeyCombo = Ogre::String(combo.c_str());
+    std::string combo;
+    int keys = RoR::App::GetInputEngine()->getCurrentKeyCombo(&combo);
+    if (keys != 0)
+    {
+        endTime = Timer + 5000;
+        startCounter = true;
+        LastKeyCombo = Ogre::String(combo.c_str());
 
-		Ogre::String str_text = "";
-		str_text += "Press any button/Move your joystick axis to map it to this event. \nYou can also close this window to cancel the mapping. \n\n";
-		str_text += "#66FF33 Event: #FFFFFF" + m_keymapping->getSubItemNameAt(0, m_keymapping->getItemIndexSelected()) + "\n";
-		str_text += "#66FF33 Current Key: #FFFFFF" + m_keymapping->getSubItemNameAt(1, m_keymapping->getItemIndexSelected()) + "\n";
-		str_text += "#66FF33 New Key: #FFFFFF" + LastKeyCombo;
-		m_key_mapping_window_text->setCaptionWithReplacing(str_text);
-		
-		str_text = "";
-	}
+        Ogre::String str_text = "";
+        str_text += "Press any button/Move your joystick axis to map it to this event. \nYou can also close this window to cancel the mapping. \n\n";
+        str_text += "#66FF33 Event: #FFFFFF" + m_keymapping->getSubItemNameAt(0, m_keymapping->getItemIndexSelected()) + "\n";
+        str_text += "#66FF33 Current Key: #FFFFFF" + m_keymapping->getSubItemNameAt(1, m_keymapping->getItemIndexSelected()) + "\n";
+        str_text += "#66FF33 New Key: #FFFFFF" + LastKeyCombo;
+        m_key_mapping_window_text->setCaptionWithReplacing(str_text);
+        
+        str_text = "";
+    }
 
-	if (startCounter)
-	{
-		long timer1 = Timer - endTime;
-		m_key_mapping_window_info->setCaptionWithReplacing("Changes will apply in: " + Ogre::StringConverter::toString(-timer1) + " Seconds");
-		if (timer1 == 0)
-		{
-			m_keymapping->setSubItemNameAt(1, m_keymapping->getItemIndexSelected(), LastKeyCombo);
+    if (startCounter)
+    {
+        long timer1 = Timer - endTime;
+        m_key_mapping_window_info->setCaptionWithReplacing("Changes will apply in: " + Ogre::StringConverter::toString(-timer1) + " Seconds");
+        if (timer1 == 0)
+        {
+            m_keymapping->setSubItemNameAt(1, m_keymapping->getItemIndexSelected(), LastKeyCombo);
 
-			startCounter = false;
-			LastKeyCombo = "";
+            startCounter = false;
+            LastKeyCombo = "";
 
-			MyGUI::Gui::getInstance().eventFrameStart -= MyGUI::newDelegate(this, &CLASS::FrameEntered);
-			isFrameActivated = false;
+            MyGUI::Gui::getInstance().eventFrameStart -= MyGUI::newDelegate(this, &CLASS::FrameEntered);
+            isFrameActivated = false;
 
-			m_key_mapping_window->setVisibleSmooth(false);
-			return;
-		}
-	}
+            m_key_mapping_window->setVisibleSmooth(false);
+            return;
+        }
+    }
 
 }
 

@@ -14,7 +14,7 @@ using namespace GUI;
 
 GameChatBoxLayout::GameChatBoxLayout(MyGUI::Widget* _parent)
 {
-	initialiseByAttributes(this, _parent);
+    initialiseByAttributes(this, _parent);
 }
 
 GameChatBoxLayout::~GameChatBoxLayout()

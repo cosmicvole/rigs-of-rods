@@ -25,23 +25,23 @@ BEGIN_AS_NAMESPACE
 class CScriptString
 {
 public:
-	CScriptString();
-	CScriptString(const CScriptString &other);
-	CScriptString(const char *s, unsigned int len);
-	CScriptString(const std::string &s);
+    CScriptString();
+    CScriptString(const CScriptString &other);
+    CScriptString(const char *s, unsigned int len);
+    CScriptString(const std::string &s);
 
-	void AddRef() const;
-	void Release() const;
+    void AddRef() const;
+    void Release() const;
 
-	CScriptString &operator=(const CScriptString &other);
-	CScriptString &operator+=(const CScriptString &other);
-	friend CScriptString *operator+(const CScriptString &a, const CScriptString &b);
+    CScriptString &operator=(const CScriptString &other);
+    CScriptString &operator+=(const CScriptString &other);
+    friend CScriptString *operator+(const CScriptString &a, const CScriptString &b);
 
-	std::string buffer;
+    std::string buffer;
 
 protected:
-	~CScriptString();
-	mutable int refCount;
+    ~CScriptString();
+    mutable int refCount;
 };
 
 // This function will determine the configuration of the engine

@@ -28,20 +28,20 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace Ogre {
 
-	/** Factory class for DeflectorPlaneAffector. */
-	class FireExtinguisherAffectorFactory : public ParticleAffectorFactory
-	{
-		/** See ParticleAffectorFactory */
-		String getName() const { return "FireExtinguisher"; }
+    /** Factory class for DeflectorPlaneAffector. */
+    class FireExtinguisherAffectorFactory : public ParticleAffectorFactory
+    {
+        /** See ParticleAffectorFactory */
+        String getName() const { return "FireExtinguisher"; }
 
-		/** See ParticleAffectorFactory */
-		Ogre::ParticleAffector* createAffector(Ogre::ParticleSystem* psys)
-		{
-			Ogre::ParticleAffector* p = OGRE_NEW FireExtinguisherAffector(psys);
-			mAffectors.push_back(p);
-			return p;
-		}
-	};
+        /** See ParticleAffectorFactory */
+        Ogre::ParticleAffector* createAffector(Ogre::ParticleSystem* psys)
+        {
+            Ogre::ParticleAffector* p = OGRE_NEW FireExtinguisherAffector(psys);
+            mAffectors.push_back(p);
+            return p;
+        }
+    };
 }
 #endif
 

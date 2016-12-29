@@ -48,14 +48,14 @@ public:
     // Deletes all keys
     void DeleteAll();
 
-	// Garbage collections behaviours
-	int GetRefCount();
-	void SetGCFlag();
-	bool GetGCFlag();
-	void EnumReferences(asIScriptEngine *engine);
-	void ReleaseAllReferences(asIScriptEngine *engine);
+    // Garbage collections behaviours
+    int GetRefCount();
+    void SetGCFlag();
+    bool GetGCFlag();
+    void EnumReferences(asIScriptEngine *engine);
+    void ReleaseAllReferences(asIScriptEngine *engine);
 
-	// The structure for holding the values
+    // The structure for holding the values
     struct valueStruct
     {
         union
@@ -67,17 +67,17 @@ public:
         int   typeId;
     };
 
-	// HACK so we can interate over the items in C++
+    // HACK so we can interate over the items in C++
     std::map<std::string, valueStruct> dict;
 protected:
 
-	// We don't want anyone to call the destructor directly, it should be called through the Release method
-	virtual ~CScriptDictionary();
+    // We don't want anyone to call the destructor directly, it should be called through the Release method
+    virtual ~CScriptDictionary();
 
-	// Helper methods
+    // Helper methods
     void FreeValue(valueStruct &value);
-	
-	// Our properties
+    
+    // Our properties
     asIScriptEngine *engine;
     mutable int refCount;
 };

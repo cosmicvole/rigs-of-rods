@@ -32,49 +32,49 @@ ATTRIBUTE_CLASS_LAYOUT(TextureToolWindow, "TextureTool.layout");
 
 class TextureToolWindow : public wraps::BaseLayout, public ZeroedMemoryAllocator
 {
-	friend class RoRSingleton<TextureToolWindow>;
+    friend class RoRSingleton<TextureToolWindow>;
 
 public:
 
-	TextureToolWindow();
-	~TextureToolWindow();
+    TextureToolWindow();
+    ~TextureToolWindow();
 
-	void show();
-	void hide();
+    void show();
+    void hide();
 
-	bool IsVisible();
-	void SetVisible(bool value);
+    bool IsVisible();
+    void SetVisible(bool value);
 
 private:
 
-	ATTRIBUTE_FIELD_WIDGET_NAME(TextureToolWindow, mTxt, "txtInfo");
-	MyGUI::TextBox* mTxt;
+    ATTRIBUTE_FIELD_WIDGET_NAME(TextureToolWindow, mTxt, "txtInfo");
+    MyGUI::TextBox* mTxt;
 
-	ATTRIBUTE_FIELD_WIDGET_NAME(TextureToolWindow, mCBo, "cboTextures");
-	MyGUI::ComboBox* mCBo;
+    ATTRIBUTE_FIELD_WIDGET_NAME(TextureToolWindow, mCBo, "cboTextures");
+    MyGUI::ComboBox* mCBo;
 
-	ATTRIBUTE_FIELD_WIDGET_NAME(TextureToolWindow, mBtnSavePNG, "btnSavePNG");
-	MyGUI::Button* mBtnSavePNG;
+    ATTRIBUTE_FIELD_WIDGET_NAME(TextureToolWindow, mBtnSavePNG, "btnSavePNG");
+    MyGUI::Button* mBtnSavePNG;
 
-	ATTRIBUTE_FIELD_WIDGET_NAME(TextureToolWindow, mBtnSaveRAW, "btnSaveRAW");
-	MyGUI::Button* mBtnSaveRAW;
+    ATTRIBUTE_FIELD_WIDGET_NAME(TextureToolWindow, mBtnSaveRAW, "btnSaveRAW");
+    MyGUI::Button* mBtnSaveRAW;
 
-	ATTRIBUTE_FIELD_WIDGET_NAME(TextureToolWindow, mImage, "imgTexture");
-	MyGUI::ImageBox* mImage;
+    ATTRIBUTE_FIELD_WIDGET_NAME(TextureToolWindow, mImage, "imgTexture");
+    MyGUI::ImageBox* mImage;
 
-	ATTRIBUTE_FIELD_WIDGET_NAME(TextureToolWindow, mChkDynamic, "chkDynamic");
-	MyGUI::Button* mChkDynamic;
-	
-	void notifyWindowPressed(MyGUI::Window* _widget, const std::string& _name);
-	void eventClickSavePNGButton(MyGUI::WidgetPtr _sender);
-	void eventClickSaveRAWButton(MyGUI::WidgetPtr _sender);
-	void eventClickDynamicButton(MyGUI::WidgetPtr _sender);
-	void eventSelectTexture(MyGUI::WidgetPtr _sender);
-	void eventSelectTexture2(MyGUI::ComboBoxPtr _sender, size_t _index);
+    ATTRIBUTE_FIELD_WIDGET_NAME(TextureToolWindow, mChkDynamic, "chkDynamic");
+    MyGUI::Button* mChkDynamic;
+    
+    void notifyWindowPressed(MyGUI::Window* _widget, const std::string& _name);
+    void eventClickSavePNGButton(MyGUI::WidgetPtr _sender);
+    void eventClickSaveRAWButton(MyGUI::WidgetPtr _sender);
+    void eventClickDynamicButton(MyGUI::WidgetPtr _sender);
+    void eventSelectTexture(MyGUI::WidgetPtr _sender);
+    void eventSelectTexture2(MyGUI::ComboBoxPtr _sender, size_t _index);
 
-	void updateControls(Ogre::String texName);
-	void saveTexture( Ogre::String texName, bool png );
-	void fillCombo();
+    void updateControls(Ogre::String texName);
+    void saveTexture( Ogre::String texName, bool png );
+    void fillCombo();
 };
 
 } // namespace GUI

@@ -3,7 +3,7 @@
 This source file is part of Hydrax.
 Visit ---
 
-Copyright (C) 2008 Xavier VerguÌn Gonz·lez <xavierverguin@hotmail.com>
+Copyright (C) 2008 Xavier Vergu√≠n Gonz√°lez <xavierverguin@hotmail.com>
                                            <xavyiy@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -28,71 +28,71 @@ http://www.gnu.org/copyleft/lesser.txt.
 namespace Hydrax{namespace Noise
 {
     Noise::Noise(const Ogre::String &Name, const bool& GPUNormalMapSupported)
-		: mName(Name)
-	    , mCreated(false)
-		, mGPUNormalMapSupported(GPUNormalMapSupported)
-		, mGPUNormalMapResourcesCreated(false)
-	{
-	}
+        : mName(Name)
+        , mCreated(false)
+        , mGPUNormalMapSupported(GPUNormalMapSupported)
+        , mGPUNormalMapResourcesCreated(false)
+    {
+    }
 
-	Noise::~Noise()
-	{
-	}
+    Noise::~Noise()
+    {
+    }
 
-	void Noise::create()
-	{
-		mCreated = true;
-	}
+    void Noise::create()
+    {
+        mCreated = true;
+    }
 
-	void Noise::remove()
-	{
-		mCreated = false;
-	}
+    void Noise::remove()
+    {
+        mCreated = false;
+    }
 
-	bool Noise::createGPUNormalMapResources(GPUNormalMapManager *g)
-	{
-		if (mGPUNormalMapSupported)
-		{
-			if (mGPUNormalMapResourcesCreated)
-			{
-				removeGPUNormalMapResources(g);
-			}
+    bool Noise::createGPUNormalMapResources(GPUNormalMapManager *g)
+    {
+        if (mGPUNormalMapSupported)
+        {
+            if (mGPUNormalMapResourcesCreated)
+            {
+                removeGPUNormalMapResources(g);
+            }
 
-			mGPUNormalMapResourcesCreated = true;
+            mGPUNormalMapResourcesCreated = true;
 
-			g->remove();
+            g->remove();
 
-			return true;
-		}
+            return true;
+        }
 
-		return false;
-	}
+        return false;
+    }
 
-	void Noise::removeGPUNormalMapResources(GPUNormalMapManager *g)
-	{
-		if (mGPUNormalMapSupported && mGPUNormalMapResourcesCreated)
-		{
-			mGPUNormalMapResourcesCreated = false;
+    void Noise::removeGPUNormalMapResources(GPUNormalMapManager *g)
+    {
+        if (mGPUNormalMapSupported && mGPUNormalMapResourcesCreated)
+        {
+            mGPUNormalMapResourcesCreated = false;
 
-			g->remove();
-		}
-	}
+            g->remove();
+        }
+    }
 
-	void Noise::saveCfg(Ogre::String &Data)
-	{
-		Data += "#Noise options\n";
-		Data += "Noise="+mName+"\n\n";
-	}
+    void Noise::saveCfg(Ogre::String &Data)
+    {
+        Data += "#Noise options\n";
+        Data += "Noise="+mName+"\n\n";
+    }
 
-	bool Noise::loadCfg(Ogre::ConfigFile &CfgFile)
-	{
-		if (CfgFile.getSetting("Noise") == mName)
-		{
-		    HydraxLOG(mName + " options entry found.");
-			return true;
-		}
+    bool Noise::loadCfg(Ogre::ConfigFile &CfgFile)
+    {
+        if (CfgFile.getSetting("Noise") == mName)
+        {
+            HydraxLOG(mName + " options entry found.");
+            return true;
+        }
 
         HydraxLOG("Error (Noise::loadCfg):\t" + mName + " options entry can not be found.");
-		return false;
-	}
+        return false;
+    }
 }}

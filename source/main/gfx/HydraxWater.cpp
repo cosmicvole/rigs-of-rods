@@ -39,59 +39,59 @@ waternoise(0)
 , mRenderCamera(gEnv->mainCamera)
 , CurrentConfigFile(configFile)
 {
-	waterHeight = PARSEREAL(mTerrainConfig.getSetting("WaterLine", "General"));
+    waterHeight = PARSEREAL(mTerrainConfig.getSetting("WaterLine", "General"));
 
-	mRenderCamera->setNearClipDistance(0.1f);
+    mRenderCamera->setNearClipDistance(0.1f);
 
-	InitHydrax();
+    InitHydrax();
 }
 
 HydraxWater::~HydraxWater()
 {
-	mHydrax->remove();
-	mHydrax = nullptr;
+    mHydrax->remove();
+    mHydrax = nullptr;
 }
 
 void HydraxWater::InitHydrax()
 {
-	mHydrax = new Hydrax::Hydrax(gEnv->sceneManager, mRenderCamera, RoR::App::GetOgreSubsystem()->GetViewport());
+    mHydrax = new Hydrax::Hydrax(gEnv->sceneManager, mRenderCamera, RoR::App::GetOgreSubsystem()->GetViewport());
 
-	waternoise = new Hydrax::Noise::Perlin();
-	mModule = new Hydrax::Module::ProjectedGrid(// Hydrax parent pointer
-		mHydrax,
-		// Noise module
-		waternoise,
-		// Base plane
-		Ogre::Plane(Ogre::Vector3::UNIT_Y, 0),
-		// Normal mode
-		Hydrax::MaterialManager::NM_VERTEX,
-		// Projected grid options
-		Hydrax::Module::ProjectedGrid::Options());
+    waternoise = new Hydrax::Noise::Perlin();
+    mModule = new Hydrax::Module::ProjectedGrid(// Hydrax parent pointer
+        mHydrax,
+        // Noise module
+        waternoise,
+        // Base plane
+        Ogre::Plane(Ogre::Vector3::UNIT_Y, 0),
+        // Normal mode
+        Hydrax::MaterialManager::NM_VERTEX,
+        // Projected grid options
+        Hydrax::Module::ProjectedGrid::Options());
 
-	mHydrax->setModule(static_cast<Hydrax::Module::Module*>(mModule));
+    mHydrax->setModule(static_cast<Hydrax::Module::Module*>(mModule));
 
-	mHydrax->loadCfg(CurrentConfigFile);
-	
-	// Choose shader language based on renderer (HLSL=0, CG=1, GLSL=2)
-	if(Root::getSingleton().getRenderSystem()->getName() == "Direct3D9 Rendering Subsystem" || Root::getSingleton().getRenderSystem()->getName() == "Direct3D11 Rendering Subsystem")
-	{
-		mHydrax->setShaderMode(static_cast<Hydrax::MaterialManager::ShaderMode>(0));
-	}
-	else
-	{
-		mHydrax->setShaderMode(static_cast<Hydrax::MaterialManager::ShaderMode>(2));
-	}
+    mHydrax->loadCfg(CurrentConfigFile);
+    
+    // Choose shader language based on renderer (HLSL=0, CG=1, GLSL=2)
+    if(Root::getSingleton().getRenderSystem()->getName() == "Direct3D9 Rendering Subsystem" || Root::getSingleton().getRenderSystem()->getName() == "Direct3D11 Rendering Subsystem")
+    {
+        mHydrax->setShaderMode(static_cast<Hydrax::MaterialManager::ShaderMode>(0));
+    }
+    else
+    {
+        mHydrax->setShaderMode(static_cast<Hydrax::MaterialManager::ShaderMode>(2));
+    }
 
 
-	mHydrax->create();
-	mHydrax->setPosition(Ogre::Vector3(0, waterHeight, 0));
+    mHydrax->create();
+    mHydrax->setPosition(Ogre::Vector3(0, waterHeight, 0));
 }
 
 bool HydraxWater::isUnderWater(Ogre::Vector3 pos)
 {
-	if (pos.y < getHeightWaves(Ogre::Vector3(pos.x, pos.y, pos.z)))
-		return true;
-	return false;
+    if (pos.y < getHeightWaves(Ogre::Vector3(pos.x, pos.y, pos.z)))
+        return true;
+    return false;
 }
 
 void HydraxWater::setCamera(Ogre::Camera *cam)
@@ -100,7 +100,7 @@ void HydraxWater::setCamera(Ogre::Camera *cam)
 
 bool HydraxWater::allowUnderWater()
 {
-	return true;
+    return true;
 }
 
 void HydraxWater::showWave(Vector3 refpos)
@@ -109,20 +109,20 @@ void HydraxWater::showWave(Vector3 refpos)
 
 void HydraxWater::update()
 {
-	//This has to change in the next versions when SkyX will be added.
+    //This has to change in the next versions when SkyX will be added.
 #ifdef USE_CAELUM
-	if (gEnv->sky) //Caelum way of doing things
-	{
-		Ogre::Vector3 sunPosition = gEnv->mainCamera->getDerivedPosition();
-		sunPosition -= gEnv->sky->getCaelumSys()->getSun()->getLightDirection() * 80000;
-		mHydrax->setSunPosition(sunPosition);
-		mHydrax->setSunColor(Ogre::Vector3(gEnv->sky->getCaelumSys()->getSun()->getBodyColour().r, gEnv->sky->getCaelumSys()->getSun()->getBodyColour().g, gEnv->sky->getCaelumSys()->getSun()->getBodyColour().b));
-	}
-	else
+    if (gEnv->sky) //Caelum way of doing things
+    {
+        Ogre::Vector3 sunPosition = gEnv->mainCamera->getDerivedPosition();
+        sunPosition -= gEnv->sky->getCaelumSys()->getSun()->getLightDirection() * 80000;
+        mHydrax->setSunPosition(sunPosition);
+        mHydrax->setSunColor(Ogre::Vector3(gEnv->sky->getCaelumSys()->getSun()->getBodyColour().r, gEnv->sky->getCaelumSys()->getSun()->getBodyColour().g, gEnv->sky->getCaelumSys()->getSun()->getBodyColour().b));
+    }
+    else
 #endif // USE_CAELUM
-	{
-		mHydrax->setSunPosition(gEnv->sceneManager->getLight("MainLight")->getPosition());
-	}
+    {
+        mHydrax->setSunPosition(gEnv->sceneManager->getLight("MainLight")->getPosition());
+    }
 }
 
 void HydraxWater::prepareShutdown()
@@ -131,35 +131,35 @@ void HydraxWater::prepareShutdown()
 
 float HydraxWater::getHeight()
 {
-	return waterHeight;
+    return waterHeight;
 }
 
 void HydraxWater::setHeight(float value)
 {
-	waterHeight = value;
+    waterHeight = value;
 }
 
 void HydraxWater::setVisible(bool value)
 {
-	if (mHydrax)
-		mHydrax->setVisible(value);
+    if (mHydrax)
+        mHydrax->setVisible(value);
 }
 
 float HydraxWater::getHeightWaves(Vector3 pos)
 {
-	if (!RoR::App::GetGfxWaterUseWaves())
-	{
-		return waterHeight;
-	}
-	waveHeight = mHydrax->getHeigth(pos);
-	return waveHeight;
+    if (!RoR::App::GetGfxWaterUseWaves())
+    {
+        return waterHeight;
+    }
+    waveHeight = mHydrax->getHeigth(pos);
+    return waveHeight;
 }
 
 Vector3 HydraxWater::getVelocity(Vector3 pos)
 {
-	if (!RoR::App::GetGfxWaterUseWaves()) return Vector3(0, 0, 0);
+    if (!RoR::App::GetGfxWaterUseWaves()) return Vector3(0, 0, 0);
 
-	return Vector3(0, 0, 0); //TODO
+    return Vector3(0, 0, 0); //TODO
 }
 
 void HydraxWater::updateReflectionPlane(float h)
@@ -169,21 +169,21 @@ void HydraxWater::updateReflectionPlane(float h)
 
 void HydraxWater::setFadeColour(ColourValue ambient)
 {
-	if (mHydrax)
-		mHydrax->setSunColor(Vector3(ambient.r, ambient.g, ambient.b));
+    if (mHydrax)
+        mHydrax->setSunColor(Vector3(ambient.r, ambient.g, ambient.b));
 }
 
 void HydraxWater::setSunPosition(Ogre::Vector3 pos)
 {
-	if (mHydrax)
-		mHydrax->setSunPosition(pos);
+    if (mHydrax)
+        mHydrax->setSunPosition(pos);
 }
 
 void HydraxWater::framestep(float dt)
 {
-	if (mHydrax)
-		mHydrax->update(dt);
-	update();
+    if (mHydrax)
+        mHydrax->update(dt);
+    update();
 }
 
 void HydraxWater::moveTo(float centerheight)

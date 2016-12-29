@@ -29,28 +29,28 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace Ogre {
 
-	/** Factory class for DeflectorPlaneAffector. */
-	class ExtinguishableFireAffectorFactory : public ParticleAffectorFactory
-	{
-		/** See ParticleAffectorFactory */
-		String getName() const { return "ExtinguishableFire"; }
+    /** Factory class for DeflectorPlaneAffector. */
+    class ExtinguishableFireAffectorFactory : public ParticleAffectorFactory
+    {
+        /** See ParticleAffectorFactory */
+        String getName() const { return "ExtinguishableFire"; }
 
-		/** See ParticleAffectorFactory */
-		Ogre::ParticleAffector* createAffector(Ogre::ParticleSystem* psys)
-		{
-			Ogre::ParticleAffector* p = OGRE_NEW ExtinguishableFireAffector(psys);
-			mAffectors.push_back(p);
-			return p;
-		}
+        /** See ParticleAffectorFactory */
+        Ogre::ParticleAffector* createAffector(Ogre::ParticleSystem* psys)
+        {
+            Ogre::ParticleAffector* p = OGRE_NEW ExtinguishableFireAffector(psys);
+            mAffectors.push_back(p);
+            return p;
+        }
 
-		public:
+        public:
 
-		typedef VectorIterator<vector<ParticleAffector*>::type> affectorIterator;
+        typedef VectorIterator<vector<ParticleAffector*>::type> affectorIterator;
 
-		/** Allow external access to the mFactories iterator */
-		affectorIterator getAffectorIterator() { return affectorIterator(mAffectors.begin(), mAffectors.end()); }
-		
-	};
+        /** Allow external access to the mFactories iterator */
+        affectorIterator getAffectorIterator() { return affectorIterator(mAffectors.begin(), mAffectors.end()); }
+        
+    };
 }
 #endif
 

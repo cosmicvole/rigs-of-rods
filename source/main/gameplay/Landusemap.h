@@ -28,18 +28,18 @@ class Landusemap : public ZeroedMemoryAllocator
 {
 public:
 
-	Landusemap(Ogre::String cfgfilename);
-	~Landusemap();
+    Landusemap(Ogre::String cfgfilename);
+    ~Landusemap();
 
-	ground_model_t *getGroundModelAt(int x, int z);
-	int loadConfig(Ogre::String filename);
+    ground_model_t *getGroundModelAt(int x, int z);
+    int loadConfig(Ogre::String filename);
 
 protected:
 
-	ground_model_t **data;
-	ground_model_t *default_ground_model;
+    ground_model_t **data;
+    ground_model_t *default_ground_model;
 
-	Ogre::Vector3 mapsize;
+    Ogre::Vector3 mapsize;
 };
 
 #endif // __LandUseMap_H_

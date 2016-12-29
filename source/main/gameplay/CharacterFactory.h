@@ -35,19 +35,19 @@ class CharacterFactory : public RoRSingleton< CharacterFactory >, public ZeroedM
 {
 public:
 
-	Character *createLocal(int playerColour);
+    Character *createLocal(int playerColour);
 
-	void update(float dt);
+    void update(float dt);
 #ifdef USE_SOCKETW
-	void handleStreamData(std::vector<RoR::Networking::recv_packet_t> packet);
+    void handleStreamData(std::vector<RoR::Networking::recv_packet_t> packet);
 #endif // USE_SOCKETW
 
 private:
 
-	std::vector<std::unique_ptr<Character>> m_characters;
+    std::vector<std::unique_ptr<Character>> m_characters;
 
-	void createRemoteInstance(int sourceid, int streamid);
-	void removeStreamSource(int sourceid);
+    void createRemoteInstance(int sourceid, int streamid);
+    void removeStreamSource(int sourceid);
 };
 
 #endif // __CharacterFactory_H_

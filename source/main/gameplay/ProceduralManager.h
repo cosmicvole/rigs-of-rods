@@ -28,49 +28,49 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 class ProceduralPoint : public ZeroedMemoryAllocator
 {
 public:
-	Ogre::Vector3 position;
-	Ogre::Quaternion rotation;
-	int type;
-	float width;
-	float bwidth;
-	float bheight;
-	int pillartype;
+    Ogre::Vector3 position;
+    Ogre::Quaternion rotation;
+    int type;
+    float width;
+    float bwidth;
+    float bheight;
+    int pillartype;
 };
 
 class ProceduralObject : public ZeroedMemoryAllocator
 {
 public:
-	ProceduralObject() : loadingState(-1), name(""), road(0)
-	{
-	}
-	int loadingState;
-	std::string name;
-	std::vector<ProceduralPoint> points;
-	
-	// runtime
-	Road2 *road;
+    ProceduralObject() : loadingState(-1), name(""), road(0)
+    {
+    }
+    int loadingState;
+    std::string name;
+    std::vector<ProceduralPoint> points;
+    
+    // runtime
+    Road2 *road;
 };
 
 class ProceduralManager : public ZeroedMemoryAllocator
 {
 protected:
-	std::vector<ProceduralObject> pObjects;
-	int objectcounter;
-	
+    std::vector<ProceduralObject> pObjects;
+    int objectcounter;
+    
 public:
-	ProceduralManager();
-	~ProceduralManager();
+    ProceduralManager();
+    ~ProceduralManager();
 
-	int addObject(ProceduralObject &po);
+    int addObject(ProceduralObject &po);
 
-	int updateAllObjects();
-	int updateObject(ProceduralObject &po);
-	
-	
-	int deleteAllObjects();
-	int deleteObject(ProceduralObject &po);
+    int updateAllObjects();
+    int updateObject(ProceduralObject &po);
+    
+    
+    int deleteAllObjects();
+    int deleteObject(ProceduralObject &po);
 
-	std::vector<ProceduralObject> &getObjects();
+    std::vector<ProceduralObject> &getObjects();
 };
 
 #endif // __ProceduralManager_H_

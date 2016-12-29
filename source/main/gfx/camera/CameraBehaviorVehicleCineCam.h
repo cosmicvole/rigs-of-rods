@@ -31,21 +31,21 @@ class CameraBehaviorVehicleCineCam : public CameraBehaviorVehicle
 {
 public:
 
-	CameraBehaviorVehicleCineCam(CameraManager* camera_mgr);
-	
-	void update(const CameraManager::CameraContext &ctx);
+    CameraBehaviorVehicleCineCam(CameraManager* camera_mgr);
+    
+    void update(const CameraManager::CameraContext &ctx);
 
-	void activate(const CameraManager::CameraContext &ctx, bool reset = true);
-	void deactivate(const CameraManager::CameraContext &ctx);
-	void reset(const CameraManager::CameraContext &ctx);
+    void activate(const CameraManager::CameraContext &ctx, bool reset = true);
+    void deactivate(const CameraManager::CameraContext &ctx);
+    void reset(const CameraManager::CameraContext &ctx);
 
-	bool switchBehavior(const CameraManager::CameraContext &ctx);
+    bool switchBehavior(const CameraManager::CameraContext &ctx);
 
 protected:
 
-	CameraManager*     m_camera_manager;
+    CameraManager*     m_camera_manager;
 
-	static const int   DEFAULT_INTERNAL_CAM_PITCH = -15;
+    static const int   DEFAULT_INTERNAL_CAM_PITCH = -15;
 };
 
 #endif // __CAMERA_BEHAVIOR_VEHICLE_INTERNAL_H_

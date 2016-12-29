@@ -31,80 +31,80 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 
 class CameraManager : public IBehaviorManager
 {
-	friend class RoR::SceneMouse;
+    friend class RoR::SceneMouse;
 
 public:
 
-	CameraManager();
-	~CameraManager();
+    CameraManager();
+    ~CameraManager();
 
-	class CameraContext
-	{
-	public:
+    class CameraContext
+    {
+    public:
 
-		Beam *mCurrTruck;
-		DOFManager *mDof;
-		Ogre::Degree mRotScale;
-		Ogre::Real mDt;
-		Ogre::Real mTransScale;
-		Ogre::Radian fovInternal;
-		Ogre::Radian fovExternal;
-		bool mDebug;
-	};
+        Beam *mCurrTruck;
+        DOFManager *mDof;
+        Ogre::Degree mRotScale;
+        Ogre::Real mDt;
+        Ogre::Real mTransScale;
+        Ogre::Radian fovInternal;
+        Ogre::Radian fovExternal;
+        bool mDebug;
+    };
 
-	enum CameraBehaviors {
-		CAMERA_BEHAVIOR_CHARACTER=0,
-		CAMERA_BEHAVIOR_STATIC,
-		CAMERA_BEHAVIOR_VEHICLE,
-		CAMERA_BEHAVIOR_VEHICLE_SPLINE,
-		CAMERA_BEHAVIOR_VEHICLE_CINECAM,
-		CAMERA_BEHAVIOR_END,
-		CAMERA_BEHAVIOR_FREE,
-		CAMERA_BEHAVIOR_FIXED,
-		CAMERA_BEHAVIOR_ISOMETRIC
-	};
+    enum CameraBehaviors {
+        CAMERA_BEHAVIOR_CHARACTER=0,
+        CAMERA_BEHAVIOR_STATIC,
+        CAMERA_BEHAVIOR_VEHICLE,
+        CAMERA_BEHAVIOR_VEHICLE_SPLINE,
+        CAMERA_BEHAVIOR_VEHICLE_CINECAM,
+        CAMERA_BEHAVIOR_END,
+        CAMERA_BEHAVIOR_FREE,
+        CAMERA_BEHAVIOR_FIXED,
+        CAMERA_BEHAVIOR_ISOMETRIC
+    };
 
-	/**
-	* TIGHT-LOOP; Called once per frame.
-	*/
-	bool update(float dt);
+    /**
+    * TIGHT-LOOP; Called once per frame.
+    */
+    bool update(float dt);
 
-	void switchBehavior(int newBehavior, bool reset = true);
-	void switchToNextBehavior(bool force = true);
-	void toggleBehavior(int behavior);
+    void switchBehavior(int newBehavior, bool reset = true);
+    void switchToNextBehavior(bool force = true);
+    void toggleBehavior(int behavior);
 
-	bool gameControlsLocked();
-	bool hasActiveBehavior();
-	bool hasActiveCharacterBehavior();
-	bool hasActiveVehicleBehavior();
+    bool gameControlsLocked();
+    bool hasActiveBehavior();
+    bool hasActiveCharacterBehavior();
+    bool hasActiveVehicleBehavior();
 
-	int getCurrentBehavior();
+    int getCurrentBehavior();
 
-	void OnReturnToMainMenu();
-	void NotifyContextChange();
-	void NotifyVehicleChanged(Beam* old_vehicle, Beam* new_vehicle);
+    void OnReturnToMainMenu();
+    void NotifyContextChange();
+    void NotifyVehicleChanged(Beam* old_vehicle, Beam* new_vehicle);
 
 protected:
 
-	void createGlobalBehaviors();
-	void SwitchBehaviorOnVehicleChange(int newBehaviorID, bool reset, Beam* old_vehicle, Beam* new_vehicle);
+    void createGlobalBehaviors();
+    void SwitchBehaviorOnVehicleChange(int newBehaviorID, bool reset, Beam* old_vehicle, Beam* new_vehicle);
 
-	CameraContext ctx;
+    CameraContext ctx;
 
-	float mTransScale, mTransSpeed;
-	float mRotScale, mRotateSpeed;
+    float mTransScale, mTransSpeed;
+    float mRotScale, mRotateSpeed;
 
-	int currentBehaviorID;
-	IBehavior<CameraContext> *currentBehavior;
+    int currentBehaviorID;
+    IBehavior<CameraContext> *currentBehavior;
 
-	std::map <int , IBehavior<CameraContext> *> globalBehaviors;
+    std::map <int , IBehavior<CameraContext> *> globalBehaviors;
 
-	bool m_config_enter_vehicle_keep_fixedfreecam;
-	bool m_config_exit_vehicle_keep_fixedfreecam;
+    bool m_config_enter_vehicle_keep_fixedfreecam;
+    bool m_config_exit_vehicle_keep_fixedfreecam;
 
-	bool mouseMoved(const OIS::MouseEvent& _arg);
-	bool mousePressed(const OIS::MouseEvent& _arg, OIS::MouseButtonID _id);
-	bool mouseReleased(const OIS::MouseEvent& _arg, OIS::MouseButtonID _id);
+    bool mouseMoved(const OIS::MouseEvent& _arg);
+    bool mousePressed(const OIS::MouseEvent& _arg, OIS::MouseButtonID _id);
+    bool mouseReleased(const OIS::MouseEvent& _arg, OIS::MouseButtonID _id);
 };
 
 #endif // __CAMERA_MANAGER_H_

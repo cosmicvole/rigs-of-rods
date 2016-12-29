@@ -28,26 +28,26 @@ class MaterialFunctionMapper : public ZeroedMemoryAllocator
 {
 public:
 
-	typedef struct materialmapping_t
-	{
-		Ogre::ColourValue emissiveColour;
-		Ogre::String material;
-		Ogre::String originalmaterial;
-		bool laststate;
-		int type;
-	} materialmapping_t;
+    typedef struct materialmapping_t
+    {
+        Ogre::ColourValue emissiveColour;
+        Ogre::String material;
+        Ogre::String originalmaterial;
+        bool laststate;
+        int type;
+    } materialmapping_t;
 
-	void addMaterial(int flareid, materialmapping_t t);
-	void toggleFunction(int flareid, bool enabled);
-	// this function searches and replaces materials in meshes
-	void replaceMeshMaterials(Ogre::Entity *e);
+    void addMaterial(int flareid, materialmapping_t t);
+    void toggleFunction(int flareid, bool enabled);
+    // this function searches and replaces materials in meshes
+    void replaceMeshMaterials(Ogre::Entity *e);
 
-	static void replaceSimpleMeshMaterials(Ogre::Entity *e, Ogre::ColourValue c = Ogre::ColourValue::White);
+    static void replaceSimpleMeshMaterials(Ogre::Entity *e, Ogre::ColourValue c = Ogre::ColourValue::White);
 
 private:
 
-	static int simpleMaterialCounter;
-	std::map <int, std::vector<materialmapping_t> > materialBindings;
+    static int simpleMaterialCounter;
+    std::map <int, std::vector<materialmapping_t> > materialBindings;
 };
 
 #endif // __MaterialFunctionMapper_H_

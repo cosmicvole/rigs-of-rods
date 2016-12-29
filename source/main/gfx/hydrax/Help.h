@@ -3,7 +3,7 @@
 This source file is part of Hydrax.
 Visit ---
 
-Copyright (C) 2008 Xavier VerguÌn Gonz·lez <xavierverguin@hotmail.com>
+Copyright (C) 2008 Xavier Vergu√≠n Gonz√°lez <xavierverguin@hotmail.com>
                                            <xavyiy@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -47,7 +47,7 @@ namespace Hydrax
         }
 
         /** Constructor
-        	@param size The width and height values
+            @param size The width and height values
         */
         Size(const int &size)
         {
@@ -56,8 +56,8 @@ namespace Hydrax
         }
 
         /** Constructor
-        	@param width Width value
-        	@param height Height value
+            @param width Width value
+            @param height Height value
         */
         Size(const int &width, const int &height)
         {
@@ -72,7 +72,7 @@ namespace Hydrax
         }
 
         /** Sets the same width and height value
-        	@param size The width and height values
+            @param size The width and height values
         */
         void setSize(const int &size)
         {
@@ -81,8 +81,8 @@ namespace Hydrax
         }
 
         /** Sets the especified values
-        	@param width Width value
-        	@param height Height value
+            @param width Width value
+            @param height Height value
         */
         void setSize(const int &width, const int &height)
         {
@@ -91,28 +91,28 @@ namespace Hydrax
         }
     };
 
-	/** Math class with some help funtions
-	 */
-	class Math
-	{
-	public:
-		/** Constructor
-		 */
-		Math(){};
-		/** Destructor
-		 */
-		~Math(){};
+    /** Math class with some help funtions
+     */
+    class Math
+    {
+    public:
+        /** Constructor
+         */
+        Math(){};
+        /** Destructor
+         */
+        ~Math(){};
 
-		/** Find the intersection point of two lines
-		    @param a First line origin
-			@param b First line final
-			@param c First line origin
-			@param d First line final
-			@return Ogre::Vector2::ZERO if there isn't intersection, intersection point
-		 */
-		static Ogre::Vector2 intersectionOfTwoLines(const Ogre::Vector2 &a, const Ogre::Vector2 &b,
-			                                        const Ogre::Vector2 &c, const Ogre::Vector2 &d);
-	};
+        /** Find the intersection point of two lines
+            @param a First line origin
+            @param b First line final
+            @param c First line origin
+            @param d First line final
+            @return Ogre::Vector2::ZERO if there isn't intersection, intersection point
+         */
+        static Ogre::Vector2 intersectionOfTwoLines(const Ogre::Vector2 &a, const Ogre::Vector2 &b,
+                                                    const Ogre::Vector2 &c, const Ogre::Vector2 &d);
+    };
 }
 
 #endif

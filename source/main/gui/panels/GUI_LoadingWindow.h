@@ -31,33 +31,33 @@ namespace GUI {
 
 ATTRIBUTE_CLASS_LAYOUT(LoadingWindow, "LoadingWindow.layout");
 class LoadingWindow :
-	public wraps::BaseLayout,
-	public ZeroedMemoryAllocator
+    public wraps::BaseLayout,
+    public ZeroedMemoryAllocator
 {
-	friend class RoRSingleton<LoadingWindow>;
+    friend class RoRSingleton<LoadingWindow>;
 
 public:
 
-	LoadingWindow();
-	~LoadingWindow();
+    LoadingWindow();
+    ~LoadingWindow();
 
-	void setProgress(int _percent, const Ogre::UTFString& _text = "", bool _updateRenderFrame = true);
-	void setAutotrack(const Ogre::UTFString& _text = "", bool _updateRenderFrame = true);
+    void setProgress(int _percent, const Ogre::UTFString& _text = "", bool _updateRenderFrame = true);
+    void setAutotrack(const Ogre::UTFString& _text = "", bool _updateRenderFrame = true);
 
     void SetVisible(bool v);
     bool IsVisible();
 
 private:
 
-	void renderOneFrame(bool force = false);
-	
+    void renderOneFrame(bool force = false);
+    
 
-	ATTRIBUTE_FIELD_WIDGET_NAME(LoadingWindow, mBarProgress, "Bar");
-	MyGUI::ProgressBar* mBarProgress;
-	ATTRIBUTE_FIELD_WIDGET_NAME(LoadingWindow, mInfoStaticText, "Info");
-	MyGUI::TextBox* mInfoStaticText;
+    ATTRIBUTE_FIELD_WIDGET_NAME(LoadingWindow, mBarProgress, "Bar");
+    MyGUI::ProgressBar* mBarProgress;
+    ATTRIBUTE_FIELD_WIDGET_NAME(LoadingWindow, mInfoStaticText, "Info");
+    MyGUI::TextBox* mInfoStaticText;
 
-	Ogre::Timer *t;
+    Ogre::Timer *t;
 };
 
 } // namespace GUI

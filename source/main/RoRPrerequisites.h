@@ -31,9 +31,9 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 // OGRE version
 #include <OgrePrerequisites.h>
 #if OGRE_VERSION < 0x010701
-#	error You need at least Ogre version 1.7.1, older versions are not supported
+#    error You need at least Ogre version 1.7.1, older versions are not supported
 #elif OGRE_VERSION >= 0x010900
-#	define ROR_USE_OGRE_1_9
+#    define ROR_USE_OGRE_1_9
 #endif
 
 // add some ogre headers
@@ -50,7 +50,7 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #ifdef ROR_USE_OGRE_1_9
-#	include <Overlay/OgreOverlaySystem.h>
+#    include <Overlay/OgreOverlaySystem.h>
 #endif
 
 #include "ForwardDeclarations.h"
@@ -61,9 +61,9 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 #include <MyGUI_Prerequest.h> // Forward declarations
 
 #if MYGUI_VERSION >= 0x030201
-#	define MYGUI_GET_SCANCODE(KEY) (KEY.getValue())
+#    define MYGUI_GET_SCANCODE(KEY) (KEY.getValue())
 #else
-#	define MYGUI_GET_SCANCODE(KEY) (KEY.toValue())
+#    define MYGUI_GET_SCANCODE(KEY) (KEY.toValue())
 #endif
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
@@ -125,29 +125,29 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 enum VisibilityMasks {
-	DEPTHMAP_ENABLED  = BITMASK(1),
-	DEPTHMAP_DISABLED = BITMASK(2),
-	HIDE_MIRROR       = BITMASK(3),
+    DEPTHMAP_ENABLED  = BITMASK(1),
+    DEPTHMAP_DISABLED = BITMASK(2),
+    HIDE_MIRROR       = BITMASK(3),
 };
 
 extern GlobalEnvironment *gEnv;
 
 enum LoaderType 
 { 
-	LT_None, 
-	LT_Terrain, 
-	LT_Vehicle,
-	LT_Truck, 
-	LT_Car, 
-	LT_Boat,
-	LT_Airplane, 
-	LT_Trailer,
-	LT_Train, 
-	LT_Load, 
-	LT_Extension, 
-	LT_Network,
-	LT_NetworkWithBoat, 
-	LT_Heli, 
-	LT_SKIN,
-	LT_AllBeam 
+    LT_None, 
+    LT_Terrain, 
+    LT_Vehicle,
+    LT_Truck, 
+    LT_Car, 
+    LT_Boat,
+    LT_Airplane, 
+    LT_Trailer,
+    LT_Train, 
+    LT_Load, 
+    LT_Extension, 
+    LT_Network,
+    LT_NetworkWithBoat, 
+    LT_Heli, 
+    LT_SKIN,
+    LT_AllBeam 
 };

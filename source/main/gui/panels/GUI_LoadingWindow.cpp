@@ -34,57 +34,57 @@ namespace GUI {
 
 LoadingWindow::LoadingWindow()
 {
-	initialiseByAttributes(this);
+    initialiseByAttributes(this);
 
-	MyGUI::IntSize gui_area = MyGUI::RenderManager::getInstance().getViewSize();
-	mMainWidget->setPosition(gui_area.width/2 - mMainWidget->getWidth()/2, gui_area.height/2 - mMainWidget->getHeight()/2);
-	((MyGUI::Window*)mMainWidget)->setCaption(_L("Loading ..."));
-	t = new Ogre::Timer();
-	mMainWidget->setVisible(false);
+    MyGUI::IntSize gui_area = MyGUI::RenderManager::getInstance().getViewSize();
+    mMainWidget->setPosition(gui_area.width/2 - mMainWidget->getWidth()/2, gui_area.height/2 - mMainWidget->getHeight()/2);
+    ((MyGUI::Window*)mMainWidget)->setCaption(_L("Loading ..."));
+    t = new Ogre::Timer();
+    mMainWidget->setVisible(false);
 }
 
 LoadingWindow::~LoadingWindow()
 {
-	delete(t);
-	t=NULL;
+    delete(t);
+    t=NULL;
 }
 
 void LoadingWindow::setProgress(int _percent, const Ogre::UTFString& _text, bool _updateRenderFrame)
 {
-	mMainWidget->setVisible(true);
-	mInfoStaticText->setCaption(convertToMyGUIString(_text));
+    mMainWidget->setVisible(true);
+    mInfoStaticText->setCaption(convertToMyGUIString(_text));
 
-	mBarProgress->setProgressAutoTrack(false);
-	mBarProgress->setProgressPosition(_percent);
+    mBarProgress->setProgressAutoTrack(false);
+    mBarProgress->setProgressPosition(_percent);
 
-	if ( _updateRenderFrame )
-	{
-		renderOneFrame();
-	}
+    if ( _updateRenderFrame )
+    {
+        renderOneFrame();
+    }
 }
 
 void LoadingWindow::setAutotrack(const Ogre::UTFString& _text, bool _updateRenderFrame)
 {
-	mMainWidget->setVisible(true);
-	mInfoStaticText->setCaption(convertToMyGUIString(_text));
-	mBarProgress->setProgressPosition(0);
-	mBarProgress->setProgressAutoTrack(true);
+    mMainWidget->setVisible(true);
+    mInfoStaticText->setCaption(convertToMyGUIString(_text));
+    mBarProgress->setProgressPosition(0);
+    mBarProgress->setProgressAutoTrack(true);
 
-	if ( _updateRenderFrame )
-	{
-		renderOneFrame(true);
-	}
+    if ( _updateRenderFrame )
+    {
+        renderOneFrame(true);
+    }
 }
 
 void LoadingWindow::renderOneFrame(bool force)
 {
-	if (t->getMilliseconds() > 200 || force)
-	{
-		// we must pump the window messages, otherwise the window will get white on Vista ...
-		RoRWindowEventUtilities::messagePump();
-		Ogre::Root::getSingleton().renderOneFrame();
-		t->reset();
-	}
+    if (t->getMilliseconds() > 200 || force)
+    {
+        // we must pump the window messages, otherwise the window will get white on Vista ...
+        RoRWindowEventUtilities::messagePump();
+        Ogre::Root::getSingleton().renderOneFrame();
+        t->reset();
+    }
 }
 
 bool LoadingWindow::IsVisible()        { return mMainWidget->getVisible(); }

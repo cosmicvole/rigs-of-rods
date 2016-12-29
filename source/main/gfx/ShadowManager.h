@@ -35,40 +35,40 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 //Store datas using structs
 struct PSSM_Shadows_Data
 {
-	Ogre::ShadowCameraSetupPtr mPSSMSetup;
-	bool mDepthShadows;
-	int ShadowsTextureNum;
-	int Quality;
-	float lambda;
+    Ogre::ShadowCameraSetupPtr mPSSMSetup;
+    bool mDepthShadows;
+    int ShadowsTextureNum;
+    int Quality;
+    float lambda;
 };
 
 class ShadowManager : public ZeroedMemoryAllocator
 {
 public:
 
-	ShadowManager();
-	~ShadowManager();
+    ShadowManager();
+    ~ShadowManager();
 
-	void loadConfiguration();
+    void loadConfiguration();
 
-	void updatePSSM();
+    void updatePSSM();
 
-	void updateTerrainMaterial(Ogre::TerrainPSSMMaterialGenerator::SM2Profile* matProfile);
+    void updateTerrainMaterial(Ogre::TerrainPSSMMaterialGenerator::SM2Profile* matProfile);
 
-	int getShadowsType() { return ShadowsType; }
+    int getShadowsType() { return ShadowsType; }
 
 protected:
 
-	void processTextureShadows();
+    void processTextureShadows();
 
-	void processPSSM();
-	void setManagedMaterialSplitPoints(Ogre::PSSMShadowCameraSetup::SplitPointList splitPointList);
+    void processPSSM();
+    void setManagedMaterialSplitPoints(Ogre::PSSMShadowCameraSetup::SplitPointList splitPointList);
 
-	int updateShadowTechnique();
+    int updateShadowTechnique();
 
-	int ShadowsType;
+    int ShadowsType;
 
-	PSSM_Shadows_Data PSSM_Shadows;
+    PSSM_Shadows_Data PSSM_Shadows;
 };
 
 

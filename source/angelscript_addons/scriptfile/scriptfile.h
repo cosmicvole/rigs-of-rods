@@ -41,10 +41,10 @@ public:
     void AddRef() const;
     void Release() const;
 
-	// TODO: Implement the "r+", "w+" and "a+" modes
-	// mode = "r" -> open the file for reading
-	//        "w" -> open the file for writing (overwrites existing file)
-	//        "a" -> open the file for appending
+    // TODO: Implement the "r+", "w+" and "a+" modes
+    // mode = "r" -> open the file for reading
+    //        "w" -> open the file for writing (overwrites existing file)
+    //        "a" -> open the file for appending
     int  Open(const std::string &filename, const std::string &mode);
     int  Close();
     int  GetSize() const;
@@ -66,7 +66,7 @@ public:
     int WriteDouble(double v);
 
     // Cursor
-	int GetPos() const;
+    int GetPos() const;
     int SetPos(int pos);
     int MovePos(int delta);
 

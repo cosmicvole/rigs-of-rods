@@ -14,7 +14,7 @@ using namespace GUI;
 
 GameAboutLayout::GameAboutLayout(MyGUI::Widget* _parent)
 {
-	initialiseByAttributes(this, _parent);
+    initialiseByAttributes(this, _parent);
 }
 
 GameAboutLayout::~GameAboutLayout()

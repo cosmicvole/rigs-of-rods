@@ -28,8 +28,8 @@ static void StringSplit_Generic(asIScriptGeneric *gen)
     asIScriptEngine *engine = ctx->GetEngine();
 
     // TODO: This should only be done once
-	// TODO: This assumes that CScriptArray was already registered
-	asIObjectType *arrayType = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<string>"));
+    // TODO: This assumes that CScriptArray was already registered
+    asIObjectType *arrayType = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<string>"));
 
     // Create the array object
     CScriptArray *array = new CScriptArray(0, arrayType);
@@ -82,18 +82,18 @@ static void StringJoin_Generic(asIScriptGeneric *gen)
 
     // Create the new string
     string str = "";
-	if( array->GetSize() )
-	{
-		int n;
-		for( n = 0; n < (int)array->GetSize() - 1; n++ )
-		{
-			str += *(string*)array->At(n);
-			str += *delim;
-		}
+    if( array->GetSize() )
+    {
+        int n;
+        for( n = 0; n < (int)array->GetSize() - 1; n++ )
+        {
+            str += *(string*)array->At(n);
+            str += *delim;
+        }
 
-		// Add the last part
-		str += *(string*)array->At(n);
-	}
+        // Add the last part
+        str += *(string*)array->At(n);
+    }
 
     // Return the string
     new(gen->GetAddressOfReturnLocation()) string(str);
@@ -103,10 +103,10 @@ static void StringJoin_Generic(asIScriptGeneric *gen)
 // The string type must have been registered first.
 void RegisterStdStringUtils(asIScriptEngine *engine)
 {
-	int r;
+    int r;
 
-	r = engine->RegisterObjectMethod("string", "array<string>@ split(const string &in) const", asFUNCTION(StringSplit_Generic), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterGlobalFunction("string join(const array<string> &in, const string &in)", asFUNCTION(StringJoin_Generic), asCALL_GENERIC); assert(r >= 0);
+    r = engine->RegisterObjectMethod("string", "array<string>@ split(const string &in) const", asFUNCTION(StringSplit_Generic), asCALL_GENERIC); assert(r >= 0);
+    r = engine->RegisterGlobalFunction("string join(const array<string> &in, const string &in)", asFUNCTION(StringJoin_Generic), asCALL_GENERIC); assert(r >= 0);
 }
 
 END_AS_NAMESPACE

@@ -14,7 +14,7 @@ using namespace GUI;
 
 DebugOptionsLayout::DebugOptionsLayout(MyGUI::Widget* _parent)
 {
-	initialiseByAttributes(this, _parent);
+    initialiseByAttributes(this, _parent);
 }
 
 DebugOptionsLayout::~DebugOptionsLayout()

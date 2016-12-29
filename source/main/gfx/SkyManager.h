@@ -31,36 +31,36 @@ class SkyManager : public ZeroedMemoryAllocator
 {
 public:
 
-	SkyManager();
-	~SkyManager();
+    SkyManager();
+    ~SkyManager();
 
-	void loadScript(Ogre::String script, int fogStart=-1, int fogEnd=-1);
-	
-	/// change the time scale
-	void setTimeFactor(Ogre::Real f);
-	Ogre::Light *getMainLight();
-	/// gets the current time scale
-	Ogre::Real getTimeFactor();
-	
-	/// prints the current time of the simulation in the format of HH:MM:SS
-	Ogre::String getPrettyTime();
-	
-	bool update( float dt );
+    void loadScript(Ogre::String script, int fogStart=-1, int fogEnd=-1);
+    
+    /// change the time scale
+    void setTimeFactor(Ogre::Real f);
+    Ogre::Light *getMainLight();
+    /// gets the current time scale
+    Ogre::Real getTimeFactor();
+    
+    /// prints the current time of the simulation in the format of HH:MM:SS
+    Ogre::String getPrettyTime();
+    
+    bool update( float dt );
 
-	void forceUpdate(float dt);
+    void forceUpdate(float dt);
 
-	void notifyCameraChanged(Ogre::Camera *cam);
+    void notifyCameraChanged(Ogre::Camera *cam);
 
-	void detectUpdate();
+    void detectUpdate();
 
-	Caelum::CaelumSystem* getCaelumSys()
+    Caelum::CaelumSystem* getCaelumSys()
     {
-		return mCaelumSystem;
-	}
+        return mCaelumSystem;
+    }
 protected:
-	Caelum::LongReal lc;
+    Caelum::LongReal lc;
     Caelum::CaelumSystem *mCaelumSystem;
-	Caelum::CaelumSystem *getCaelumSystem() { return mCaelumSystem; };
+    Caelum::CaelumSystem *getCaelumSystem() { return mCaelumSystem; };
 };
 
 #endif // __SkyManager_H_

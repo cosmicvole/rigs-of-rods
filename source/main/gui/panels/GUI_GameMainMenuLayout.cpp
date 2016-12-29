@@ -14,7 +14,7 @@ using namespace GUI;
 
 GameMainMenuLayout::GameMainMenuLayout(MyGUI::Widget* _parent)
 {
-	initialiseByAttributes(this, _parent);
+    initialiseByAttributes(this, _parent);
 }
 
 GameMainMenuLayout::~GameMainMenuLayout()

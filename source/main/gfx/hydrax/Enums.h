@@ -3,7 +3,7 @@
 This source file is part of Hydrax.
 Visit ---
 
-Copyright (C) 2008 Xavier VerguÌn Gonz·lez <xavierverguin@hotmail.com>
+Copyright (C) 2008 Xavier Vergu√≠n Gonz√°lez <xavierverguin@hotmail.com>
                                            <xavyiy@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under
@@ -56,10 +56,10 @@ namespace Hydrax
         /// Smooth transitions and caustics components need depth component
         HYDRAX_COMPONENT_SMOOTH     = 1 << 3,
         HYDRAX_COMPONENT_CAUSTICS   = 1 << 4,
-		HYDRAX_COMPONENT_UNDERWATER = 1 << 5,
-		/// Underwater reflections and god rays need underwater component
-		HYDRAX_COMPONENT_UNDERWATER_REFLECTIONS = 1 << 6,
-		HYDRAX_COMPONENT_UNDERWATER_GODRAYS = 1 << 7,
+        HYDRAX_COMPONENT_UNDERWATER = 1 << 5,
+        /// Underwater reflections and god rays need underwater component
+        HYDRAX_COMPONENT_UNDERWATER_REFLECTIONS = 1 << 6,
+        HYDRAX_COMPONENT_UNDERWATER_GODRAYS = 1 << 7,
 
         HYDRAX_COMPONENTS_NONE    = 0x0000,
         HYDRAX_COMPONENTS_ALL     = 0x001F,

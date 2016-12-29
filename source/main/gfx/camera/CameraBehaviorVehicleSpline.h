@@ -30,33 +30,33 @@ class CameraBehaviorVehicleSpline : public CameraBehaviorVehicle
 {
 public:
 
-	CameraBehaviorVehicleSpline();
-	~CameraBehaviorVehicleSpline();
+    CameraBehaviorVehicleSpline();
+    ~CameraBehaviorVehicleSpline();
 
-	void update(const CameraManager::CameraContext &ctx);
-	
-	bool mouseMoved(const CameraManager::CameraContext &ctx, const OIS::MouseEvent& _arg);
+    void update(const CameraManager::CameraContext &ctx);
+    
+    bool mouseMoved(const CameraManager::CameraContext &ctx, const OIS::MouseEvent& _arg);
 
-	void activate(const CameraManager::CameraContext &ctx, bool reset = true);
-	void reset(const CameraManager::CameraContext &ctx);
+    void activate(const CameraManager::CameraContext &ctx, bool reset = true);
+    void reset(const CameraManager::CameraContext &ctx);
 
-	void createSpline(const CameraManager::CameraContext &ctx);
-	void updateSpline();
-	void updateSplineDisplay();
+    void createSpline(const CameraManager::CameraContext &ctx);
+    void updateSpline();
+    void updateSplineDisplay();
 
 protected:
 
-	Ogre::ManualObject* splineObject;
-	Ogre::SimpleSpline* spline;
-	Ogre::Real splineLength;
-	Ogre::Real splinePos;
-	bool splineClosed;
-	bool autoTracking;
+    Ogre::ManualObject* splineObject;
+    Ogre::SimpleSpline* spline;
+    Ogre::Real splineLength;
+    Ogre::Real splinePos;
+    bool splineClosed;
+    bool autoTracking;
 
-	std::deque<node_t*> splineNodes;
-	unsigned int numLinkedBeams;
+    std::deque<node_t*> splineNodes;
+    unsigned int numLinkedBeams;
 
-	static const int splineDrawResolution = 200;
+    static const int splineDrawResolution = 200;
 };
 
 #endif // __CAMERA_BEHAVIOR_VEHICLE_SPLINE_H_

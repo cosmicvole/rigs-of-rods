@@ -33,17 +33,17 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 class ColoredTextAreaOverlayElementFactory : public Ogre::OverlayElementFactory
 {
 public:
-	/** See OverlayElementFactory */
-	Ogre::OverlayElement* createOverlayElement(const Ogre::String& instanceName)
-	{
-		return new ColoredTextAreaOverlayElement(instanceName);
-	}
-	/** See OverlayElementFactory */
-	const Ogre::String& getTypeName() const
-	{
-		static Ogre::String name = "ColoredTextArea";
-		return name;
-	}
+    /** See OverlayElementFactory */
+    Ogre::OverlayElement* createOverlayElement(const Ogre::String& instanceName)
+    {
+        return new ColoredTextAreaOverlayElement(instanceName);
+    }
+    /** See OverlayElementFactory */
+    const Ogre::String& getTypeName() const
+    {
+        static Ogre::String name = "ColoredTextArea";
+        return name;
+    }
 };
 
 #endif // __ColoredTextAreaOverlayElementFactory_H_

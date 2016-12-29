@@ -25,28 +25,28 @@ using namespace Ogre;
 
 PositionStorage::PositionStorage(int _numNodes, int _numStorage) : numNodes(_numNodes), numStorage(_numStorage)
 {
-	nodes = (Vector3*)calloc(numNodes * numStorage, sizeof(Vector3));
-	usage = (bool*)calloc(numStorage, sizeof(bool));
+    nodes = (Vector3*)calloc(numNodes * numStorage, sizeof(Vector3));
+    usage = (bool*)calloc(numStorage, sizeof(bool));
 }
 
 PositionStorage::~PositionStorage()
 {
-	if (nodes) free(nodes);
-	if (usage) free(usage);
+    if (nodes) free(nodes);
+    if (usage) free(usage);
 }
 
 Vector3 *PositionStorage::getStorage(int indexNum)
 {
-	if (indexNum < 0 || indexNum > numStorage) return 0;
-	return nodes + (indexNum * numNodes);
+    if (indexNum < 0 || indexNum > numStorage) return 0;
+    return nodes + (indexNum * numNodes);
 }
 
 void PositionStorage::setUsage(int indexNum, bool use)
 {
-	*(usage + (indexNum)) = use;
+    *(usage + (indexNum)) = use;
 }
 
 bool PositionStorage::getUsage(int indexNum)
 {
-	return *(usage + (indexNum));
+    return *(usage + (indexNum));
 }

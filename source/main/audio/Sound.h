@@ -33,45 +33,45 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 
 class Sound : public ZeroedMemoryAllocator
 {
-	friend class SoundManager;
+    friend class SoundManager;
 
 public:
-	Sound(ALuint buffer, SoundManager* soundManager, int sourceIndex);
+    Sound(ALuint buffer, SoundManager* soundManager, int sourceIndex);
 
-	void setPitch(float pitch);
-	void setGain(float gain);
-	void setPosition(Ogre::Vector3 pos);
-	void setVelocity(Ogre::Vector3 vel);
-	void setLoop(bool loop);
-	void setEnabled(bool e);
-	void play();
-	void stop();
+    void setPitch(float pitch);
+    void setGain(float gain);
+    void setPosition(Ogre::Vector3 pos);
+    void setVelocity(Ogre::Vector3 vel);
+    void setLoop(bool loop);
+    void setEnabled(bool e);
+    void play();
+    void stop();
 
-	bool getEnabled();
-	bool isPlaying();
+    bool getEnabled();
+    bool isPlaying();
 
-	enum RecomputeSource { REASON_PLAY, REASON_STOP, REASON_GAIN, REASON_LOOP, REASON_PTCH, REASON_POSN, REASON_VLCT };
+    enum RecomputeSource { REASON_PLAY, REASON_STOP, REASON_GAIN, REASON_LOOP, REASON_PTCH, REASON_POSN, REASON_VLCT };
 
 private:
-	void computeAudibility(Ogre::Vector3 pos);
+    void computeAudibility(Ogre::Vector3 pos);
 
-	float audibility;
-	float gain;
-	float pitch;
-	bool loop;
-	bool enabled;
-	bool should_play;
+    float audibility;
+    float gain;
+    float pitch;
+    bool loop;
+    bool enabled;
+    bool should_play;
 
-	// this value is changed dynamically, depending on whether the input is played or not.
-	int hardware_index;
-	ALuint buffer;
-	
-	Ogre::Vector3 position;
-	Ogre::Vector3 velocity;
+    // this value is changed dynamically, depending on whether the input is played or not.
+    int hardware_index;
+    ALuint buffer;
+    
+    Ogre::Vector3 position;
+    Ogre::Vector3 velocity;
 
-	SoundManager* sound_manager;
-	// must not be changed during the lifetime of this object
-	int source_index;
+    SoundManager* sound_manager;
+    // must not be changed during the lifetime of this object
+    int source_index;
 };
 
 #endif // __Sound_H_

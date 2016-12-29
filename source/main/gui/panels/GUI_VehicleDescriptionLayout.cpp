@@ -14,7 +14,7 @@ using namespace GUI;
 
 VehicleDescriptionLayout::VehicleDescriptionLayout(MyGUI::Widget* _parent)
 {
-	initialiseByAttributes(this, _parent);
+    initialiseByAttributes(this, _parent);
 }
 
 VehicleDescriptionLayout::~VehicleDescriptionLayout()

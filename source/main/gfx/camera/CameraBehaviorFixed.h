@@ -31,18 +31,18 @@ class CameraBehaviorFixed : public IBehavior<CameraManager::CameraContext>
 {
 public:
 
-	void update(const CameraManager::CameraContext &ctx) {};
+    void update(const CameraManager::CameraContext &ctx) {};
 
-	bool mouseMoved(const CameraManager::CameraContext &ctx, const OIS::MouseEvent& _arg) { return false; };
-	bool mousePressed(const CameraManager::CameraContext &ctx, const OIS::MouseEvent& _arg, OIS::MouseButtonID _id) { return false; };
-	bool mouseReleased(const CameraManager::CameraContext &ctx, const OIS::MouseEvent& _arg, OIS::MouseButtonID _id) { return false; };
+    bool mouseMoved(const CameraManager::CameraContext &ctx, const OIS::MouseEvent& _arg) { return false; };
+    bool mousePressed(const CameraManager::CameraContext &ctx, const OIS::MouseEvent& _arg, OIS::MouseButtonID _id) { return false; };
+    bool mouseReleased(const CameraManager::CameraContext &ctx, const OIS::MouseEvent& _arg, OIS::MouseButtonID _id) { return false; };
 
-	void activate(const CameraManager::CameraContext &ctx, bool reset = true);
-	void deactivate(const CameraManager::CameraContext &ctx) {};
-	void reset(const CameraManager::CameraContext &ctx) {};
-	void notifyContextChange(const CameraManager::CameraContext &ctx) {};
+    void activate(const CameraManager::CameraContext &ctx, bool reset = true);
+    void deactivate(const CameraManager::CameraContext &ctx) {};
+    void reset(const CameraManager::CameraContext &ctx) {};
+    void notifyContextChange(const CameraManager::CameraContext &ctx) {};
 
-	bool switchBehavior(const CameraManager::CameraContext &ctx) { return true; };
+    bool switchBehavior(const CameraManager::CameraContext &ctx) { return true; };
 };
 
 #endif // __CAMERA_BEHAVIOR_FIXED_H_

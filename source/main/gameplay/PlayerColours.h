@@ -32,14 +32,14 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 class PlayerColours : public RoRSingleton < PlayerColours >, public ZeroedMemoryAllocator
 {
 public:
-	PlayerColours();
-	~PlayerColours();
+    PlayerColours();
+    ~PlayerColours();
 
-	void updateMaterial(int colourNum, Ogre::String materialName, int textureUnitStateNum=0);
-	Ogre::String getColourMaterial(int colourNum);
-	Ogre::ColourValue getColour(int colourNum);
+    void updateMaterial(int colourNum, Ogre::String materialName, int textureUnitStateNum=0);
+    Ogre::String getColourMaterial(int colourNum);
+    Ogre::ColourValue getColour(int colourNum);
 protected:
-	void updatePlayerColours();
+    void updatePlayerColours();
 };
 
 

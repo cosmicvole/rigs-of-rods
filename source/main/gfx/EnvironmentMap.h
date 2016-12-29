@@ -27,24 +27,24 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 class Envmap : public ZeroedMemoryAllocator
 {
 public:
-		
-	Envmap();
-	~Envmap();
+        
+    Envmap();
+    ~Envmap();
 
-	void prepareShutdown() {};
+    void prepareShutdown() {};
 
-	void update(Ogre::Vector3 center, Beam *beam = 0);
+    void update(Ogre::Vector3 center, Beam *beam = 0);
 
 private:
 
-	void init(Ogre::Vector3 center);
+    void init(Ogre::Vector3 center);
 
-	static const unsigned int NUM_FACES = 6;
+    static const unsigned int NUM_FACES = 6;
 
-	Ogre::Camera *mCameras[NUM_FACES];
-	Ogre::RenderTarget *mRenderTargets[NUM_FACES];
-	bool mInitiated;
-	int mRound;
+    Ogre::Camera *mCameras[NUM_FACES];
+    Ogre::RenderTarget *mRenderTargets[NUM_FACES];
+    bool mInitiated;
+    int mRound;
 };
 
 #endif // __Environment_Map_H_
