@@ -1,4 +1,4 @@
-﻿/*
+/*
     This source file is part of Rigs of Rods
 
     Copyright 2005-2012 Pierre-Michel Ricordel
@@ -238,7 +238,6 @@ void VehicleAI::update(float dt, int doUpdate)
             }
         }
     }
-<<<<<<< HEAD
 
 
 #if 0
@@ -330,8 +329,6 @@ void VehicleAI::update(float dt, int doUpdate)
             return true;
         }
         */
-=======
->>>>>>> upstream/master
 }
 
 #endif // USE_ANGELSCRIPT

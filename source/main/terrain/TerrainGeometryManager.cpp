@@ -219,7 +219,8 @@ Ogre::String TerrainGeometryManager::getPageConfigFilename(int x, int z)
 Ogre::DataStreamPtr TerrainGeometryManager::getPageConfig(int x, int z)
 {
     String cfg = getPageConfigFilename(x, z);
-
+    bool logged = false;
+    
     try
     {
         LOG("loading page config for page " + XZSTR(x,z) + " : " + cfg);

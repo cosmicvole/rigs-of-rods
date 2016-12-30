@@ -36,24 +36,6 @@ public:
     float max_torque;
 
     Turboprop(
-<<<<<<< HEAD
-        char* propname, 
-        node_t *nd, 
-        int nr, 
-        int nb, 
-        int np1, 
-        int np2, 
-        int np3, 
-        int np4, 
-        int tqn, 
-        float power, 
-        Ogre::String const & propfoilname, 
-        int mnumber, 
-        int trucknum, 
-        bool disable_smoke, 
-        bool ispiston, 
-        float fpitch, 
-=======
         char* propname,
         node_t* nd,
         int nr,
@@ -70,7 +52,6 @@ public:
         bool disable_smoke,
         bool ispiston,
         float fpitch,
->>>>>>> upstream/master
         bool heathaze
     );
     ~Turboprop();

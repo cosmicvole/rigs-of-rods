@@ -671,11 +671,7 @@ Vector3 FlexAirfoil::updateShadowVertices()
         v2=coshadowposvertices[cdnfaces[i*3+2]].vertex-coshadowposvertices[cdnfaces[i*3]].vertex;
         v1=v1.crossProduct(v2);
         v1.normalise();
-<<<<<<< HEAD
-//        v1/=3.0;
-=======
-//		v1/=3.0;
->>>>>>> upstream/master
+//      v1/=3.0;
         coshadownorvertices[cdnfaces[i*3]].normal+=v1;
         coshadownorvertices[cdnfaces[i*3+1]].normal+=v1;
         coshadownorvertices[cdnfaces[i*3+2]].normal+=v1;
