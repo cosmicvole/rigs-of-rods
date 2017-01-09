@@ -96,7 +96,7 @@ public:
     void UnmuteAllTrucks();
 
     bool enterRescueTruck();
-    void repairTruck(Collisions* collisions, const Ogre::String& inst, const Ogre::String& box, bool keepPosition = false);
+    void repairTruck(Collisions *collisions, const Ogre::String &inst, const Ogre::String &box, bool keepPosition=false, bool partialRepair = false); //cosmic vole added partial repairs
 
     /**
     * TIGHT-LOOP; Logic: display, particles, sound; 

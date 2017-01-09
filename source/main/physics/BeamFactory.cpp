@@ -735,20 +735,28 @@ int BeamFactory::FindTruckInsideBox(Collisions* collisions, const Ogre::String& 
     return id;
 }
 
-void BeamFactory::repairTruck(Collisions* collisions, const Ogre::String& inst, const Ogre::String& box, bool keepPosition)
+//cosmic vole added partial repairs
+void BeamFactory::repairTruck(Collisions *collisions, const Ogre::String &inst, const Ogre::String &box, bool keepPosition, bool partialRepair)
 {
-    int rtruck = this->FindTruckInsideBox(collisions, inst, box);
-    if (rtruck >= 0)
-    {
-        // take a position reference
+	int rtruck = this->FindTruckInsideBox(collisions, inst, box);
+	if (rtruck >= 0)
+	{
+		// take a position reference
 #ifdef USE_OPENAL
-        SoundScriptManager::getSingleton().trigOnce(rtruck, SS_TRIG_REPAIR);
+		SoundScriptManager::getSingleton().trigOnce(rtruck, SS_TRIG_REPAIR);
 #endif // USE_OPENAL
-        Vector3 ipos = m_trucks[rtruck]->nodes[0].AbsPosition;
-        m_trucks[rtruck]->reset();
-        m_trucks[rtruck]->resetPosition(ipos.x, ipos.z, false, 0);
-        m_trucks[rtruck]->updateVisual();
-    }
+		Vector3 ipos = m_trucks[rtruck]->nodes[0].AbsPosition;
+        if (partialRepair)
+        {
+            m_trucks[rtruck]->partialRepair();
+        }
+        else
+        {
+		    m_trucks[rtruck]->reset();
+        }
+		m_trucks[rtruck]->resetPosition(ipos.x, ipos.z, false, 0);
+		m_trucks[rtruck]->updateVisual();
+	}
 }
 
 void BeamFactory::MuteAllTrucks()

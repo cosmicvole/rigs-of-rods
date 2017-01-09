@@ -327,6 +327,12 @@ void GameScript::repairVehicle(const String& instance, const String& box, bool k
     BeamFactory::getSingleton().repairTruck(gEnv->collisions, instance, box, keepPosition);
 }
 
+//cosmic vole added partial repairs
+void GameScript::repairVehiclePartially(const String &instance, const String &box)
+{
+    BeamFactory::getSingleton().repairTruck(gEnv->collisions, instance, box, true, true);
+}
+
 void GameScript::removeVehicle(const String& instance, const String& box)
 {
     BeamFactory::getSingleton().removeTruck(gEnv->collisions, instance, box);
@@ -894,6 +900,34 @@ void GameScript::boostCurrentTruck(float factor)
         rpm += 2000.0f * factor;
         b->engine->setRPM(rpm);
     }
+}
+
+// Code to adjust the performance of a specified truck (intended to adjust AI difficulty but could be used for power-ups / cheats!) cosmic vole January 6 2017
+void GameScript::tuneTruck(int truckNum, bool relative, float maxTorque, float maxRPM, float brakingTorque, float grip)
+{
+    Beam* b = BeamFactory::getSingleton().getTruck(truckNum);
+    if (b && b->engine)
+    {
+        b->engine->tune(relative, maxTorque, maxRPM, brakingTorque, grip);
+        if (relative)
+        {
+            if (grip > 0.0f)
+            {
+                //TODO !!
+            }
+       
+        }
+        else
+        {
+
+            if (grip > 0.0f)
+            {
+                //TODO !!
+            }
+        
+        }
+    }
+    
 }
 
 int GameScript::addScriptFunction(const String& arg)

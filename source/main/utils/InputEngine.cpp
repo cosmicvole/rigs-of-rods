@@ -1015,6 +1015,12 @@ eventInfo_t eventInfo[] = {
         "Keyboard BACK",
         _L("repair truck")
     },
+    {// cosmic vole added partial repairs
+        "COMMON_PARTIAL_REPAIR_TRUCK",
+        EV_COMMON_PARTIAL_REPAIR_TRUCK,
+        "Keyboard SLASH",
+        _L("repair truck gradually")
+    },
     {
         "COMMON_RESCUE_TRUCK",
         EV_COMMON_RESCUE_TRUCK,

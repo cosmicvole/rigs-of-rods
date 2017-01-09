@@ -233,7 +233,7 @@ Ogre::DataStreamPtr TerrainGeometryManager::getPageConfig(int x, int z)
     }
     catch(Exception &e)
     {
-        //cosmic vole added specific exception logging 28 December 2016
+        //cosmic vole added specific exception logging December 28 2016
         LOG("error loading page config for page " + XZSTR(x,z) + " : " + cfg + " : " + e.getFullDescription());
         logged = true;
     }

@@ -99,6 +99,7 @@ public:
     float getRotation();
     Ogre::Vector3 getDirection();
     Ogre::Vector3 getPosition();
+    float getSpawnRotation();//cosmic vole
 
     /**
     * Returns the average truck velocity calculated using the truck positions of the last two frames
@@ -116,6 +117,11 @@ public:
     * Call this one to reset a truck from any context
     */
     void reset(bool keepPosition = false); 
+
+    /**
+    * Call this one to repair the truck by a small increment - cosmic vole
+    */
+    void partialRepair();
 
     /**
     * Call this one to displace a truck
@@ -403,8 +409,12 @@ public:
     float leftMirrorAngle;
     float rightMirrorAngle;
     float refpressure;
+    //cosmic vole - scale RORBot Character when driving this vehicle
+    float driverScale;
 
     bool hasDriverSeat();
+    //cosmic vole - scale RORBot Character when driving this vehicle
+    void setDriverScale(float value);
     void calculateDriverPos(Ogre::Vector3 &pos, Ogre::Quaternion &rot);
     float getSteeringAngle();
     void triggerGUIFeaturesChanged();
@@ -611,6 +621,7 @@ protected:
     void calcAnimators(const int flag_state, float &cstate, int &div, float timer, const float lower_limit, const float upper_limit, const float option3);
 
     void SyncReset(); //this one should be called only synchronously (without physics running in background)
+    void SyncPartialRepair(float step);//so should this one. cosmic vole added partial repairs
 
     void SetPropsCastShadows(bool do_cast_shadows);
 
@@ -684,7 +695,8 @@ protected:
         REQUEST_RESET_NONE,
         REQUEST_RESET_ON_INIT_POS,
         REQUEST_RESET_ON_SPOT,
-        REQUEST_RESET_FINAL
+        REQUEST_RESET_FINAL,
+        REQUEST_RESET_PARTIAL_REPAIR //cosmic vole added partial repairs
     };
 
     ResetRequest m_reset_request;

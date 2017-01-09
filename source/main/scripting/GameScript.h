@@ -80,6 +80,9 @@ public:
 
     //anglescript test
     void boostCurrentTruck(float factor);
+    
+    //adjust performance of specified truck - cosmic vole January 6 2017
+    void tuneTruck(int truckNum, bool relative, float maxTorque, float maxRPM, float brakingTorque, float grip);
 
     /**
      * sets the character position
@@ -329,6 +332,8 @@ public:
     // new things, not documented yet
     void showChooser(const Ogre::String& type, const Ogre::String& instance, const Ogre::String& box);
     void repairVehicle(const Ogre::String& instance, const Ogre::String& box, bool keepPosition);
+    //cosmic vole added partial repairs
+    void repairVehiclePartially(const Ogre::String &instance, const Ogre::String &box);
     void removeVehicle(const Ogre::String& instance, const Ogre::String& box);
 
     int getNumTrucksByFlag(int flag);

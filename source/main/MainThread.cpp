@@ -285,7 +285,7 @@ void MainThread::Go()
 
             if (previous_application_state == App::APP_STATE_SIMULATION)
             {
-//cosmic vole added fix for non SocketW builds 24 December 2016
+//cosmic vole added fix for non SocketW builds December 24 2016
 #ifdef USE_SOCKETW
                 if (App::GetActiveMpState() == App::MP_STATE_CONNECTED)
                 {
@@ -679,7 +679,7 @@ void MainThread::EnterMainMenuLoop()
 
         RoR::App::GetOgreSubsystem()->GetOgreRoot()->renderOneFrame();
 
-//cosmic vole added fix for non SocketW builds 24 December 2016
+//cosmic vole added fix for non SocketW builds December 24 2016
 #ifdef USE_SOCKETW
         if ((App::GetActiveMpState() == App::MP_STATE_CONNECTED) && RoR::Networking::CheckError())
         {
@@ -755,7 +755,7 @@ void MainThread::EnterGameplayLoop()
 
         RoR::App::GetOgreSubsystem()->GetOgreRoot()->renderOneFrame();
 
-//cosmic vole added fix for non SocketW builds 24 December 2016
+//cosmic vole added fix for non SocketW builds December 24 2016
 #ifdef USE_SOCKETW
         if ((App::GetActiveMpState() == App::MP_STATE_CONNECTED) && RoR::Networking::CheckError())
         {

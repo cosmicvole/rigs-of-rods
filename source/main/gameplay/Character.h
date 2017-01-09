@@ -48,6 +48,8 @@ public:
     void setPhysicsEnabled(bool enabled) { physicsEnabled = enabled; };
     void setPosition(Ogre::Vector3 position);
     void setRotation(Ogre::Radian rotation);
+    //cosmic vole - I've added this only because it helps fit RORBot inside small vehicles. Use with caution! Really, it probably means the vehicle should be bigger, or his pose needs adjusting per vehicle. November 21 2016
+    void setScale(Ogre::Vector3 scale);
     void setVisible(bool visible);
 
     void move(Ogre::Vector3 offset);

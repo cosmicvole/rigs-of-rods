@@ -835,7 +835,8 @@ bool RoRFrameListener::updateEvents(float dt)
                     BeamFactory::getSingleton().removeCurrentTruck();
                     gEnv->player->setPosition(center);
                 }
-                else if ((RoR::App::GetInputEngine()->getEventBoolValue(EV_COMMON_REPAIR_TRUCK) || m_advanced_truck_repair) && !curr_truck->replaymode)
+                //cosmic vole added partial repairs
+                else if ((RoR::App::GetInputEngine()->getEventBoolValue(EV_COMMON_REPAIR_TRUCK) || m_advanced_truck_repair || RoR::App::GetInputEngine()->getEventBoolValue(EV_COMMON_PARTIAL_REPAIR_TRUCK)) && !curr_truck->replaymode)    
                 {
                     StopRaceTimer();
                     if (RoR::App::GetInputEngine()->getEventBoolValue(EV_COMMON_REPAIR_TRUCK))
@@ -907,7 +908,15 @@ bool RoRFrameListener::updateEvents(float dt)
                         m_advanced_truck_repair_timer += dt;
                     }
 
-                    curr_truck->reset(true);
+                    //cosmic vole added partial repairs
+                    if (RoR::App::GetInputEngine()->getEventBoolValue(EV_COMMON_PARTIAL_REPAIR_TRUCK))
+                    {
+                        curr_truck->partialRepair();
+                    }
+                    else
+                    {
+                        curr_truck->reset(true);
+                    }
                 }
                 else
                 {
@@ -1876,7 +1885,10 @@ void RoRFrameListener::showLoad(int type, const Ogre::String& instance, const Og
 void RoRFrameListener::setDirectionArrow(char* text, Vector3 position)
 {
     if (RoR::App::GetOverlayWrapper() == nullptr)
-        return;
+    {
+        LOG("Error: Overlay wrapper is null in setDirectionArrow()!");// cosmic vole
+        return;        
+    }
 
     if (text == nullptr)
     {

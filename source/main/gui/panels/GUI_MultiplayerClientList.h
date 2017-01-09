@@ -86,6 +86,6 @@ protected:
 } // namespace GUI
 } // namespace RoR
 
-//cosmic vole bug fix - moved these back below the namespace curlies 30 December 2016
+//cosmic vole bug fix - moved these back below the namespace curlies December 30 2016
 #endif // USE_SOCKETW
 #endif // USE_MYGUI

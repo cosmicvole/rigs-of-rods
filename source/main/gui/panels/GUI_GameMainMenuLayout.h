@@ -43,6 +43,10 @@ protected:
 
     ATTRIBUTE_FIELD_WIDGET_NAME(GameMainMenuLayout, m_multi_player, "multi_player");
     MyGUI::Button* m_multi_player;
+    
+    //cosmic vole added Racing menu January 5 2017
+    ATTRIBUTE_FIELD_WIDGET_NAME(GameMainMenuLayout, m_racing, "racing");
+    MyGUI::Button* m_racing;
 
     //%LE Widget_Declaration list end
 };

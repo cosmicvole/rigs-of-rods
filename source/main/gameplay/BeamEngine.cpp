@@ -117,6 +117,59 @@ BeamEngine::~BeamEngine()
     torqueCurve = NULL;
 }
 
+// Code to adjust the performance of a specified truck (intended to adjust AI difficulty but could be used for power-ups / cheats!) cosmic vole January 6 2017
+void BeamEngine::tune(bool relative, float maxTorque, float maxRPM, float brakingTorque, float grip)
+{
+    if (relative)
+    {
+        if (maxTorque > 0.0f)
+        {
+            //TorqueCurve tc = b->engine->getTorqueCurve();
+            //TODO examine torque curve and work out a scaling factor based on old and new max torque!
+            engineTorque *= maxTorque;
+        }
+        if (maxRPM > 0.0f)
+        {
+            this->maxRPM *= maxRPM;
+        }
+        if (brakingTorque > 0.0f)
+        {
+            this->brakingTorque *= brakingTorque;
+        }
+        if (grip > 0.0f)
+        {
+            //TODO !!
+        }
+   
+    }
+    else
+    {
+        if (maxTorque > 0.0f)
+        {
+            //TorqueCurve tc = b->engine->getTorqueCurve();
+            //TODO examine torque curve and work out a scaling factor based on old and new max torque!
+            this->engineTorque = maxTorque;
+        }
+        if (maxRPM > 0.0f)
+        {
+            this->maxRPM = maxRPM;
+        }
+        if (brakingTorque > 0.0f)
+        {
+            this->brakingTorque = brakingTorque;
+        }
+        if (grip > 0.0f)
+        {
+            //TODO !!
+        }
+    
+    }
+    fullRPMRange = (this->maxRPM - minRPM);
+    oneThirdRPMRange = fullRPMRange / 3.0f;
+    halfRPMRange = fullRPMRange / 2.0f;  
+}
+
+
 void BeamEngine::setTurboOptions(int type, float tinertiaFactor, int nturbos, float param1, float param2, float param3, float param4, float param5, float param6, float param7, float param8, float param9, float param10, float param11)
 {
     hasturbo = true;

@@ -150,6 +150,8 @@ set( SOURCE_FILES
   gui/panels/GUI_GameConsoleLayout.{h,cpp}
   gui/panels/GUI_GameMainMenu.{h,cpp}
   gui/panels/GUI_GameMainMenuLayout.{h,cpp}
+  gui/panels/GUI_GameRacingMenu.{h,cpp}
+  gui/panels/GUI_GameRacingMenuLayout.{h,cpp}  
   gui/panels/GUI_GamePauseMenu.{h,cpp}
   gui/panels/GUI_GamePauseMenuLayout.{h,cpp}
   gui/panels/GUI_GameSettings.{h,cpp}

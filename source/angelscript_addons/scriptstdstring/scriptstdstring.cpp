@@ -636,7 +636,7 @@ double parseFloat(const string &val, asUINT *byteCount)
     return res;
 }
 
-//cosmic vole added more generic string functions from the latest angelscript version 28 December 2016
+//cosmic vole added more generic string functions from the latest angelscript version December 28 2016
 
 /* TODO not supported
 static void StringInsert_Generic(asIScriptGeneric *gen)
@@ -812,7 +812,7 @@ void RegisterStdString_Generic(asIScriptEngine *engine)
 
     r = engine->RegisterObjectMethod("string", "string substr(uint start = 0, int count = -1) const", asFUNCTION(StringSubString_Generic), asCALL_GENERIC); assert( r >= 0 );
     
-    //cosmic vole borrowed more of the generic functions from the latest angelscript version 28 December 2016
+    //cosmic vole borrowed more of the generic functions from the latest angelscript version December 28 2016
     r = engine->RegisterObjectMethod("string", "int findFirst(const string &in, uint start = 0) const", asFUNCTION(StringFindFirst_Generic), asCALL_GENERIC); assert(r >= 0);
 //    r = engine->RegisterObjectMethod("string", "int findFirstOf(const string &in, uint start = 0) const", asFUNCTION(StringFindFirstOf_Generic), asCALL_GENERIC); assert(r >= 0);
 //    r = engine->RegisterObjectMethod("string", "int findFirstNotOf(const string &in, uint start = 0) const", asFUNCTION(StringFindFirstNotOf_Generic), asCALL_GENERIC); assert(r >= 0);
@@ -916,7 +916,7 @@ void RegisterStdString(asIScriptEngine * engine)
     else
         RegisterStdString_Native(engine);
 #else
-//cosmic vole enabled native string functions for Linux (Things like parseInt() and findFirst() are needed for my mod) 28 December 2016
+//cosmic vole enabled native string functions for Linux (Things like parseInt() and findFirst() are needed for my mod) December 28 2016
 //#ifdef __LINUX__
 //    RegisterStdString_Native(engine);
 //#else

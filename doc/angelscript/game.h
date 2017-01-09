@@ -382,6 +382,9 @@ public:
 	 * @param factor This factor determines by how much that the RPM of the truck will be increased ( rpm += 2000.0f * factor ).
 	 */
 	void boostCurrentTruck(float factor);
+    
+    //adjust performance of specified truck - cosmic vole January 6 2017
+    void tuneTruck(int truckNum, bool relative, float maxTorque, float maxRPM, float brakingTorque, float grip);
 	
 	/**
 	 * Adds a global function to the script.

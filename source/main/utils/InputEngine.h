@@ -237,6 +237,7 @@ enum events
     EV_COMMON_PRESSURE_MORE, //!< increase tire pressure (note: only very few trucks support this)
     EV_COMMON_QUIT_GAME, //!< exit the game
     EV_COMMON_REPAIR_TRUCK, //!< repair truck to original condition
+    EV_COMMON_PARTIAL_REPAIR_TRUCK, //!< repair truck by an incremental amount - cosmic vole    
     EV_COMMON_REPLAY_BACKWARD,
     EV_COMMON_REPLAY_FAST_BACKWARD,
     EV_COMMON_REPLAY_FAST_FORWARD,

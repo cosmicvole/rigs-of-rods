@@ -1,4 +1,4 @@
-﻿/*
+/*
     This source file is part of Rigs of Rods
 
     Copyright 2005-2012 Pierre-Michel Ricordel
@@ -124,11 +124,20 @@ private:
     float wait_time;//!<(seconds) The amount of time the AI has to wait on this waypoint.
     int task_after_waiting;//!< The task to do after it has waited.
 
-    float maxspeed = 50;//!<(KM/H) The max speed the AI is allowed to drive.
+    //cosmic vole added auto reset code for stuck vehicles October 9 2016
+    bool is_stuck;
+    float stuck_time;
+    Ogre::Vector3 stuck_position;
+    float stuck_cancel_distance;
+    float stuck_reset_delay;
+    //cosmic vole added optional driver models for active AI cars
+    Character* character;
+
+    float maxspeed;// = 50;//!<(KM/H) The max speed the AI is allowed to drive.
     Beam* beam;//!< The verhicle the AI is driving.
-    bool is_enabled = false;//!< True if the AI is driving.
+    bool is_enabled;// = false;//!< True if the AI is driving.
     Ogre::Vector3 current_waypoint;//!< The coordinates of the waypoint that the AI is driving to.
-    int current_waypoint_id = 0;//!< The curent waypoint ID.
+    int current_waypoint_id;// = 0;//!< The curent waypoint ID.
     std::map<int, Ogre::Vector3> waypoints;//!< Map with all waypoints.
     std::map<Ogre::String, int> waypoint_ids;//!< Map with all waypoint IDs.
     std::map<int, Ogre::String> waypoint_names;//!< Map with all waypoint names.
@@ -136,8 +145,8 @@ private:
     std::map<int, float> waypoint_speed;//!< Map with all waypoint speeds.
     std::map<int, float> waypoint_power;//!< Map with all waypoint engine power.
     std::map<int, float> waypoint_wait_time;//!< Map with all waypoint wait times.
-    int free_waypoints = 0;//!< The amount of waypoints.
-    float acc_power = 0.8;//!< The engine power.
+    int free_waypoints;// = 0;//!< The amount of waypoints.
+    float acc_power;// = 0.8;//!< The engine power.
 };
 
 #endif // USE_ANGELSCRIPT

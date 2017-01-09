@@ -42,6 +42,7 @@
 #include "GUI_GameConsole.h"
 #include "GUI_GameSettings.h"
 #include "GUI_GamePauseMenu.h"
+#include "GUI_GameRacingMenu.h" // cosmic vole
 #include "GUI_GameChatBox.h"
 #include "GUI_LoadingWindow.h"
 #include "GUI_MessageBox.h"
@@ -72,6 +73,7 @@ struct GuiManagerImpl
     GUI::GameAbout              panel_GameAbout;
     GUI::GameSettings           panel_GameSettings;
     GUI::GamePauseMenu          panel_GamePauseMenu;
+    GUI::GameRacingMenu         panel_GameRacingMenu; //cosmic vole added racing menu January 6 2017
     GUI::DebugOptions           panel_DebugOptions;
     GUI::SimUtils               panel_SimUtils;
     GUI::gMessageBox            panel_MessageBox;
@@ -80,7 +82,7 @@ struct GuiManagerImpl
     GUI::GameChatBox            panel_ChatBox;
     GUI::RigSpawnerReportWindow panel_SpawnerReport;
     GUI::VehicleDescription     panel_VehicleDescription;
-//cosmic vole added fix for non SocketW builds 24 December 2016
+//cosmic vole added fix for non SocketW builds December 24 2016
 #ifdef USE_SOCKETW    
     GUI::MpClientList           panel_MpClientList;
 #endif
@@ -98,12 +100,13 @@ void GUIManager::SetVisible_GameMainMenu        (bool v) { m_impl->panel_GameMai
 void GUIManager::SetVisible_GameAbout           (bool v) { m_impl->panel_GameAbout          .SetVisible(v); }
 void GUIManager::SetVisible_GameSettings        (bool v) { m_impl->panel_GameSettings       .SetVisible(v); }
 void GUIManager::SetVisible_GamePauseMenu       (bool v) { m_impl->panel_GamePauseMenu      .SetVisible(v); }
+void GUIManager::SetVisible_GameRacingMenu      (bool v) { m_impl->panel_GameRacingMenu     .SetVisible(v); }//cosmic vole added racing menu January 6 2017
 void GUIManager::SetVisible_DebugOptions        (bool v) { m_impl->panel_DebugOptions       .SetVisible(v); }
 void GUIManager::SetVisible_MultiplayerSelector (bool v) { m_impl->panel_MultiplayerSelector.SetVisible(v); }
 void GUIManager::SetVisible_ChatBox             (bool v) { m_impl->panel_ChatBox            .SetVisible(v); }
 void GUIManager::SetVisible_SpawnerReport       (bool v) { m_impl->panel_SpawnerReport      .SetVisible(v); }
 void GUIManager::SetVisible_VehicleDescription  (bool v) { m_impl->panel_VehicleDescription .SetVisible(v); }
-//cosmic vole added fix for non SocketW builds 24 December 2016
+//cosmic vole added fix for non SocketW builds December 24 2016
 #ifdef USE_SOCKETW
 void GUIManager::SetVisible_MpClientList        (bool v) { m_impl->panel_MpClientList       .SetVisible(v); }
 #endif
@@ -117,6 +120,7 @@ bool GUIManager::IsVisible_GameMainMenu         () { return m_impl->panel_GameMa
 bool GUIManager::IsVisible_GameAbout            () { return m_impl->panel_GameAbout          .IsVisible(); }
 bool GUIManager::IsVisible_GameSettings         () { return m_impl->panel_GameSettings       .IsVisible(); }
 bool GUIManager::IsVisible_GamePauseMenu        () { return m_impl->panel_GamePauseMenu      .IsVisible(); }
+bool GUIManager::IsVisible_GameRacingMenu       () { return m_impl->panel_GameRacingMenu     .IsVisible(); } // cosmic vole added racing menu
 bool GUIManager::IsVisible_DebugOptions         () { return m_impl->panel_DebugOptions       .IsVisible(); }
 bool GUIManager::IsVisible_MessageBox           () { return m_impl->panel_MessageBox         .IsVisible(); }
 bool GUIManager::IsVisible_MultiplayerSelector  () { return m_impl->panel_MultiplayerSelector.IsVisible(); }
@@ -124,7 +128,7 @@ bool GUIManager::IsVisible_MainSelector         () { return m_impl->panel_MainSe
 bool GUIManager::IsVisible_ChatBox              () { return m_impl->panel_ChatBox            .IsVisible(); }
 bool GUIManager::IsVisible_SpawnerReport        () { return m_impl->panel_SpawnerReport      .IsVisible(); }
 bool GUIManager::IsVisible_VehicleDescription   () { return m_impl->panel_VehicleDescription .IsVisible(); }
-//cosmic vole added fix for non SocketW builds 24 December 2016
+//cosmic vole added fix for non SocketW builds December 24 2016
 #ifdef USE_SOCKETW
 bool GUIManager::IsVisible_MpClientList         () { return m_impl->panel_MpClientList       .IsVisible(); }
 #endif
@@ -138,7 +142,7 @@ bool GUIManager::IsVisible_Console              () { return m_impl->panel_GameCo
 Console*                    GUIManager::GetConsole()           { return &m_impl->panel_GameConsole         ; }
 GUI::MainSelector*          GUIManager::GetMainSelector()      { return &m_impl->panel_MainSelector        ; }
 GUI::LoadingWindow*         GUIManager::GetLoadingWindow()     { return &m_impl->panel_LoadingWindow       ; }
-//cosmic vole added fix for non SocketW builds 24 December 2016
+//cosmic vole added fix for non SocketW builds December 24 2016
 #ifdef USE_SOCKETW
 GUI::MpClientList*          GUIManager::GetMpClientList()      { return &m_impl->panel_MpClientList        ; }
 #endif
@@ -394,7 +398,7 @@ void GUIManager::ReflectGameState()
         m_impl->panel_VehicleDescription .SetVisible(false);
         m_impl->panel_SpawnerReport      .SetVisible(false);
         m_impl->panel_SimUtils           .SetBaseVisible(false);
-//cosmic vole added fix for non SocketW builds 24 December 2016
+//cosmic vole added fix for non SocketW builds December 24 2016
 #ifdef USE_SOCKETW        
         m_impl->panel_MpClientList       .SetVisible(mp_state == App::MP_STATE_CONNECTED);
 #endif

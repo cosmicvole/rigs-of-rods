@@ -26,7 +26,7 @@
 #pragma once
 
 #include "ForwardDeclarations.h"
-#include "GUI_GameMainMenuLayout.h"
+#include "GUI_GameRacingMenuLayout.h"
 
 #include "GUI_GameAbout.h"
 #include "GUI_GameSettings.h"
@@ -34,11 +34,11 @@
 namespace RoR {
 namespace GUI {
 
-class GameMainMenu: public GameMainMenuLayout
+class GameRacingMenu: public GameRacingMenuLayout
 {
 public:
-    GameMainMenu();
-    ~GameMainMenu();
+    GameRacingMenu();
+    ~GameRacingMenu();
 
     void Show();
     void Hide();
@@ -48,13 +48,12 @@ public:
     bool IsVisible();
 
 private:
-    void eventMouseButtonClickSelectTerrainButton(MyGUI::WidgetPtr _sender);
-    void eventMouseButtonClickRigEditorButton(MyGUI::WidgetPtr _sender);
-    void eventMouseButtonClickSettingButton(MyGUI::WidgetPtr _sender);
-    void eventMouseButtonClickAboutButton(MyGUI::WidgetPtr _sender);
-    void eventMouseButtonClickExitButton(MyGUI::WidgetPtr _sender);
-    void eventMouseButtonClickMultiPlayerButton(MyGUI::WidgetPtr _sender);
-    void eventMouseButtonClickRacingButton(MyGUI::WidgetPtr _sender);//cosmic vole added Racing button January 5 2017
+    void eventMouseButtonClickLoadPlayerButton(MyGUI::WidgetPtr _sender);
+    void eventMouseButtonClickSavePlayerButton(MyGUI::WidgetPtr _sender);
+    void eventMouseButtonClickSingleRaceButton(MyGUI::WidgetPtr _sender);
+    void eventMouseButtonClickChampionshipButton(MyGUI::WidgetPtr _sender);
+    void eventMouseButtonClickMainMenuButton(MyGUI::WidgetPtr _sender);
+    //void eventMouseButtonClickRacingSettingsButton(MyGUI::WidgetPtr _sender);
 };
 
 } // namespace GUI

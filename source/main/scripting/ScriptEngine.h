@@ -136,7 +136,7 @@ public:
 
     int fireEvent(std::string instanceName, float intensity);
 
-    int envokeCallback(int functionPtr, eventsource_t* source, node_t* node = 0, int type = 0);
+	int envokeCallback(int functionPtr, eventsource_t *source, node_t *node=0, int type=0, int truckNum=-1); //cosmic vole added truckNum to ease detection of AI trucks at checkpoints etc.
 
     AngelScript::asIScriptEngine* getEngine() { return engine; };
 

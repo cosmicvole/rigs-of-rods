@@ -46,6 +46,21 @@ struct eventsource_t
     bool enabled;
 };
 
+struct collision_box_t;
+
+//collision_history_t is for a collision event debounce, necessary when racing against AI trucks.
+//If say 2 trucks (or worse 4 or 5) are all across 1 checkpoint, the game logic would keep firing off the event from envokeScriptCallback() thousands of times [actually the original code only fired it for the first truck but //that's a bug when racing against AI trucks] - obviously keeping track of just the last truckNum that collided doesn't help here and keeping track of the last cbox hit doesn't work either, so we need a history of recent cboxes //per truck with a timeout:
+
+struct collision_history_t
+{
+	int truckNum;
+	collision_box_t* last_cbox_0;
+	collision_box_t* last_cbox_1;
+    collision_box_t* last_cbox_2;
+	collision_box_t* last_cbox_3;
+	float timer;
+};
+
 typedef std::vector<int> cell_t;
 
 class Landusemap;
@@ -108,6 +123,7 @@ private:
     // collision boxes pool
     collision_box_t collision_boxes[MAX_COLLISION_BOXES];
     collision_box_t* last_called_cbox;
+    int last_called_trucknum; //cosmic vole added flag so multiple trucks can trigger the same checkpoint in succession October 18 2016
     int free_collision_box;
 
     // collision tris pool;
@@ -127,8 +143,11 @@ private:
     eventsource_t eventsources[MAX_EVENT_SOURCE];
     int free_eventsource;
 
-    bool permitEvent(int filter);
-    bool envokeScriptCallback(collision_box_t* cbox, node_t* node = 0);
+    // collision history for event debounce - cosmic vole October 18 2016
+    collision_history_t collision_history[MAX_TRUCKS];
+
+	bool permitEvent(int filter, int truckNum = -1); // cosmic vole bug fix for AI truck collisions with world objects
+	bool envokeScriptCallback(collision_box_t *cbox, node_t *node=0, int truckNum = -1, float dt = -1.0f); // cosmic vole added truckNum and dt to ease detection of AI trucks at checkpoints etc
 
     IHeightFinder* hFinder;
     Landusemap* landuse;
@@ -167,11 +186,11 @@ public:
 
     eventsource_t* isTruckInEventBox(Beam* truck);
 
-    bool collisionCorrect(Ogre::Vector3* refpos, bool envokeScriptCallbacks = true);
+	bool collisionCorrect(Ogre::Vector3 *refpos, bool envokeScriptCallbacks = true, int truckNum = -1);
     bool groundCollision(node_t* node, float dt, ground_model_t** gm, float* nso = 0);
     bool isInside(Ogre::Vector3 pos, const Ogre::String& inst, const Ogre::String& box, float border = 0);
     bool isInside(Ogre::Vector3 pos, collision_box_t* cbox, float border = 0);
-    bool nodeCollision(node_t* node, bool contacted, float dt, float* nso, ground_model_t** ogm);
+	bool nodeCollision(node_t *node, bool contacted, float dt, float* nso, ground_model_t** ogm, int truckNum = -1);
 
     void clearEventCache();
     void finishLoadingTerrain();

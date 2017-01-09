@@ -329,6 +329,61 @@ void Console::eventCommandAccept(MyGUI::Edit* _sender)
 
             return;
         }
+        //cosmic vole added code to display vehicle rotation information October 12 2016 TODO some of these calcs are BUGGY
+        else if (args[0] == "/rot" && (is_appstate_sim && !is_sim_select))//&& (gEnv->frameListener->m_loading_state == TERRAIN_LOADED || gEnv->frameListener->m_loading_state == ALL_LOADED))
+        {
+            Beam *b = BeamFactory::getSingleton().getCurrentTruck();
+            /*if (!b && gEnv->player)
+            {
+                Vector3 pos = gEnv->player->getPosition();
+                putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_SYSTEM_REPLY, _L("Character position: ") + String("x: ") + TOSTRING(pos.x) + String(" y: ") + TOSTRING(pos.y) + String(" z: ") + TOSTRING(pos.z), "world.png");
+            }
+            else */if (b && (b->cameranodepos[0] >= 0 && b->cameranodepos[0] < MAX_NODES))
+            {
+                Vector3 beamDir = b->getDirection();
+                beamDir.normalise();
+                Degree pitchAngle = Radian(asin(beamDir.dotProduct(Vector3::UNIT_Y)));
+                //360 degree Pitch using atan2 and pythag: http://stackoverflow.com/questions/3755059/3d-accelerometer-calculate-the-orientation
+                float beamDirY = beamDir.dotProduct(Vector3::UNIT_Y);
+                float beamDirZ = beamDir.dotProduct(Vector3::UNIT_Z);
+                Degree yawAngle = Radian(atan2(beamDir.dotProduct(Vector3::UNIT_X), beamDir.dotProduct(-Vector3::UNIT_Z)));
+                //TODO this calc is wrong - the one using pythag seems strongly tied to yaw when the vehicle is upright
+                Degree pitchAngle2 = Radian(atan2(beamDir.dotProduct(Vector3::UNIT_Y), beamDir.dotProduct(-Vector3::UNIT_Z)));//Radian(atan2(beamDir.dotProduct(-Vector3::UNIT_X), sqrt(beamDirY * beamDirY + beamDirZ * beamDirZ)));
+                //Degree rollAngle = Radian(atan2(beamDirY, beamDirZ));
+                //Roll from Beam.ccp line 5260. See also Beam.cpp line 2403.
+                //roll
+                Vector3 rollv=b->nodes[b->cameranodepos[0]].RelPosition-b->nodes[b->cameranoderoll[0]].RelPosition;
+                rollv.normalise();
+                Degree rollAngle=Radian(asin(rollv.dotProduct(Vector3::UNIT_Y)));
+
+                //Find the up vector to tell if upside down or not
+                Vector3 cam_pos  = b->nodes[b->cameranodepos[0]].RelPosition;
+                Vector3 cam_roll = b->nodes[b->cameranoderoll[0]].RelPosition;
+                Vector3 cam_dir  = b->nodes[b->cameranodedir[0]].RelPosition;
+  
+                //Vector3 rollv = (cam_pos - cam_roll).normalisedCopy();
+                Vector3 dirv  = (cam_pos - cam_dir ).normalisedCopy();
+                Vector3 upv   = dirv.crossProduct(-rollv);
+
+                //Quaternions to reorientate the vehicle (experimental based on http://www.ogre3d.org/tikiwiki/Quaternion+and+Rotation+Primer#Q_How_can_I_make_my_objects_stand_upright_after_a_bunch_of_rotations_)
+                //Also based on https://github.com/opengl-tutorials/ogl/blob/master/common/quaternion_utils.cpp
+                //Vector3 localY = mNode->getOrientation() * Vector3::UNIT_Y;
+                // Get rotation to original facing                                          
+                //Vector3 currentFacing = mNode->getOrientation() * mInitFacing;                          
+                Quaternion quatRestoreFwd = dirv.getRotationTo(Vector3::UNIT_Z);//currentFacing.getRotationTo(mInitFacing);
+                // Because of the 1rst rotation, the up is probably completely screwed up.
+                // Find the rotation between the "up" of the rotated object, and the desired up
+                Vector3 newUp = quatRestoreFwd * upv;//Vector3::UNIT_Y;
+                Quaternion quatRestoreUp = newUp.getRotationTo(Vector3::UNIT_Y);//upv.getRotationTo(Vector3::UNIT_Y);
+                Quaternion quatRestore = quatRestoreUp * quatRestoreFwd;//remember, in reverse order.
+                String debugQuat = String("To reorientate, yaw: ") + TOSTRING(quatRestore.getYaw().valueDegrees()) +  String(", pitch: ") +  TOSTRING(quatRestore.getPitch().valueDegrees()) +  String(", roll: ") + TOSTRING(quatRestore.getYaw().valueDegrees());
+                
+                putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_SYSTEM_REPLY, _L("Vehicle rotation: ") + String("Yaw: ") + TOSTRING(yawAngle.valueDegrees()) + String(" Roll: ") + TOSTRING(rollAngle.valueDegrees()) + String(" Pitch: ") + TOSTRING(pitchAngle.valueDegrees
+                    ()) + String(" Pitch (alt calc): ") + TOSTRING(pitchAngle2.valueDegrees()) + String("Up vector: (") + TOSTRING(upv.x) + String(",") + TOSTRING(upv.y) + String(",") + TOSTRING(upv.z) + String("). " + debugQuat) , "world.png");
+            }
+
+            return;
+        }
         else if (args[0] == "/goto" && (is_appstate_sim && !is_sim_select))
         {
             if (args.size() != 4)

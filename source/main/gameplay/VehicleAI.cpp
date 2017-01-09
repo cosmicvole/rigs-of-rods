@@ -23,12 +23,15 @@
 #ifdef USE_ANGELSCRIPT
 
 #include "VehicleAI.h"
-
 #include "Beam.h"
+#include "BeamFactory.h"
 #include "BeamEngine.h"
 #include "GUI_GameConsole.h"
 
 #include "MainThread.h"
+//cosmic vole added AI driver model November 21 2016
+#include "CharacterFactory.h"
+#include "PlayerColours.h"
 
 #include "scriptdictionary/scriptdictionary.h"
 
@@ -36,6 +39,21 @@ using namespace Ogre;
 
 VehicleAI::VehicleAI(Beam* b)
 {
+    //Initialization moved into constructor to avoid Visual Studio error 'only static const integral data members can be initialized within a class'
+    maxspeed = 50;//!<(KM/H) The max speed the AI is allowed to drive.
+    is_enabled = false;//!< True if the AI is driving.
+    current_waypoint_id = 0;//!< The curent waypoint ID.
+    free_waypoints = 0;//!< The amount of waypoints.
+    acc_power = 0.8;//!< The engine power.
+
+    //cosmic vole added auto reset code for stuck vehicles October 9 2016
+    stuck_time = 0.0;
+    stuck_position = b->getPosition();
+    stuck_cancel_distance = 2.0;
+    stuck_reset_delay = 15.0;//Time in seconds until a stuck vehicle resets
+    //cosmic vole added AI driver model November 21 2016
+    character = nullptr;
+
     beam = b;
 }
 
@@ -46,6 +64,17 @@ VehicleAI::~VehicleAI()
 void VehicleAI::SetActive(bool value)
 {
     is_enabled = value;
+    //cosmic vole added AI Character driver model November 21 2016
+    if (value && BSETTING("ShowAIDrivers", true) && character == nullptr)
+    {
+        int aiColour = PlayerColours::getSingleton().getRandomColourNum();//Ogre::ColourValue(frand(), frand(), frand(), 1.0f);
+        character = CharacterFactory::getSingleton().createAIInstance(beam->trucknum, (int)aiColour);
+        character->setBeamCoupling(true, beam);
+    }
+    else if (!value && character != nullptr)
+    {
+        CharacterFactory::getSingleton().removeAIInstance(beam->trucknum);
+    }
 }
 
 bool VehicleAI::IsActive()
@@ -151,10 +180,24 @@ void VehicleAI::update(float dt, int doUpdate)
     }
 
     Vector3 mAgentPosition = beam->getPosition();
+    //Keep the absolute position in a separate variable as the other one will be normalized. cosmic vole October 10 2016.
+    Vector3 mAgentAbsPosition = mAgentPosition;
+    float curDistance;
 
     if (current_waypoint.distance(mAgentPosition) < 5)
     {
         updateWaypoint();
+        //Bug fix for auto reset. If the waypoints are very close together, the reset can fire off if we don't keep checking this here. cosmic vole October 10 2016
+        if (is_enabled && stuck_reset_delay > 0.0f)
+        {
+            curDistance = mAgentAbsPosition.distance(stuck_position);
+            if (curDistance >= stuck_cancel_distance)
+            {
+                is_stuck = false;
+                stuck_time = 0.0f;
+                stuck_position = mAgentPosition;
+            }
+        }
         return;
     }
 
@@ -163,7 +206,8 @@ void VehicleAI::update(float dt, int doUpdate)
     Quaternion TargetOrientation = Quaternion::ZERO;
 
     mAgentPosition.y = 0; //Vector3 > Vector2
-    Quaternion mAgentOrientation = Quaternion(Radian(beam->getHeadingDirectionAngle()), Vector3::NEGATIVE_UNIT_Y);
+    float agentRotation = beam->getHeadingDirectionAngle();
+    Quaternion mAgentOrientation = Quaternion(Radian(agentRotation), Vector3::NEGATIVE_UNIT_Y);
     mAgentOrientation.normalise();
 
     Vector3 mVectorToTarget = TargetPosition - mAgentPosition; // A-B = B->A
@@ -176,6 +220,288 @@ void VehicleAI::update(float dt, int doUpdate)
 
     // Compute new torque scalar (-1.0 to 1.0) based on heading vector to target.
     Vector3 mSteeringForce = mAgentOrientation.Inverse() * mVectorToTarget;
+
+    //cosmic vole added auto reset code for stuck vehicles October 9 2016
+    if (is_enabled && stuck_reset_delay > 0.0f)
+    {
+        float curDistance = mAgentAbsPosition.distance(stuck_position);
+        if (curDistance >= stuck_cancel_distance)
+        {
+            is_stuck = false;
+            stuck_time = 0.0f;
+            stuck_position = mAgentAbsPosition;
+        }
+        else
+        {
+            is_stuck = true;
+            stuck_time += dt;
+            if (stuck_time >= stuck_reset_delay)
+            {
+                RoR::App::GetConsole()->putMessage(RoR::Console::CONSOLE_MSGTYPE_SCRIPT, RoR::Console::CONSOLE_SYSTEM_NOTICE, 
+                    "Resetting vehicle: " + TOSTRING(beam->trucknum) + ". Got stuck at (" + TOSTRING(stuck_position.x) + ", " + TOSTRING(stuck_position.y) + ", " + TOSTRING(stuck_position.z) + "); cur. pos (" + 
+                    TOSTRING(mAgentAbsPosition.x) + ", " + TOSTRING(mAgentAbsPosition.y) + ", " + TOSTRING(mAgentAbsPosition.z) + "); for time " + TOSTRING(stuck_time) + ". Dist. moved: " + TOSTRING(curDistance) + ".", "note.png");
+                //Reset the vehicle's position to the last waypoint - TODO we may or may not want to repair the vehicle
+                Vector3 resetPos;
+                if (current_waypoint_id <= free_waypoints)
+                {
+                    //if (current_waypoint_id > 0)
+                    //{
+                    //    resetPos = waypoints[current_waypoint_id-1];
+                    //}
+                    //else
+                    //{
+                    resetPos = beam->initial_node_pos[0];//waypoints[current_waypoint_id];
+                    if (resetPos.squaredDistance(beam->nodes[0].AbsPosition) < 9.0)
+                    {
+                        //It's already on the spawn point so don't reset
+                        resetPos = Vector3::ZERO;
+                    }
+                    //}
+
+                    //When the vehicle's at the start, the 0th waypoint is Vector3::ZERO. TODO we should probably detect this better.
+                    if (resetPos != Vector3::ZERO)
+                    {
+                        //We will aim to reset to the last waypoint visited, but
+                        //before we move to the waypoint, find a clear space on the track from that point back
+                        float maxRelocateDistanceSq = 100.0 * 100.0;//If there's no clear track within 100 metres, this truck will just sit and wait
+                        int i = current_waypoint_id-1;
+                        bool found_space = false;
+                        for (int j=0; !found_space && j<free_waypoints; j++)
+                        {
+                            //0th waypoint is not a point on the track, we need to move round to the very last waypoint
+                            if (i<=0)
+                            {
+                                i = free_waypoints;
+                            }
+                            int iprev = i-1;
+                            if (i == 1)
+                            {
+                                iprev = free_waypoints;
+                            }
+                            Vector3 thisWaypoint = waypoints[i];
+                            if (j > 0 && thisWaypoint.squaredDistance(mAgentAbsPosition) > maxRelocateDistanceSq)
+                            {
+                                //Too far away. Give up and wait for the track to clear.
+                                break;
+                            }
+                            Beam** trucks = BeamFactory::getSingleton().getTrucks();
+                            int numTrucks = BeamFactory::getSingleton().getTruckCount();
+
+                            do
+                            {
+                                //Assume this new position is OK until we've checked all the trucks
+                                found_space = true;
+                                for (int t=0; t<numTrucks; t++)
+                                {
+                                    if (t == beam->trucknum)
+                                    {
+                                        continue;
+                                    }
+                                    //TODO something's not working quite right with this as a car respawned right inside the player's car today! cosmic vole October 11 2016
+                                    if (thisWaypoint.squaredDistance(trucks[t]->getPosition()) < 9.0)
+                                    {
+                                        //That truck's too close
+                                        found_space = false;
+                                        break;
+                                    }
+                                }
+                                if (!found_space)
+                                {
+                                    Vector3 prevWaypoint = waypoints[iprev];
+                                    //If we've reversed past the previous waypoint, we need to continue our outer loop to start looking at the other waypoints (busy track!)
+                                    if (waypoints[i].squaredDistance(thisWaypoint) - waypoints[i].squaredDistance(prevWaypoint) > 0.1)
+                                    {
+                                        break;
+                                    }
+                                    Vector3 headBack = prevWaypoint - waypoints[i];//thisWaypoint;
+                                    if (headBack.squaredLength() < 0.0001f)
+                                    {
+                                        //The two waypoints coincide. We need to keep looking at the other ones
+                                        break;
+                                    }
+                                    headBack = headBack.normalise();//Should be 1 metre length which is good for our purposes
+                                    thisWaypoint += headBack;
+                                    if (j > 0 && thisWaypoint.squaredDistance(mAgentAbsPosition) > maxRelocateDistanceSq)
+                                    {
+                                        //Too far away. Give up and wait for the track to clear.
+                                        break;
+                                    }
+                                }
+                            }
+                            while (!found_space);
+
+                            if (found_space)
+                            {
+                                resetPos = thisWaypoint;
+                                //Don't forget to update the current waypoint for the AI!
+                                current_waypoint_id = i+1;
+                                if (current_waypoint_id > free_waypoints)
+                                {
+                                    //BUG / TODO review this. It will create an infinite loop which is not the normal behaviour!
+                                    current_waypoint_id = 1;
+                                }
+                                //As we've changed the waypoint, at the very least we need to recalc the Target Heading so we know how to rotate the car into it's new position
+                                TargetPosition = current_waypoint = waypoints[current_waypoint_id];
+                                TargetPosition.y = 0; //Vector3 > Vector2
+                                Quaternion TargetOrientation = Quaternion::ZERO;
+                                //mAgentPosition.y = 0; //Vector3 > Vector2
+                                //float agentRotation = beam->getHeadingDirectionAngle();
+                                //Quaternion mAgentOrientation = Quaternion(Radian(agentRotation), Vector3::NEGATIVE_UNIT_Y);
+                                //mAgentOrientation.normalise();
+                                //Vector3 mVectorToTarget = TargetPosition - mAgentPosition; // A-B = B->A
+                                //mAgentPosition.normalise();
+                                //Vector3 mAgentHeading = mAgentOrientation * mAgentPosition;
+                                mTargetHeading = TargetOrientation * TargetPosition;
+                                //mAgentHeading.normalise();
+                                mTargetHeading.normalise();
+                                //We've finally found our respawn point. Good to go!
+                                break;
+                            }
+                            i--;
+                        }
+
+                        if (found_space && resetPos != Vector3::ZERO)
+                        {
+                            //Vector3 mSpawnRotationXZ = Vector3(0.0f, 0.0f, 1.0f);
+                            Vector3 beamDir = beam->getDirection();
+                            beamDir.normalise();
+                            Degree pitchAngle = Radian(asin(beamDir.dotProduct(Vector3::UNIT_Y)));
+                            //360 degree Pitch using atan2 and pythag: http://stackoverflow.com/questions/3755059/3d-accelerometer-calculate-the-orientation
+                            float beamDirY = beamDir.dotProduct(Vector3::UNIT_Y);
+                            float beamDirZ = beamDir.dotProduct(Vector3::UNIT_Z);
+                            //Yaw: return atan2(idir.dotProduct(Vector3::UNIT_X), (idir).dotProduct(-Vector3::UNIT_Z));
+                            Degree pitchAngle2 = Radian(atan2(beamDir.dotProduct(-Vector3::UNIT_X), sqrt(beamDirY * beamDirY + beamDirZ * beamDirZ)));
+                            Degree rollAngle = Radian(atan2(beamDirY, beamDirZ));
+                            Vector3 mTargetHeadingXZ = mTargetHeading;
+                            mAgentHeading.y = 0.0f;
+                            mTargetHeadingXZ.y = 0.0f;
+
+                            //agentRotation gives the vehicle's current rotation - shouldn't be relevant when we do resetAngle()
+                            //we can also get the spawnRotation but that is already accounted for in resetAngle()
+                            Degree targetRotation = Radian(atan2(mTargetHeading.dotProduct(Vector3::UNIT_X), mTargetHeading.dotProduct(-Vector3::UNIT_Z)));
+
+
+
+
+
+
+                            Vector3 rollv=beam->nodes[beam->cameranodepos[0]].RelPosition-beam->nodes[beam->cameranoderoll[0]].RelPosition;
+                            rollv.normalise();
+                            rollAngle=Radian(asin(rollv.dotProduct(Vector3::UNIT_Y)));
+
+                            //Find the up vector to tell if upside down or not
+                            Vector3 cam_pos  = beam->nodes[beam->cameranodepos[0]].RelPosition;
+                            Vector3 cam_roll = beam->nodes[beam->cameranoderoll[0]].RelPosition;
+                            Vector3 cam_dir  = beam->nodes[beam->cameranodedir[0]].RelPosition;
+
+                            //Vector3 rollv = (cam_pos - cam_roll).normalisedCopy();
+                            Vector3 dirv  = (cam_pos - cam_dir ).normalisedCopy();
+                            Vector3 upv   = dirv.crossProduct(-rollv);
+
+                            //Quaternions to reorientate the vehicle (experimental based on http://www.ogre3d.org/tikiwiki/Quaternion+and+Rotation+Primer#Q_How_can_I_make_my_objects_stand_upright_after_a_bunch_of_rotations_)
+                            //Also based on https://github.com/opengl-tutorials/ogl/blob/master/common/quaternion_utils.cpp
+                            //Vector3 localY = mNode->getOrientation() * Vector3::UNIT_Y;
+                            // Get rotation to original facing                                          
+                            //Vector3 currentFacing = mNode->getOrientation() * mInitFacing;                          
+                            Quaternion quatRestoreFwd = dirv.getRotationTo(TargetPosition - resetPos);//UNIT_Z worked great: Vector3::UNIT_Z);//currentFacing.getRotationTo(mInitFacing);
+                            // Because of the 1rst rotation, the up is probably completely screwed up.
+                            // Find the rotation between the "up" of the rotated object, and the desired up
+                            Vector3 newUp = quatRestoreFwd * upv;//Vector3::UNIT_Y;
+                            Quaternion quatRestoreUp = newUp.getRotationTo(Vector3::UNIT_Y);//upv.getRotationTo(Vector3::UNIT_Y);
+                            Quaternion quatRestore = quatRestoreUp * quatRestoreFwd;//remember, in reverse order.
+
+
+
+
+
+
+
+                            RoR::App::GetConsole()->putMessage(RoR::Console::CONSOLE_MSGTYPE_SCRIPT, RoR::Console::CONSOLE_SYSTEM_NOTICE, 
+                                "Vehicle: " + TOSTRING(beam->trucknum) + "  Yaw: " + TOSTRING(Radian(agentRotation).valueDegrees()) + " Pitch: " + TOSTRING(pitchAngle.valueDegrees()) + " Pitch (alt calc): " + TOSTRING(pitchAngle2.valueDegrees()) + " Roll: " + TOSTRING(rollAngle.valueDegrees()) + " Target Yaw: " + TOSTRING(targetRotation.valueDegrees()) + " cur. pos (" + 
+                                TOSTRING(mAgentAbsPosition.x) + ", " + TOSTRING(mAgentAbsPosition.y) + ", " + TOSTRING(mAgentAbsPosition.z) + "); for time " + TOSTRING(stuck_time) + ". Dist. moved: " + TOSTRING(curDistance) + ".", "note.png");
+
+
+                            //resetAngle() WON'T WORK if the truck is upside down or on its side as it uses a matrix made from Euler angles and only deals with yaw!
+                            //Doesn't seem to work beam->resetAngle(targetRotation);// + mAgentHeading.angleBetween(mTargetHeadingXZ).valueDegrees());//mSteeringForce.x);//mTargetHeading.x);//beam->getRotation());
+                            beam->updateFlexbodiesFinal();
+                            //I think the reason this isn't quite right is we need to know the heading of the target FROM resetPos
+                            //beam->displace(Vector3::ZERO, mAgentHeading.angleBetween(mTargetHeadingXZ).valueDegrees());//targetRotation);
+
+
+                            //TODO Do this instead (this will be slow so we may need to look at deferring it to a later time slice??):
+                            node_t* nodes = beam->nodes;
+                            int nodeCount = beam->free_node;
+                            //This code is taken from LoadTruck(), but we've got problems here. We can't easily base the rotations on each node's initial position because the nodes may be deformed.
+                            //I am not sure there's an obvious way to tell whether the whole vehicle is rotated (e.g.) upside down or just some of the nodes are rotated relative to the others!
+                            //We need the full quaternion direction the vehicle's nodes are currently pointing and to first reverse that rotation, then to apply the new one
+
+
+                            //Something like this: look at calcAnimators() from line 2389 as well to work out if vehicle upside down etc.
+                            //Also look at RORFrameListener.cpp, inside advanced repair, how it steers and moves the nodes of the whole truck (based on input events) using beam->displace(): curr_truck->displace(translation * scale, rotation * scale); line 780
+                            //Nice tutorial says how to get character upright after a bunch of rotations, using quaternions http://www.ogre3d.org/tikiwiki/Quaternion+and+Rotation+Primer#Q_How_can_I_make_my_objects_stand_upright_after_a_bunch_of_rotations_
+                            //Good quaternion cheat sheet http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-17-quaternions/
+
+                            //if (cameranodepos[0] >= 0 && cameranodepos[0] < MAX_NODES)
+                            //{
+                            //    // pitch
+                            //    Vector3 dir = nodes[cameranodepos[0]].RelPosition - nodes[cameranodedir[0]].RelPosition;
+                            //    dir.normalise();
+                            //    //TODO check this handles 360 degree rotation - look into using asin2 with y and z offsets if necessary
+                            //    float angle = asin(dir.dotProduct(Vector3::UNIT_Y));
+                            //    if (angle < -1) angle = -1;
+                            //    if (angle > 1) angle = 1;
+
+                            //    pitch = Radian(angle).valueDegrees();
+
+                            //How pitch angle is calced for anti rollback:
+                            //Vector3 dirDiff = curr_truck->getDirection();
+                            //Degree pitchAngle = Radian(asin(dirDiff.dotProduct(Vector3::UNIT_Y)));
+
+                            //    //TODO not sure how to calc roll yet but we may not need it as 2 axes may be enough to right the vehicle
+                            //}
+
+                            //Isn't this susceptible to gimbal lock?
+                            //Quaternion rot = Quaternion(Degree(rz), Vector3::UNIT_Z) * Quaternion(Degree(ry), Vector3::UNIT_Y) * Quaternion(Degree(rx), Vector3::UNIT_X);
+
+                            //CHECK OUT THIS CameraBehaviorVehicle::mousePressed Seems to do exactly what we need! Line 96 on...
+
+                            // Set origin of rotation to camera node
+                            Vector3 origin = nodes[0].AbsPosition;
+
+                            if (beam->cameranodepos[0] >= 0 && beam->cameranodepos[0] < MAX_NODES)
+                            {
+                                origin = nodes[beam->cameranodepos[0]].AbsPosition;
+                            }
+                            for (int i=0; i<nodeCount; i++)
+                            {
+                                nodes[i].AbsPosition = quatRestore * nodes[i].AbsPosition;//spawn_position + spawn_rotation * (nodes[i].AbsPosition - spawn_position);
+                                nodes[i].RelPosition = nodes[i].AbsPosition - origin;
+                            }
+
+                            beam->resetPosition(resetPos.x, resetPos.z, false, resetPos.y);//false, 0.0f);//resetPos.y);
+                            if (!beam->engine->isRunning())
+                            {
+                                beam->engine->start();
+                            }
+                            if (beam->parkingbrake)
+                            {
+                                beam->parkingbrakeToggle();
+                            }
+
+                        }
+                    }
+
+                    mAgentPosition = beam->getPosition();
+                    is_stuck = false;
+                    stuck_time = 0.0f;
+                    stuck_position = mAgentPosition;
+                    return;
+                }
+
+            }
+        }
+    }
+
     mSteeringForce.normalise();
 
     float mYaw = mSteeringForce.x;

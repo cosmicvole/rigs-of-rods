@@ -122,6 +122,7 @@ Collisions::Collisions() :
     , landuse(0)
     , largest_cellcount(0)
     , last_called_cbox(0)
+    , last_called_trucknum(-2)
     , last_used_ground_model(0)
     , max_col_tris(MAX_COLLISION_TRIS)
 {
@@ -138,6 +139,8 @@ Collisions::Collisions() :
     {
         hashtable[i].cellid = UNUSED_CELLID; // conversion from 'const int' to 'unsigned int', signed/unsigned mismatch!
     }
+
+        //cosmic vole added to handle collisions with multiple trucks
 
     collision_tris = (collision_tri_t*)malloc(sizeof(collision_tri_t) * MAX_COLLISION_TRIS);
 
@@ -567,6 +570,9 @@ int Collisions::addCollisionBox(SceneNode *tenode, bool rotating, bool virt, Vec
         free_eventsource++;
     }
 
+    //cosmic vole added flag so multiple trucks can trigger the same checkpoint in succession without excess lag October 18 2016
+    coll_box.last_called_trucknum = -2;
+
     // next, global rotate
     if (fabs(rot.x) < 0.0001f && fabs(rot.y) < 0.0001f && fabs(rot.z) < 0.0001f)
     {
@@ -861,7 +867,7 @@ void Collisions::printStats()
     LOG("COLL: Largest cell: "+TOSTRING(largest_cellcount));
 }
 
-bool Collisions::envokeScriptCallback(collision_box_t *cbox, node_t *node)
+bool Collisions::envokeScriptCallback(collision_box_t *cbox, node_t *node, int truckNum, float dt)
 {
     bool handled = false;
 
@@ -872,11 +878,57 @@ bool Collisions::envokeScriptCallback(collision_box_t *cbox, node_t *node)
     
     std::lock_guard<std::mutex> lock(m_scriptcallback_mutex);
     // this prevents that the same callback gets called at 2k FPS all the time, serious hit on FPS ...
-    if (last_called_cbox != cbox)
+    // cosmic vole overhauled this logic as if there are AI trucks triggering several checkpoints on track at the same time as the player, this was still causing major lag. 
+    // Also, with 2 or more trucks at the same checkpoint, we do need some kind of timeout otherwise the code can just alternate between the 2 truckNums 1000s of times! 18/10/16
+	
+    bool alreadyDone = false;
+    if (truckNum >= 0 && dt >= 0.0f)
     {
-        if (!ScriptEngine::getSingleton().envokeCallback(eventsources[cbox->eventsourcenum].scripthandler, &eventsources[cbox->eventsourcenum], node))
+        collision_history_t debounce = collision_history[truckNum];
+        debounce.timer += dt;
+        if (debounce.timer < 1000.0f)
+        {
+            //If the current cbox was one of the last 4 already visited by the current truck within the timeout, we will consider this event a duplicate and discard it
+            if (cbox == debounce.last_cbox_0 || cbox == debounce.last_cbox_1 || cbox == debounce.last_cbox_2 || cbox == debounce.last_cbox_3)
+            {
+                alreadyDone = true;
+            }
+            else
+            {
+                //Update the collision history with this cbox
+                debounce.last_cbox_3 = debounce.last_cbox_2;
+                debounce.last_cbox_2 = debounce.last_cbox_1;
+                debounce.last_cbox_1 = debounce.last_cbox_0;
+                debounce.last_cbox_0 = cbox;
+            }
+        }
+        else
+        {
+            //Reset the collision history for this truck
+            debounce.timer = 0.0f;
+            debounce.last_cbox_1 = debounce.last_cbox_2 = debounce.last_cbox_3 = nullptr;
+            debounce.last_cbox_0 = cbox;
+        }
+    }
+    else
+    {
+        //TODO This code will be hit if the Character hit the cbox or it was called via colision_correct(), usually during a reset
+        //We need to consider whether those cases also need debouncing, and how to do it. 
+        //If the character is standing on a checkpoint that a truck is also parked on, it could cause real problems here.
+        //For now, this might help a bit:
+        if (last_called_cbox == cbox && cbox->last_called_trucknum == truckNum)
+        {
+            alreadyDone = true;
+        }
+    }
+
+    //if (last_called_cbox != cbox)
+    if (!alreadyDone)
+    {
+        if (!ScriptEngine::getSingleton().envokeCallback(eventsources[cbox->eventsourcenum].scripthandler, &eventsources[cbox->eventsourcenum], node, 0, truckNum))
             handled = true;
         last_called_cbox = cbox;
+        cbox->last_called_trucknum = truckNum;
     }
 #endif //USE_ANGELSCRIPT
 
@@ -886,9 +938,10 @@ bool Collisions::envokeScriptCallback(collision_box_t *cbox, node_t *node)
 void Collisions::clearEventCache()
 {
     last_called_cbox = 0;
+    last_called_trucknum = -2;
 }
 
-bool Collisions::collisionCorrect(Vector3 *refpos, bool envokeScriptCallbacks)
+bool Collisions::collisionCorrect(Vector3 *refpos, bool envokeScriptCallbacks, int truckNum) // cosmic vole added truckNum to ease detection of AI trucks on checkpoints etc.
 {
     // find the correct cell
     bool contacted=false;
@@ -930,9 +983,9 @@ bool Collisions::collisionCorrect(Vector3 *refpos, bool envokeScriptCallbacks)
                 // now test with the inner box
                 if (Pos > cbox->relo && Pos < cbox->rehi)
                 {
-                    if (cbox->eventsourcenum!=-1 && permitEvent(cbox->event_filter) && envokeScriptCallbacks)
+					if (cbox->eventsourcenum!=-1 && permitEvent(cbox->event_filter, truckNum) && envokeScriptCallbacks)
                     {
-                        envokeScriptCallback(cbox);
+						envokeScriptCallback(cbox, 0, truckNum);
                         isScriptCallbackEnvoked = true;
                     }
                     if (cbox->camforced && !forcecam)
@@ -962,9 +1015,9 @@ bool Collisions::collisionCorrect(Vector3 *refpos, bool envokeScriptCallbacks)
 
             } else
             {
-                if (cbox->eventsourcenum!=-1 && permitEvent(cbox->event_filter) && envokeScriptCallbacks)
+				if (cbox->eventsourcenum!=-1 && permitEvent(cbox->event_filter, truckNum) && envokeScriptCallbacks)
                 {
-                    envokeScriptCallback(cbox);
+					envokeScriptCallback(cbox, 0, truckNum);
                     isScriptCallbackEnvoked = true;
                 }
                 if (cbox->camforced && !forcecam)
@@ -1017,9 +1070,10 @@ bool Collisions::collisionCorrect(Vector3 *refpos, bool envokeScriptCallbacks)
     return contacted;
 }
 
-bool Collisions::permitEvent(int filter)
+bool Collisions::permitEvent(int filter, int truckNum)
 {
-    Beam *b = BeamFactory::getSingleton().getCurrentTruck();
+    //Bug fix - the truck being collision detected isn't always the player's currently selected truck - especially when AI is active. cosmic vole October 6 2016.
+	Beam *b = (truckNum < 0) ? BeamFactory::getSingleton().getCurrentTruck() : BeamFactory::getSingleton().getTruck(truckNum);
 
     switch (filter)
     {
@@ -1050,7 +1104,7 @@ int Collisions::enableCollisionTri(int number, bool enable)
     return 0;
 }
 
-bool Collisions::nodeCollision(node_t *node, bool contacted, float dt, float* nso, ground_model_t** ogm)
+bool Collisions::nodeCollision(node_t *node, bool contacted, float dt, float* nso, ground_model_t** ogm, int truckNum) //cosmic vole added truckNum to ease AI truck detection at checkpoints etc
 {
     bool smoky = false;
     // float corrf=1.0;
@@ -1089,9 +1143,9 @@ bool Collisions::nodeCollision(node_t *node, bool contacted, float dt, float* ns
                         // now test with the inner box
                         if (Pos > cbox->relo && Pos < cbox->rehi)
                         {
-                            if (cbox->eventsourcenum!=-1 && permitEvent(cbox->event_filter))
+							if (cbox->eventsourcenum!=-1 && permitEvent(cbox->event_filter, truckNum))
                             {
-                                envokeScriptCallback(cbox, node);
+								envokeScriptCallback(cbox, node, truckNum, dt);
                             }
                             if (cbox->camforced && !forcecam)
                             {
@@ -1133,9 +1187,9 @@ bool Collisions::nodeCollision(node_t *node, bool contacted, float dt, float* ns
                             }
                     } else
                     {
-                        if (cbox->eventsourcenum!=-1 && permitEvent(cbox->event_filter))
+						if (cbox->eventsourcenum!=-1 && permitEvent(cbox->event_filter, truckNum))
                         {
-                            envokeScriptCallback(cbox, node);
+							envokeScriptCallback(cbox, node, truckNum, dt);
                         }
                         if (cbox->camforced && !forcecam)
                         {

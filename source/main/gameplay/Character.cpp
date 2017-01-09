@@ -236,6 +236,12 @@ void Character::setRotation(Radian rotation)
     mCharacterNode->yaw(-characterRotation);
 }
 
+//cosmic vole - I've added this only because it helps fit RORBot inside small vehicles. Use with caution! Really, it probably means the vehicle should be bigger, or his pose needs adjusting per vehicle. November 21 2016
+void Character::setScale(Ogre::Vector3 scale)
+{
+	mCharacterNode->setScale(scale);
+}
+
 void Character::setAnimationMode(String mode, float time)
 {
     if (!mAnimState)
@@ -312,7 +318,8 @@ void Character::update(float dt)
         // Trigger script events and handle mesh (ground) collision
         {
             Vector3 query = position;
-            gEnv->collisions->collisionCorrect(&query);
+            int truckNum = (beamCoupling != nullptr) ? beamCoupling->trucknum : -3;
+            gEnv->collisions->collisionCorrect(&query, true, truckNum);
             if (std::abs(position.y - query.y) > 0.1f && gEnv->cameraManager)
             {
                 gEnv->cameraManager->NotifyContextChange();
@@ -708,6 +715,16 @@ void Character::setBeamCoupling(bool enabled, Beam* truck /* = 0 */)
         // do not cast shadows inside of a truck
         mCharacterNode->getAttachedObject(0)->setCastShadows(false);
         isCoupled = true;
+        //cosmic vole added driver scale
+        if (beamCoupling->driverScale > 0.0f)
+        {
+            Ogre::Real scale = (Ogre::Real)(beamCoupling->driverScale * 0.02f);
+            mCharacterNode->setScale(scale, scale, scale);
+        }
+        else
+        {
+            mCharacterNode->setScale(0.02f, 0.02f, 0.02f);
+        }
         // check if there is a seat, if not, hide our character
         if (!beamCoupling->hasDriverSeat())
         {
@@ -719,6 +736,8 @@ void Character::setBeamCoupling(bool enabled, Beam* truck /* = 0 */)
     else
     {
         isCoupled = false;
+        //cosmic vole added driver scale
+        mCharacterNode->setScale(0.02f, 0.02f, 0.02f);
         setPhysicsEnabled(true);
         beamCoupling = 0;
         if (mMoveableText && !mMoveableText->isVisible())

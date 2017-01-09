@@ -52,12 +52,13 @@ public:
     void SetVisible_GameAbout           (bool visible);
     void SetVisible_GameSettings        (bool visible);
     void SetVisible_GamePauseMenu       (bool visible);
+    void SetVisible_GameRacingMenu      (bool visible); //cosmic vole added racing menu January 6 2017
     void SetVisible_DebugOptions        (bool visible);
     void SetVisible_MultiplayerSelector (bool visible);
     void SetVisible_ChatBox             (bool visible);
     void SetVisible_SpawnerReport       (bool visible);
     void SetVisible_VehicleDescription  (bool visible);
-//cosmic vole added fix for non SocketW builds 24 December 2016
+//cosmic vole added fix for non SocketW builds December 24 2016
 #ifdef USE_SOCKETW    
     void SetVisible_MpClientList        (bool visible);
 #endif    
@@ -72,6 +73,7 @@ public:
     bool IsVisible_GameAbout            ();
     bool IsVisible_GameSettings         ();
     bool IsVisible_GamePauseMenu        ();
+    bool IsVisible_GameRacingMenu       (); // cosmic vole added racing menu
     bool IsVisible_DebugOptions         ();
     bool IsVisible_MessageBox           ();
     bool IsVisible_MultiplayerSelector  ();
@@ -90,7 +92,7 @@ public:
     Console*                    GetConsole();
     GUI::MainSelector*          GetMainSelector();
     GUI::LoadingWindow*         GetLoadingWindow();
-//cosmic vole added fix for non SocketW builds 24 December 2016
+//cosmic vole added fix for non SocketW builds December 24 2016
 #ifdef USE_SOCKETW    
     GUI::MpClientList*          GetMpClientList();
 #endif    

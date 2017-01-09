@@ -530,6 +530,11 @@ float Beam::getRotation()
     return atan2(cur_dir.dotProduct(Vector3::UNIT_X), cur_dir.dotProduct(-Vector3::UNIT_Z));
 }
 
+float Beam::getSpawnRotation()
+{
+    return m_spawn_rotation;
+}
+
 Vector3 Beam::getDirection()
 {
     Vector3 cur_dir = nodes[0].AbsPosition;
@@ -1473,6 +1478,12 @@ bool Beam::hasDriverSeat()
     return driverSeat != 0;
 }
 
+//cosmic vole - scale RORBot Character when driving this vehicle
+void Beam::setDriverScale(float value)
+{
+    this->driverScale = value;
+}
+
 void Beam::calculateDriverPos(Vector3& out_pos, Quaternion& out_rot)
 {
     assert(this->driverSeat != nullptr);
@@ -1562,6 +1573,12 @@ void Beam::reset(bool keepPosition)
         m_reset_request = REQUEST_RESET_ON_SPOT;
     else
         m_reset_request = REQUEST_RESET_ON_INIT_POS;
+}
+
+//cosmic vole added partial repairs
+void Beam::partialRepair()
+{
+    m_reset_request = REQUEST_RESET_PARTIAL_REPAIR;
 }
 
 void Beam::displace(Vector3 translation, float rotation)
@@ -1737,11 +1754,153 @@ void Beam::SyncReset()
     if (m_reset_request != REQUEST_RESET_ON_SPOT)
     {
         m_reset_request = REQUEST_RESET_NONE;
-    }
-    else
+    } else
     {
         m_reset_request = REQUEST_RESET_FINAL;
     }
+}
+
+//cosmic vole
+void Beam::SyncPartialRepair(float step)
+{
+    hydrodirstate=0.0;
+    hydroaileronstate=0.0;
+    hydrorudderstate=0.0;
+    hydroelevatorstate=0.0;
+    hydrodirwheeldisplay=0.0;
+    if (hydroInertia) hydroInertia->resetCmdKeyDelay();
+    parkingbrake=0;
+    cc_mode = false;
+    fusedrag=Vector3::ZERO;
+    origin=Vector3::ZERO;
+    float yPos = nodes[lowestcontactingnode].AbsPosition.y;
+
+    Vector3 cur_position = nodes[0].AbsPosition;
+    float cur_rot = getRotation();
+    if (engine) engine->start();
+    //TODO Find angle each node has been rotated and rotate back towards original alignment a bit before translating
+    //TODO consider fixing wheel nodes faster than other parts
+    //TODO consider regional repairs based on mouse location
+    //When this value is set it stops a perfect repair - beams will always remain offset by at least this amount
+    //TODO randomise it a bit for each beam
+    float minOffset = 0.001f;
+    for (int i=0; i<free_node; i++)
+    {
+        Vector3 offset = nodes[i].AbsPosition-initial_node_pos[i];
+        float curStep;
+        if (nodes[i].iswheel != NOWHEEL)
+        {
+            //Attempt to fix wheels faster than the other parts
+            curStep = step * 1.5f;//1.0f;
+            //if (curStep < step)
+            //{
+            //    curStep = step;
+            //}
+        }
+        else
+        {
+            curStep = step;
+        }
+        float len = offset.length();
+        if (fabsf(len) <= minOffset)
+        {
+            continue;
+        }
+        if (fabsf(len) > curStep)
+        {
+            offset = offset / len;
+            nodes[i].AbsPosition += offset * curStep;
+        }
+        else
+        {
+            nodes[i].AbsPosition = initial_node_pos[i];//+= offset;
+        }        
+        nodes[i].RelPosition=nodes[i].AbsPosition-origin;
+        nodes[i].Velocity=Vector3::ZERO;
+        nodes[i].Forces=Vector3::ZERO;
+    }
+
+    for (int i=0; i<free_beam; i++)
+    {
+        beams[i].broken=0;
+        //TODO linear interp physics values
+        beams[i].maxposstress=default_beam_deform[i];
+        beams[i].maxnegstress=-default_beam_deform[i];
+        beams[i].minmaxposnegstress=default_beam_deform[i];
+        beams[i].strength=initial_beam_strength[i];
+        beams[i].plastic_coef=default_beam_plastic_coef[i];
+        beams[i].L=beams[i].refL;
+        beams[i].stress=0.0;
+        beams[i].disabled=false;
+        if (beams[i].mSceneNode && beams[i].type!=BEAM_VIRTUAL && beams[i].type!=BEAM_INVISIBLE && beams[i].type!=BEAM_INVISIBLE_HYDRO)
+        {
+            //reattach possibly detached nodes
+            //beams[i].mSceneNode->setVisible(true);
+            if (beams[i].mSceneNode->numAttachedObjects()==0) beams[i].mSceneNode->attachObject(beams[i].mEntity);
+        }
+    }
+
+    //this is a hook assistance beam and needs to be disabled after reset
+    for (std::vector <hook_t>::iterator it = hooks.begin(); it!=hooks.end(); it++)
+    {
+        if (it->lockTruck)
+        {
+            it->lockTruck->hideSkeleton(true);
+        }
+        it->beam->mSceneNode->detachAllObjects();
+        it->beam->disabled = true;
+        it->locked        = UNLOCKED;
+        it->lockNode      = 0;
+        it->lockTruck     = 0;
+        it->beam->p2      = &nodes[0];
+        it->beam->p2truck = false;
+        it->beam->L       = (nodes[0].AbsPosition - it->hookNode->AbsPosition).length();
+        removeInterTruckBeam(it->beam);
+    }
+
+    for (std::vector <rope_t>::iterator it = ropes.begin(); it != ropes.end(); it++) it->lockedto=0;
+    for (std::vector <tie_t>::iterator it = ties.begin(); it != ties.end(); it++)
+    {
+        it->beam->disabled = true;
+        it->beam->p2       = &nodes[0];
+        it->beam->mSceneNode->detachAllObjects();
+    }
+    for (int i=0; i<free_aeroengine; i++) aeroengines[i]->reset();
+    for (int i=0; i<free_screwprop; i++) screwprops[i]->reset();
+    for (int i=0; i<free_rotator; i++) rotators[i].angle = 0.0;
+    for (int i=0; i<free_wing; i++) wings[i].fa->broken = false;
+    for (int i=0; i<free_wheel; i++) wheels[i].speed = 0.0;
+    if (buoyance) buoyance->setsink(0);
+    refpressure = 50.0;
+    addPressure(0.0);
+    if (autopilot) resetAutopilot();
+    for (int i=0; i<free_flexbody; i++) flexbodies[i]->reset();
+
+    //Don't reset position - TODO have a flag for righting the vehicle
+    //// reset on spot with backspace
+    //if (m_reset_request != REQUEST_RESET_ON_INIT_POS)
+    //{
+    //    resetAngle(cur_rot);
+    //    resetPosition(cur_position.x, cur_position.z, false, yPos);
+    //}
+
+    // reset commands (self centering && push once/twice forced to terminate moving commands)
+    for (int i=0; i<MAX_COMMANDS; i++)
+    {
+        commandkey[i].commandValue = 0.0;
+        commandkey[i].triggerInputValue = 0.0f;
+        commandkey[i].playerInputValue = 0.0f;
+    }
+
+    resetSlideNodes();
+
+    //if (m_reset_request != REQUEST_RESET_PARTIAL_REPAIR)
+    //{
+        m_reset_request = REQUEST_RESET_NONE;
+    //} else
+    //{
+    //    m_reset_request = REQUEST_RESET_FINAL;
+    //}
 }
 
 bool Beam::replayStep()
@@ -1827,7 +1986,17 @@ void Beam::updateVideocameras(float dt)
 void Beam::handleResetRequests(float dt)
 {
     if (m_reset_request)
-        SyncReset();
+    {
+        //cosmic vole added partial repairs
+        if (m_reset_request == REQUEST_RESET_PARTIAL_REPAIR)
+        {
+            SyncPartialRepair(FSETTING("Partial Repair Speed", 0.005f));
+        }
+        else
+        {
+            SyncReset();
+        }
+    }
 }
 
 void Beam::sendStreamSetup()

@@ -472,6 +472,7 @@ struct collision_box_t
     int event_filter;
     bool enabled;
     Ogre::Vector3 ilo, ihi;
+    int last_called_trucknum; //cosmic vole added flag so multiple trucks can trigger the same checkpoint in succession without excess lag October 18 2016
 };
 
 struct ground_model_t

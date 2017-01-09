@@ -295,6 +295,8 @@ void ScriptEngine::init()
     result = engine->RegisterObjectMethod("VehicleAIClass", "void addWaypoint(string &in, vector3 &in)", AngelScript::asMETHOD(VehicleAI, AddWaypoint), AngelScript::asCALL_THISCALL); MYASSERT(result >= 0);
     result = engine->RegisterObjectMethod("VehicleAIClass", "void addWaypoints(dictionary &in)", AngelScript::asMETHOD(VehicleAI, AddWaypoint), AngelScript::asCALL_THISCALL); MYASSERT(result >= 0);
     result = engine->RegisterObjectMethod("VehicleAIClass", "void setActive(bool)", AngelScript::asMETHOD(VehicleAI, SetActive), AngelScript::asCALL_THISCALL); MYASSERT(result >= 0);
+    //cosmic vole registered VehicleAIClass::isActive()
+    result = engine->RegisterObjectMethod("VehicleAIClass", "bool isActive()", AngelScript::asMETHOD(VehicleAI, IsActive), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("VehicleAIClass", "void addEvent(string &in,int &in)", AngelScript::asMETHOD(VehicleAI, AddEvent), AngelScript::asCALL_THISCALL); MYASSERT(result >= 0);
     result = engine->RegisterObjectMethod("VehicleAIClass", "void setValueAtWaypoint(string &in, int &in, float &in)", AngelScript::asMETHOD(VehicleAI, SetValueAtWaypoint), AngelScript::asCALL_THISCALL); MYASSERT(result >= 0);
     result = engine->RegisterObjectBehaviour("VehicleAIClass", AngelScript::asBEHAVE_ADDREF, "void f()", AngelScript::asMETHOD(VehicleAI, addRef), AngelScript::asCALL_THISCALL); MYASSERT(result >= 0);
@@ -306,6 +308,8 @@ void ScriptEngine::init()
     // class Beam
     result = engine->RegisterObjectType("BeamClass", sizeof(Beam), AngelScript::asOBJ_REF); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("BeamClass", "void scaleTruck(float)", AngelScript::asMETHOD(Beam,scaleTruck), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+	//cosmic vole added BeamClass::SetDriverScale()
+    result = engine->RegisterObjectMethod("BeamClass", "void setDriverScale(float)", AngelScript::asMETHOD(Beam, setDriverScale), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("BeamClass", "string getTruckName()", AngelScript::asMETHOD(Beam,getTruckName), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("BeamClass", "string getTruckFileName()", AngelScript::asMETHOD(Beam,getTruckFileName), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("BeamClass", "string getTruckHash()", AngelScript::asMETHOD(Beam,getTruckHash), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
@@ -478,9 +482,12 @@ void ScriptEngine::init()
     result = engine->RegisterObjectMethod("GameScriptClass", "int setMaterialTextureScale(const string &in, int, int, int, float, float)", AngelScript::asMETHOD(GameScript,setMaterialTextureScale), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
 
     result = engine->RegisterObjectMethod("GameScriptClass", "void repairVehicle(const string &in, const string &in, bool)", AngelScript::asMETHOD(GameScript,repairVehicle), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    result = engine->RegisterObjectMethod("GameScriptClass", "void repairVehiclePartially(const string &in, const string &in)", AngelScript::asMETHOD(GameScript,repairVehiclePartially), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("GameScriptClass", "void removeVehicle(const string &in, const string &in)", AngelScript::asMETHOD(GameScript,removeVehicle), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("GameScriptClass", "int getCurrentTruckNumber()", AngelScript::asMETHOD(GameScript,getCurrentTruckNumber), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("GameScriptClass", "void boostCurrentTruck(float)", AngelScript::asMETHOD(GameScript, boostCurrentTruck), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    //adjust performance of specified truck - cosmic vole January 6 2017
+    result = engine->RegisterObjectMethod("GameScriptClass", "void tuneTruck(int, bool, float, float, float, float)", AngelScript::asMETHOD(GameScript, tuneTruck), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("GameScriptClass", "int getNumTrucks()", AngelScript::asMETHOD(GameScript,getNumTrucks), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("GameScriptClass", "BeamClass @getCurrentTruck()", AngelScript::asMETHOD(GameScript,getCurrentTruck), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("GameScriptClass", "BeamClass @getTruckByNum(int)", AngelScript::asMETHOD(GameScript,getTruckByNum), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
@@ -647,7 +654,7 @@ int ScriptEngine::fireEvent(std::string instanceName, float intensity)
     return 0;
 }
 
-int ScriptEngine::envokeCallback(int functionPtr, eventsource_t *source, node_t *node, int type)
+int ScriptEngine::envokeCallback(int functionPtr, eventsource_t *source, node_t *node, int type, int truckNum)
 {
     if (!engine) return 0;
     if (functionPtr <= 0 && defaultEventCallbackFunctionPtr > 0)
@@ -659,6 +666,22 @@ int ScriptEngine::envokeCallback(int functionPtr, eventsource_t *source, node_t 
         // no default callback available, discard the event
         return 0;
     }
+
+    //Get the current truck number - Essential when scripts need to distinguish between AI vehicles and the player's. cosmic vole October 3 2016.
+    if (truckNum < 0)
+    {
+        //Beam *truck = BeamFactory::getSingleton().getCurrentTruck();
+        //if (truck)
+        //{
+        //    truckNum = truck->trucknum;
+        //}
+        //cosmic vole DEBUG
+        if (!node)
+        {
+            truckNum = -2;
+        }
+    }
+
     if (!context) context = engine->CreateContext();
     context->Prepare(functionPtr);
 
@@ -672,6 +695,8 @@ int ScriptEngine::envokeCallback(int functionPtr, eventsource_t *source, node_t 
         context->SetArgDWord (3, node->id);
     else
         context->SetArgDWord (3, -1); // conversion from 'int' to 'AngelScript::asDWORD', signed/unsigned mismatch!
+    //Pass truckNum cosmic vole October 3 2016
+    context->SetArgDWord(4, truckNum);
 
     int r = context->Execute();
     if ( r == AngelScript::asEXECUTION_FINISHED )

@@ -38,6 +38,8 @@ public:
     void updateMaterial(int colourNum, Ogre::String materialName, int textureUnitStateNum=0);
     Ogre::String getColourMaterial(int colourNum);
     Ogre::ColourValue getColour(int colourNum);
+    //cosmic vole added - used to pick colours for local AI drivers November 21 2016
+    int getRandomColourNum();
 protected:
     void updatePlayerColours();
 };

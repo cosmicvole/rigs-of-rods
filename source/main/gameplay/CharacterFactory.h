@@ -35,6 +35,10 @@ public:
 
     Character* createLocal(int playerColour);
 
+    //cosmic vole added separate collection of the local AI characters November 21 2016
+    Character *createAIInstance(int id, int aiColour);
+    void removeAIInstance(int id);
+
     void update(float dt);
 #ifdef USE_SOCKETW
     void handleStreamData(std::vector<RoR::Networking::recv_packet_t> packet);
@@ -43,6 +47,8 @@ public:
 private:
 
     std::vector<std::unique_ptr<Character>> m_characters;
+    //cosmic vole added separate collection of the local AI characters November 21 2016
+    std::vector<std::unique_ptr<Character>> m_AIcharacters;
 
     void createRemoteInstance(int sourceid, int streamid);
     void removeStreamSource(int sourceid);

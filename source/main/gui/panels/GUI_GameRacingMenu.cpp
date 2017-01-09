@@ -23,7 +23,7 @@
 /// @author Moncef Ben Slimane
 /// @date   11/2014
 
-#include "GUI_GameMainMenu.h"
+#include "GUI_GameRacingMenu.h"
 
 #include "Application.h"
 #include "GUIManager.h"
@@ -36,35 +36,28 @@
 using namespace RoR;
 using namespace GUI;
 
-#define CLASS        GameMainMenu
+#define CLASS        GameRacingMenu
 #define MAIN_WIDGET  ((MyGUI::Window*)mMainWidget)
 
 CLASS::CLASS()
 {
     MyGUI::WindowPtr win = dynamic_cast<MyGUI::WindowPtr>(mMainWidget);
 
-    m_single_player->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::eventMouseButtonClickSelectTerrainButton);
-    m_rig_editor->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::eventMouseButtonClickRigEditorButton);
-    m_settings->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::eventMouseButtonClickSettingButton);
-    m_about->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::eventMouseButtonClickAboutButton);
-    m_exit->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::eventMouseButtonClickExitButton);
-    m_multi_player->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::eventMouseButtonClickMultiPlayerButton);
-    m_racing->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::eventMouseButtonClickRacingButton);
+    m_load_player->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::eventMouseButtonClickLoadPlayerButton);
+    m_save_player->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::eventMouseButtonClickSavePlayerButton);
+    m_single_race->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::eventMouseButtonClickSingleRaceButton);
+    m_championship->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::eventMouseButtonClickChampionshipButton);
+    m_main_menu->eventMouseButtonClick += MyGUI::newDelegate(this, &CLASS::eventMouseButtonClickMainMenuButton);
 
-    m_single_player->setCaption(_L("Singleplayer"));
-    m_rig_editor->setCaption(_L("Rig-Editor"));
-    m_settings->setCaption(_L("Settings"));
-    m_about->setCaption(_L("About"));
-    m_exit->setCaption(_L("Quit"));
-    m_multi_player->setCaption(_L("Multiplayer"));
-    m_racing->setCaption(_L("Racing"));//cosmic vole added Racing menu January 5 2017
+    m_load_player->setCaption(_L("Load Player"));
+    m_save_player->setCaption(_L("Save Player"));
+    m_single_race->setCaption(_L("Single Race"));
+    //m_settings->setCaption(_L("Race Settings"));
+    m_championship->setCaption(_L("Championship"));
+    m_main_menu->setCaption(_L("Main Menu"));
 
-    win->setCaption(_L("Main Menu"));
+    win->setCaption(_L("Racing Menu"));
     win->setMovable(false);
-
-#ifndef USE_SOCKETW
-    m_multi_player->setEnabled(false);
-#endif
 
     MAIN_WIDGET->setVisible(false);
 }
@@ -93,7 +86,7 @@ void CLASS::Hide()
     MAIN_WIDGET->setVisibleSmooth(false);
 }
 
-void CLASS::eventMouseButtonClickSelectTerrainButton(MyGUI::WidgetPtr _sender)
+void CLASS::eventMouseButtonClickLoadPlayerButton(MyGUI::WidgetPtr _sender)
 {
     this->Hide();
     if (App::GetDiagPreselectedTerrain() == "")
@@ -106,39 +99,28 @@ void CLASS::eventMouseButtonClickSelectTerrainButton(MyGUI::WidgetPtr _sender)
     }
 }
 
-void CLASS::eventMouseButtonClickSettingButton(MyGUI::WidgetPtr _sender)
+void CLASS::eventMouseButtonClickSavePlayerButton(MyGUI::WidgetPtr _sender)
 {
     App::GetGuiManager()->SetVisible_GameSettings(true);
     Hide();
 }
 
-void CLASS::eventMouseButtonClickAboutButton(MyGUI::WidgetPtr _sender)
+void CLASS::eventMouseButtonClickSingleRaceButton(MyGUI::WidgetPtr _sender)
 {
     App::GetGuiManager()->SetVisible_GameAbout(true);
     Hide();
 }
 
-void CLASS::eventMouseButtonClickExitButton(MyGUI::WidgetPtr _sender)
+void CLASS::eventMouseButtonClickChampionshipButton(MyGUI::WidgetPtr _sender)
 {
     Hide();
     App::SetPendingAppState(App::APP_STATE_SHUTDOWN);
 }
 
-void CLASS::eventMouseButtonClickMultiPlayerButton(MyGUI::WidgetPtr _sender)
+void CLASS::eventMouseButtonClickMainMenuButton(MyGUI::WidgetPtr _sender)
 {
-    App::GetGuiManager()->SetVisible_MultiplayerSelector(true);
+    App::GetGuiManager()->SetVisible_GameMainMenu(true);
     Hide();
-}
-
-//cosmic vole added Racing button January 5 2017
-void CLASS::eventMouseButtonClickRacingButton(MyGUI::WidgetPtr _sender)
-{
-    App::GetGuiManager()->SetVisible_GameRacingMenu(true);
-    Hide();
-}
-
-void CLASS::eventMouseButtonClickRigEditorButton(MyGUI::WidgetPtr _sender)
-{
 }
 
 void CLASS::SetVisible(bool v)

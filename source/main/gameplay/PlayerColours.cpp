@@ -79,6 +79,13 @@ Ogre::ColourValue PlayerColours::getColour(int colourNum)
     return cvals[colourNum];
 }
 
+//cosmic vole added - used to pick colours for local AI drivers November 21 2016
+int PlayerColours::getRandomColourNum()
+{
+    int numColours = sizeof(cvals) / sizeof(ColourValue);
+    return rand() % numColours;
+}
+
 void PlayerColours::updateMaterial(int colourNum, String materialName, int textureUnitStateNum)
 {
     int numColours = sizeof(cvals) / sizeof(ColourValue);
