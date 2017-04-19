@@ -313,7 +313,9 @@ void ScriptEngine::init()
     result = engine->RegisterObjectMethod("BeamClass", "string getTruckName()", AngelScript::asMETHOD(Beam,getTruckName), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("BeamClass", "string getTruckFileName()", AngelScript::asMETHOD(Beam,getTruckFileName), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("BeamClass", "string getTruckHash()", AngelScript::asMETHOD(Beam,getTruckHash), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
-    result = engine->RegisterObjectMethod("BeamClass", "int  getTruckType()", AngelScript::asMETHOD(Beam,getTruckType), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    result = engine->RegisterObjectMethod("BeamClass", "int getTruckType()", AngelScript::asMETHOD(Beam,getTruckType), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    //cosmic vole added getTruckNumber() - useful for AI competitors
+    result = engine->RegisterObjectMethod("BeamClass", "int getTruckNumber()", AngelScript::asMETHOD(Beam,getTruckNumber), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("BeamClass", "void reset(bool)", AngelScript::asMETHOD(Beam,reset), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("BeamClass", "void setDetailLevel(int)", AngelScript::asMETHOD(Beam,setDetailLevel), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("BeamClass", "void showSkeleton(bool, bool)", AngelScript::asMETHOD(Beam,showSkeleton), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
@@ -447,9 +449,13 @@ void ScriptEngine::init()
 
     result = engine->RegisterObjectMethod("GameScriptClass", "void activateAllVehicles()", AngelScript::asMETHOD(GameScript,activateAllVehicles), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("GameScriptClass", "void setTrucksForcedActive(bool forceActive)", AngelScript::asMETHOD(GameScript,setTrucksForcedActive), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
-
-    result = engine->RegisterObjectMethod("GameScriptClass", "void startTimer()", AngelScript::asMETHOD(GameScript,startTimer), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
-    result = engine->RegisterObjectMethod("GameScriptClass", "float stopTimer()", AngelScript::asMETHOD(GameScript,stopTimer), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    
+    //cosmic vole added optional truckNum argument to timer methods - January 13 2017
+    result = engine->RegisterObjectMethod("GameScriptClass", "void startTimer(int)", AngelScript::asMETHOD(GameScript,startTimer), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    result = engine->RegisterObjectMethod("GameScriptClass", "float stopTimer(int)", AngelScript::asMETHOD(GameScript,stopTimer), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    //cosmic vole commented these out as Angelscript function overloading doesn't seem to work - January 14 2017
+    //result = engine->RegisterObjectMethod("GameScriptClass", "void startTimer()", AngelScript::asMETHOD(GameScript,startTimer), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    //result = engine->RegisterObjectMethod("GameScriptClass", "float stopTimer()", AngelScript::asMETHOD(GameScript,stopTimer), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("GameScriptClass", "void flashMessage(const string &in, float, float)", AngelScript::asMETHOD(GameScript,flashMessage), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("GameScriptClass", "void message(const string &in, const string &in, float, bool)", AngelScript::asMETHOD(GameScript,message), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("GameScriptClass", "void setDirectionArrow(const string &in, vector3 &in)", AngelScript::asMETHOD(GameScript,setDirectionArrow), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);

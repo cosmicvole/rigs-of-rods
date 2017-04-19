@@ -61,6 +61,7 @@
 #include "TruckHUD.h"
 #include "Utils.h"
 #include "Water.h"
+#include "VehicleAI.h" //cosic vole January 13 2017
 
 #ifdef USE_MYGUI
 #include "GUIManager.h"
@@ -175,16 +176,32 @@ RoRFrameListener::RoRFrameListener() :
     m_time_until_next_toggle(0),
     m_truck_info_on(false)
 {
+    //Arrays of race times for racing against bots - cosmic vole January 13 2017
+    m_race_start_times = new unsigned long[MAX_TRUCKS];
+    m_races_in_progress = new bool[MAX_TRUCKS];
+    m_race_lastlap_times = new float[MAX_TRUCKS];
 }
 
 RoRFrameListener::~RoRFrameListener()
 {
+    //Arrays of race times for racing against bots - cosmic vole January 13 2017
+    delete[] m_race_start_times;
+    delete[] m_races_in_progress;
+    delete[] m_race_lastlap_times;
 }
 
-void RoRFrameListener::StartRaceTimer()
+void RoRFrameListener::StartRaceTimer(int truckNum) //cosmic vole added optional truckNum January 13 2017
 {
-    m_race_start_time = (int)m_time;
-    m_race_in_progress = true;
+    if (truckNum >= 0)
+    {
+        m_race_start_times[truckNum] = (int)m_time;
+        m_races_in_progress[truckNum] = true;
+    }
+    else
+    {
+        m_race_start_time = (int)m_time;
+        m_race_in_progress = true;
+    }
     OverlayWrapper* ow = RoR::App::GetOverlayWrapper();
     if (ow)
     {
@@ -195,48 +212,88 @@ void RoRFrameListener::StartRaceTimer()
     }
 }
 
-float RoRFrameListener::StopRaceTimer()
+float RoRFrameListener::StopRaceTimer(int truckNum) //cosmic vole added optional truckNum January 13 2017
 {
     float time;
 
-    if (m_race_in_progress)
+    if (truckNum >= 0)
+    {
+        if (m_races_in_progress[truckNum])
+        {
+            time = static_cast<float>(m_time - m_race_start_times[truckNum]);
+            m_race_lastlap_times[truckNum] = time;
+        }
+    }
+    else if (m_race_in_progress)
     {
         time = static_cast<float>(m_time - m_race_start_time);
         m_race_bestlap_time = time;
     }
 
-    // let the display on
-    OverlayWrapper* ow = RoR::App::GetOverlayWrapper();
-    if (ow)
+    //cosmic vole TODO - need more defintive logic to see if this is the currently viewed truck! getCurrentTruckNumber() doesn't seem to do it!
+    if (/*truckNum < 0 ||*/ ((truckNum == BeamFactory::getSingleton().getCurrentTruckNumber())))// && (!(BeamFactory::getSingleton().getTruck(truckNum)->getVehicleAI()) || !BeamFactory::getSingleton().getTruck(truckNum)->getVehicleAI()->IsActive())))//truckNum == BeamFactory::getSingleton().getCurrentTruckNumber()) // cosmic vole added support for multiple AI trucks January 13 2017
     {
-        wchar_t txt[256] = L"";
-        UTFString fmt = _L("Last lap: %.2i'%.2i.%.2i");
-        swprintf(txt, 256, fmt.asWStr_c_str(), ((int)(m_race_bestlap_time)) / 60, ((int)(m_race_bestlap_time)) % 60, ((int)(m_race_bestlap_time * 100.0)) % 100);
-        ow->lasttime->setCaption(UTFString(txt));
-        //ow->m_racing_overlay->hide();
-        ow->laptimes->hide();
-        ow->laptimems->hide();
-        ow->laptimemin->hide();
+        if (time < 0.0 || time > 200000.0)
+        {
+            time = 0.0;
+        }
+        // let the display on
+        OverlayWrapper* ow = RoR::App::GetOverlayWrapper();
+        if (ow)
+        {
+            wchar_t txt[256] = L"";
+            UTFString fmt = _L("Last lap: %.2i'%.2i.%.2i");
+            swprintf(txt, 256, fmt.asWStr_c_str(), ((int)(time)) / 60, ((int)(time)) % 60, ((int)(time * 100.0)) % 100);
+            ow->lasttime->setCaption(UTFString(txt));
+            //ow->m_racing_overlay->hide();
+            ow->laptimes->hide();
+            ow->laptimems->hide();
+            ow->laptimemin->hide();
+        }
     }
-    m_race_start_time = 0;
-    m_race_in_progress = false;
-    return m_race_bestlap_time;
+    if (truckNum >= 0)
+    {
+        m_race_start_times[truckNum] = 0;
+        m_races_in_progress[truckNum] = false;
+    }
+    else
+    {
+        m_race_start_time = 0;
+        m_race_in_progress = false;    
+    }
+    return time;
 }
 
-void RoRFrameListener::UpdateRacingGui()
+void RoRFrameListener::UpdateRacingGui(int truckNum) //cosmic vole added optional truckNum January 13 2017
 {
     OverlayWrapper* ow = RoR::App::GetOverlayWrapper();
     if (!ow)
         return;
     // update m_racing_overlay gui if required
-    float time = static_cast<float>(m_time - m_race_start_time);
-    wchar_t txt[10];
-    swprintf(txt, 10, L"%.2i", ((int)(time * 100.0)) % 100);
-    ow->laptimems->setCaption(txt);
-    swprintf(txt, 10, L"%.2i", ((int)(time)) % 60);
-    ow->laptimes->setCaption(txt);
-    swprintf(txt, 10, L"%.2i'", ((int)(time)) / 60);
-    ow->laptimemin->setCaption(UTFString(txt));
+    float time;
+    if (truckNum >= 0)
+    {
+        time = static_cast<float>(m_time - m_race_start_times[truckNum]);
+    }
+    else
+    {
+        time = static_cast<float>(m_time - m_race_start_time);
+    }
+    //cosmic vole TODO - need more defintive logic to see if this is the currently viewed truck! getCurrentTruckNumber() doesn't seem to do it!
+    if (/*truckNum < 0 ||*/ ((truckNum == BeamFactory::getSingleton().getCurrentTruckNumber())))// && (!(BeamFactory::getSingleton().getTruck(truckNum)->getVehicleAI()) || !BeamFactory::getSingleton().getTruck(truckNum)->getVehicleAI()->IsActive())))//truckNum == BeamFactory::getSingleton().getCurrentTruckNumber()) // cosmic vole added support for multiple AI trucks January 13 2017
+    {
+        if (time < 0.0 || time > 200000.0)
+        {
+            time = 0.0;
+        }
+        wchar_t txt[10];
+        swprintf(txt, 10, L"%.2i", ((int)(time * 100.0)) % 100);
+        ow->laptimems->setCaption(txt);
+        swprintf(txt, 10, L"%.2i", ((int)(time)) % 60);
+        ow->laptimes->setCaption(txt);
+        swprintf(txt, 10, L"%.2i'", ((int)(time)) / 60);
+        ow->laptimemin->setCaption(UTFString(txt));
+    }
 }
 
 bool RoRFrameListener::updateEvents(float dt)
@@ -823,22 +880,44 @@ bool RoRFrameListener::updateEvents(float dt)
             }
             else // we are in a vehicle
             {
+                //cosmic vole added recording waypoints - March 13 2017 - TODO make configurable
+                #if 0
+                static Vector3 lastPosition = Vector3::ZERO;
+                Vector3 newPosition = curr_truck->getPosition();
+                float speed = curr_truck->getVelocity().length();
+                if (newPosition.distance(lastPosition) >= 10.0f && speed > 3.0f)
+                {
+                    float power = curr_truck->engine->getEnginePower(curr_truck->engine->getRPM());//Mostly returns zero - getAcc();
+                    LOG(_L("{ ") + TOSTRING(newPosition.x) + ", " + TOSTRING(newPosition.y) + ", " + TOSTRING(newPosition.z) + ", " + TOSTRING(speed * 3.6f) + ", " + TOSTRING(power) + "},\n");
+                    lastPosition = newPosition;
+                }
+                #endif
                 if (RoR::App::GetInputEngine()->getEventBoolValue(EV_COMMON_RESET_TRUCK) && !curr_truck->replaymode)
                 {
-                    StopRaceTimer();
+                    StopRaceTimer(curr_truck->trucknum);//cosmic vole added trucknum
                     curr_truck->reset();
                 }
                 else if (RoR::App::GetInputEngine()->getEventBoolValue(EV_COMMON_REMOVE_CURRENT_TRUCK) && !curr_truck->replaymode)
                 {
-                    StopRaceTimer();
+                    StopRaceTimer(curr_truck->trucknum);//cosmic vole added trucknum
                     Vector3 center = curr_truck->getRotationCenter();
                     BeamFactory::getSingleton().removeCurrentTruck();
                     gEnv->player->setPosition(center);
                 }
+                //cosmic vole added save and load truck
+                else if (RoR::App::GetInputEngine()->getEventBoolValue(EV_COMMON_LOAD_TRUCK) && !curr_truck->replaymode)
+                {
+                    //StopRaceTimer(curr_truck->trucknum);
+                    curr_truck->load();
+                }
+                else if (RoR::App::GetInputEngine()->getEventBoolValue(EV_COMMON_SAVE_TRUCK) && !curr_truck->replaymode)
+                {
+                    curr_truck->save();
+                }
                 //cosmic vole added partial repairs
                 else if ((RoR::App::GetInputEngine()->getEventBoolValue(EV_COMMON_REPAIR_TRUCK) || m_advanced_truck_repair || RoR::App::GetInputEngine()->getEventBoolValue(EV_COMMON_PARTIAL_REPAIR_TRUCK)) && !curr_truck->replaymode)    
                 {
-                    StopRaceTimer();
+                    StopRaceTimer(curr_truck->trucknum);//cosmic vole added trucknum
                     if (RoR::App::GetInputEngine()->getEventBoolValue(EV_COMMON_REPAIR_TRUCK))
                     {
                         m_advanced_truck_repair = m_advanced_truck_repair_timer > 1.0f;
@@ -920,6 +999,8 @@ bool RoRFrameListener::updateEvents(float dt)
                 }
                 else
                 {
+                    curr_truck->is_repairing = false; // cosmic vole January 28 2017
+                    
                     // get commands
                     // -- here we should define a maximum numbers per trucks. Some trucks does not have that much commands
                     // -- available, so why should we iterate till MAX_COMMANDS?
@@ -1151,7 +1232,7 @@ bool RoRFrameListener::updateEvents(float dt)
                     //replay mode
                     if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_COMMON_TOGGLE_REPLAY_MODE))
                     {
-                        StopRaceTimer();
+                        StopRaceTimer(curr_truck->trucknum);//cosmic vole added trucknum
                         curr_truck->setReplayMode(!curr_truck->replaymode);
                     }
 
@@ -1796,9 +1877,10 @@ bool RoRFrameListener::frameStarted(const FrameEvent& evt)
                     RoR::App::GetOverlayWrapper()->UpdatePressureTexture(curr_truck->getPressure());
                 }
 
-                if (IsRaceInProgress() && !RoR::App::GetGuiManager()->IsVisible_GamePauseMenu())
+                // cosmic vole added truckNum to support racing against AI competitors January 14 2017
+                if (IsRaceInProgress(curr_truck->trucknum) && !RoR::App::GetGuiManager()->IsVisible_GamePauseMenu())
                 {
-                    UpdateRacingGui(); //I really think that this should stay here.
+                    UpdateRacingGui(curr_truck->trucknum); //I really think that this should stay here.
                 }
 
                 if (curr_truck->driveable == TRUCK && curr_truck->engine != nullptr)

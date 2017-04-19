@@ -22,6 +22,10 @@ struct rig_t
     // TODO: sort these a bit more ...
     node_t nodes[MAX_NODES];
     Ogre::Vector3 initial_node_pos[MAX_NODES];
+    //used for partial repairs - cosmic vole Jan 28 2017
+    Ogre::Vector3 damaged_node_pos[MAX_NODES];
+    Ogre::Vector3 target_node_pos[MAX_NODES];
+    bool is_repairing;
     bool node_mouse_grab_disabled[MAX_NODES];
     int free_node;
 

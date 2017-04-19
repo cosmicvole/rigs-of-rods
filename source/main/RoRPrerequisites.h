@@ -42,6 +42,7 @@ along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
 #include <OgreHeaderPrefix.h>
 #include <OgreLogManager.h>
 #include <OgreQuaternion.h>
+#include <OgreMatrix4.h> // Used in collision avoidance. cosmic vole March 7 2017
 #include <OgreString.h>
 #include <OgreStringConverter.h>
 #include <OgreUTFString.h>

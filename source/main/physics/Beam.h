@@ -27,6 +27,11 @@
 #include "PerVehicleCameraContext.h"
 #include "RigDef_Prerequisites.h"
 
+/* Cosmic Vole added headers for Boost serialization to save truck */
+#include <fstream>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+
 #include "BeamData.h"
 
 #include <memory>
@@ -93,6 +98,12 @@ public:
 
     bool addPressure(float v);
     float getPressure();
+    
+    /**
+     * Resets full xyz rotation of vehicle using quaternions - cosmic vole January 31 2017
+     */
+    void resetRotation(Ogre::Vector3 newHeading = Ogre::Vector3::ZERO);
+    
     void resetAngle(float rot);
     void resetPosition(float px, float pz, bool setInitPosition, float miny);
 
@@ -100,6 +111,13 @@ public:
     Ogre::Vector3 getDirection();
     Ogre::Vector3 getPosition();
     float getSpawnRotation();//cosmic vole
+    /**
+    * In world coordinates this returns the current positions of the bounding corners of the vehicle (based on 2D xz bounds).
+    * This is not the same as boundingBox because this is vehicle aligned, not axis aligned.
+    * It will need to use the cameras to work out what is front, rear, left and right for the vehicle.
+    * cosmic vole February 27 2017
+    */
+    void getCorners2D(Ogre::Vector3& frontLeft, Ogre::Vector3& frontRight, Ogre::Vector3& rearLeft, Ogre::Vector3& rearRight, float scale);
 
     /**
     * Returns the average truck velocity calculated using the truck positions of the last two frames
@@ -145,6 +163,15 @@ public:
         collision_box_t *spawn_box,
         int cache_entry_number = -1
     );
+    
+    /**
+     * Loads truck deformation, race results etc. cosmic vole.
+     */
+    void load();
+    /**
+     * Saves truck deformation, race results etc. cosmic vole.
+     */
+    void save();
 
     VehicleAI* getVehicleAI() { return vehicle_ai; }
 
@@ -442,6 +469,7 @@ public:
     std::string getTruckFileName();
     std::string getTruckHash();
     int getTruckType();
+    inline int getTruckNumber() { return trucknum; } // cosmic vole added for scripting January 17 2017
     
     std::vector<authorinfo_t> getAuthors();
     std::vector<std::string> getDescription();
@@ -592,6 +620,14 @@ public:
 
 protected:
 
+    /* Cosmic vole added boost serialization code to save truck */
+    friend class boost::serialization::access;
+    // When the class Archive corresponds to an output archive, the
+    // & operator is defined similar to <<.  Likewise, when the class Archive
+    // is a type of input archive the & operator is defined similar to >>.
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version);
+
     /**
     * TIGHT LOOP; Physics & sound; 
     * @param doUpdate Only passed to Beam::calcShocks2()
@@ -622,6 +658,7 @@ protected:
 
     void SyncReset(); //this one should be called only synchronously (without physics running in background)
     void SyncPartialRepair(float step);//so should this one. cosmic vole added partial repairs
+    void SyncLoad();//cosmic vole added load / save truck deformation / race results etc
 
     void SetPropsCastShadows(bool do_cast_shadows);
 
@@ -696,7 +733,8 @@ protected:
         REQUEST_RESET_ON_INIT_POS,
         REQUEST_RESET_ON_SPOT,
         REQUEST_RESET_FINAL,
-        REQUEST_RESET_PARTIAL_REPAIR //cosmic vole added partial repairs
+        REQUEST_RESET_PARTIAL_REPAIR, //cosmic vole added partial repairs
+        REQUEST_RESET_LOAD_TRUCK, //cosmic vole added load / save truck
     };
 
     ResetRequest m_reset_request;
@@ -786,4 +824,15 @@ protected:
      * @return a pair containing the rail, and the distant to the SlideNode
      */
     std::pair<RailGroup*, Ogre::Real> getClosestRailOnTruck( Beam* truck, const SlideNode& node);
+};
+
+//cosmic vole March 9 2017
+struct truckDistanceSort
+{
+    Beam* fromTruck;
+    inline bool operator()(Beam * a, Beam * b) const 
+    {
+        Ogre::Vector3 fromPos = fromTruck->getPosition();
+        return fromPos.distance(a->getPosition()) < fromPos.distance(b->getPosition());
+    }
 };

@@ -338,8 +338,8 @@ public:
 
     int getNumTrucksByFlag(int flag);
     bool getCaelumAvailable();
-    float stopTimer();
-    void startTimer();
+    float stopTimer(int truckNum = -1); // cosmic vole added truckNum to handle AI competitors);
+    void startTimer(int truckNum = -1); // cosmic vole added truckNum to handle AI competitors);
     Ogre::String getSetting(const Ogre::String& str);
     void hideDirectionArrow();
     int setMaterialAmbient(const Ogre::String& materialName, float red, float green, float blue);

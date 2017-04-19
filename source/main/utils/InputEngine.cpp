@@ -1021,6 +1021,16 @@ eventInfo_t eventInfo[] = {
         "Keyboard SLASH",
         _L("repair truck gradually")
     },
+    {// cosmic vole added save truck (deformation, race results etc)
+        "COMMON_SAVE_TRUCK",
+        EV_COMMON_SAVE_TRUCK,
+        "Keyboard EXPL+CTRL+S"
+    },
+    {// cosmic vole added load truck (deformation, race results etc)
+        "COMMON_LOAD_TRUCK",
+        EV_COMMON_LOAD_TRUCK,
+        "Keyboard EXPL+CTRL+O"
+    },
     {
         "COMMON_RESCUE_TRUCK",
         EV_COMMON_RESCUE_TRUCK,
@@ -1054,7 +1064,7 @@ eventInfo_t eventInfo[] = {
     {
         "COMMON_SECURE_LOAD",
         EV_COMMON_SECURE_LOAD,
-        "Keyboard O",
+        "Keyboard EXPL+O", /*cosmic vole added EXPL - CTRL+O will load saved truck*/
         _L("tie a load to the truck")
     },
     {

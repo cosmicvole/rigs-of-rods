@@ -166,14 +166,14 @@ bool GameScript::getCaelumAvailable()
     return result;
 }
 
-float GameScript::stopTimer()
+float GameScript::stopTimer(int truckNum) // cosmic vole added truckNum to handle AI competitors
 {
-    return mse->GetFrameListener()->StopRaceTimer();
+    return mse->GetFrameListener()->StopRaceTimer(truckNum);
 }
 
-void GameScript::startTimer()
+void GameScript::startTimer(int truckNum) // cosmic vole added truckNum to handle AI competitors
 {
-    return mse->GetFrameListener()->StartRaceTimer();
+    return mse->GetFrameListener()->StartRaceTimer(truckNum);
 }
 
 void GameScript::setWaterHeight(float value)

@@ -430,7 +430,7 @@ IF(WIN32)
   add_definitions("/wd4305 /wd4244 /wd4193 -DNOMINMAX")
 ELSEIF(UNIX)
   include_directories(${GTK_INCLUDE_DIRS})
-  set(OS_LIBS "X11 -l${CMAKE_DL_LIBS} -lrt -lboost_system")
+  set(OS_LIBS "X11 -l${CMAKE_DL_LIBS} -lrt -lboost_system -lboost_serialization")
 ENDIF(WIN32)
 
 

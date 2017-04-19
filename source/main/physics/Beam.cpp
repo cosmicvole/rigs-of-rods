@@ -30,6 +30,11 @@
 #	include <OgreOverlayElement.h>
 #endif
 
+/* Cosmic Vole added headers for Boost serialization to save truck */
+#include <fstream>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+
 #include "AirBrake.h"
 #include "Airfoil.h"
 #include "Application.h"
@@ -370,6 +375,99 @@ Beam::~Beam()
     }
 }
 
+/* Cosmic vole added boost serialization code to save truck */
+// When the class Archive corresponds to an output archive, the
+// & operator is defined similar to <<.  Likewise, when the class Archive
+// is a type of input archive the & operator is defined similar to >>.
+template<class Archive>
+void Beam::serialize(Archive & ar, const unsigned int version)
+{
+    //hydrodirstate = 0.0;
+    //hydroaileronstate = 0.0;
+    //hydrorudderstate = 0.0;
+    //hydroelevatorstate = 0.0;
+    //hydrodirwheeldisplay = 0.0;
+    //if (hydroInertia)
+    //    hydroInertia->resetCmdKeyDelay();
+    //parkingbrake = 0;
+    //cc_mode = false;
+    //fusedrag = Vector3::ZERO;
+    //origin = Vector3::ZERO;
+
+    ar & origin;
+    ar & free_node;
+    for (int i=0; i<free_node; i++)
+    {
+        //Fully repair the nodes first, so we can find the right slide node positions as well TODO just cache initial slide node positions instead!
+        //TODO resetAngle() and resetPosition() rotated and translated nodes[] but not initial_node_pos[] so they're potentially at different angles!
+        ar & nodes[i].AbsPosition;// = initial_node_pos[i];//(initial_node_pos[i]-initial_node_pos[0])+(nodes[0].AbsPosition);//= initial_node_pos[i];
+        ar & nodes[i].RelPosition;//=nodes[i].AbsPosition-origin;
+        ar & nodes[i].Velocity;//=Vector3::ZERO;
+        ar & nodes[i].Forces;//=Vector3::ZERO;
+    }
+    
+    //TODO if the taunus is repaired when it is on its side or upside down, it gets put the right way up BUT in totally the wrong place in the world, a long way from where it was!
+    //Vector3 cur_position = nodes[0].AbsPosition;
+    //float cur_rot = getRotation();
+    //Vector3 cur_dir = getDirection();
+    //cur_dir.y = 0.0f;    
+    
+    ar & free_beam;
+    for (int i = 0; i < free_beam; i++)
+    {
+        ar & beams[i].maxposstress;// = default_beam_deform[i];
+        ar & beams[i].maxnegstress;// = -default_beam_deform[i];
+        ar & beams[i].minmaxposnegstress;// = default_beam_deform[i];
+        ar & beams[i].strength;// = initial_beam_strength[i];
+        ar & beams[i].plastic_coef;// = default_beam_plastic_coef[i];
+        ar & beams[i].L;// = beams[i].refL;
+        ar & beams[i].refL;
+        ar & beams[i].stress;// = 0.0;
+        ar & beams[i].broken;// = false;
+        ar & beams[i].disabled;// = false;
+    }
+    
+    ar & free_wheel;
+    for (int i = 0; i < free_wheel; i++)
+    {
+        ar & wheels[i].speed;// = 0.0;
+        ar & wheels[i].detached;// = false;
+    }
+    //if (buoyance)
+    //    buoyance->setsink(0);
+    //refpressure = 50.0;
+    //addPressure(0.0);
+    //if (autopilot)
+    //    resetAutopilot();
+    //for (int i = 0; i < free_flexbody; i++)
+    //    flexbodies[i]->reset();
+    
+//    ar & cur_dir;//resetRotation(cur_dir);
+
+    //resetPosition(cur_position.x, cur_position.z, false, yPos); //CAUTION true actually overwrites the values in intial_node_pos[] but I think we need that
+//    ar & cur_position.x;
+//    ar & cur_position.y;
+//    ar & cur_position.z;
+    
+    //TODO do we need to serialize the slide nodes?
+ 
+}
+
+//Cosmic Vole added helper to serialize Ogre Vector needed for Beam::serialize()
+namespace boost {
+namespace serialization {
+
+template<class Archive>
+void serialize(Archive & ar, Ogre::Vector3 & v, const unsigned int version)
+{
+    ar & v.x;
+    ar & v.y;
+    ar & v.z;
+}
+
+} // namespace serialization
+} // namespace boost
+
 // This method scales trucks. Stresses should *NOT* be scaled, they describe
 // the material type and they do not depend on length or scale.
 void Beam::scaleTruck(float value)
@@ -566,6 +664,144 @@ Vector3 Beam::getDirection()
 Vector3 Beam::getPosition()
 {
     return position; //the position is already in absolute position
+}
+
+
+// In world coordinates this returns the current positions of the (vehicle aligned) bounding corners of the vehicle (based on 2D xz bounds).
+// cosmic vole February 27 2017
+void Beam::getCorners2D(Ogre::Vector3& frontLeft, Ogre::Vector3& frontRight, Ogre::Vector3& rearLeft, Ogre::Vector3& rearRight, float scale)
+{
+    if (scale == 1.0f || scale < 0.0f)
+    {
+        scale = 0.0f;
+    }
+    //TODO Feb 27 2017 This will need to use the cameras to work out what is front, rear, left and right for the vehicle.
+    //We use initial node pos, so this will be inaccurate for an extremely deformed vehicle.
+    //The (slow) alternative would be to make a rotated axis aligned copy of the deformed nodes to find the bounding corners.
+    float left = initial_node_pos[0].x;
+    float right = left;
+    float front = initial_node_pos[0].z;
+    float rear = front;
+    
+    //These will store which nodes had the min and max x and z
+    int leftIndex = 0;
+    int rightIndex = 0;
+    int frontIndex = 0;
+    int rearIndex = 0;
+    
+    Vector3 avgPos = Vector3::ZERO;
+    
+    for (int i = 0; i < free_node; i++)
+    {
+        Vector3& pos = initial_node_pos[i];
+        if (pos.x < left)
+        {
+            left = pos.x;
+            leftIndex = i;
+        }
+        else if (pos.x > right)
+        {
+            right = pos.x;
+            rightIndex = i;
+        }
+        if (pos.z > front)
+        {
+            front = pos.z;
+            frontIndex = i;
+        }
+        else if (pos.z < rear)
+        {
+            rear = pos.z;
+            rearIndex = i;
+        }
+        avgPos += pos;
+    }
+    
+    frontLeft.x = left;
+    frontLeft.y = 0.0f;
+    frontLeft.z = front;
+    frontRight.x = right;
+    frontRight.y = 0.0f;
+    frontRight.z = front;
+    rearLeft.x = left;
+    rearLeft.y = 0.0f;
+    rearLeft.z = rear;
+    rearRight.x = right;
+    rearRight.y = 0.0f;
+    rearRight.z = rear;
+    
+    avgPos = avgPos / free_node;
+    avgPos.y = 0.0f;
+    
+    //We've found the bounding box for the initial node positions.
+    //Now we need to just rotate the corners to be aligned with the vehicle's current xz rotation
+    //Note this code won't work if the vehicle is upside down, but it should be OK for AI driving control
+    
+    // Set origin of rotation to camera node
+    Vector3 origin = initial_node_pos[0];
+    Vector3 currentOrigin = nodes[0].AbsPosition;
+
+    if (cameranodepos[0] >= 0 && cameranodepos[0] < MAX_NODES)
+    {
+        origin = initial_node_pos[cameranodepos[0]];
+        currentOrigin = nodes[cameranodepos[0]].AbsPosition;
+    }
+
+    // Get current yaw rotation
+    float rot = getRotation();
+    // Set up matrix for yaw rotation
+    Matrix3 matrix;
+    //Note this angle has to be in the opposite direction to the one used in Beam::resetAngle()
+    //Consider if we wanted to account for deformation, we could apply this rotation in the other direction to each deformed node in our for loop above instead
+    //BUG this rotation doesn't seem to be really working - the rectangle gets wider the more the vehicle turns in the world (possibly up to the rectangle's length!)
+    //BUG - I've confirmed this has nothing to do with scaling either
+    //matrix.FromEulerAnglesXYZ(Radian(0), Radian(rot - m_spawn_rotation), Radian(0));
+    matrix.FromEulerAnglesXYZ(Radian(0), Radian(-rot + m_spawn_rotation), Radian(0));
+
+    // Now move each corner back to origin, apply rotation matrix, and move corner back to correct world position
+    if (scale != 0.0f)
+    {
+        frontLeft -= avgPos;
+        frontLeft *= scale;
+        frontLeft += avgPos;
+        
+        frontRight -= avgPos;
+        frontRight *= scale;
+        frontRight += avgPos;
+        
+        rearLeft -= avgPos;
+        rearLeft *= scale;
+        rearLeft += avgPos;
+        
+        rearRight -= avgPos;
+        rearRight *= scale;
+        rearRight += avgPos;
+    }
+
+    frontLeft -= origin;
+    frontLeft = matrix * frontLeft;
+    frontLeft += currentOrigin;
+    
+    frontRight -= origin;
+    //if (scale) frontRight *= scale;
+    frontRight = matrix * frontRight;
+    frontRight += currentOrigin;
+    
+    rearLeft -= origin;
+    //if (scale) rearLeft *= scale;
+    rearLeft = matrix * rearLeft;
+    rearLeft += currentOrigin;
+    
+    rearRight -= origin;
+    //if (scale) rearRight *= scale;
+    rearRight = matrix * rearRight;
+    rearRight += currentOrigin;    
+    
+    //Zero the y coordinates - they're not used for this
+    frontLeft.y = 0.0f;
+    frontRight.y = 0.0f;
+    rearLeft.y = 0.0f;
+    rearRight.y = 0.0f;
 }
 
 void Beam::CreateSimpleSkeletonMaterial()
@@ -1367,6 +1603,64 @@ void Beam::resetAngle(float rot)
     calculateAveragePosition();
 }
 
+//reset full xyz rotation of vehicle using quaternions - cosmic vole January 31 2017
+void Beam::resetRotation(Vector3 newHeading)
+{
+    if (newHeading == Vector3::ZERO)
+    {
+        //newHeading = getDirection();
+        //newHeading.y = 0.0f;
+        newHeading = Vector3::UNIT_Z;
+    }
+    
+    //TODO this code makes the 2cv turn upside down! Check if some vehicles don't have these camera nodes. Poss check the vectors against same nodes in initial_node_pos[] or as a last resort use min / max / avg coords from that to get the vectors.
+    
+    Vector3 rollv=nodes[cameranodepos[0]].RelPosition-nodes[cameranoderoll[0]].RelPosition;
+    rollv.normalise();
+    //rollAngle=Radian(asin(rollv.dotProduct(Vector3::UNIT_Y)));
+
+    //Find the up vector to tell if upside down or not
+    Vector3 cam_pos  = nodes[cameranodepos[0]].RelPosition;
+    Vector3 cam_roll = nodes[cameranoderoll[0]].RelPosition;
+    Vector3 cam_dir  = nodes[cameranodedir[0]].RelPosition;
+
+    //Vector3 rollv = (cam_pos - cam_roll).normalisedCopy();
+    Vector3 dirv  = (cam_pos - cam_dir ).normalisedCopy();
+    Vector3 upv   = dirv.crossProduct(-rollv);
+
+    //Quaternions to reorientate the vehicle (experimental based on http://www.ogre3d.org/tikiwiki/Quaternion+and+Rotation+Primer#Q_How_can_I_make_my_objects_stand_upright_after_a_bunch_of_rotations_)
+    //Also based on https://github.com/opengl-tutorials/ogl/blob/master/common/quaternion_utils.cpp
+    //Find rotation to restore forward direction first
+    Quaternion quatRestoreFwd = dirv.getRotationTo(newHeading);//UNIT_Z worked great: Vector3::UNIT_Z);//currentFacing.getRotationTo(mInitFacing);
+    // Because of the 1rst rotation, the up is probably completely screwed up.
+    // Find the rotation between the "up" of the rotated object, and the desired up
+    Vector3 newUp = quatRestoreFwd * upv;//Vector3::UNIT_Y;
+    Quaternion quatRestoreUp = newUp.getRotationTo(Vector3::UNIT_Y);//upv.getRotationTo(Vector3::UNIT_Y);
+    Quaternion quatRestore = quatRestoreUp * quatRestoreFwd;//remember, in reverse order.
+
+    //updateFlexbodiesFinal();
+
+    int nodeCount = free_node;
+    //This code is taken from LoadTruck(), but we've got problems here. We can't easily base the rotations on each node's initial position because the nodes may be deformed.
+    //I am not sure there's an obvious way to tell whether the whole vehicle is rotated (e.g.) upside down or just some of the nodes are rotated relative to the others!
+    //We need the full quaternion direction the vehicle's nodes are currently pointing and to first reverse that rotation, then to apply the new one
+
+
+    // Set origin of rotation to camera node
+    Vector3 origin = nodes[0].AbsPosition;
+
+    if (cameranodepos[0] >= 0 && cameranodepos[0] < MAX_NODES)
+    {
+        origin = nodes[cameranodepos[0]].AbsPosition;
+    }
+    for (int i=0; i<nodeCount; i++)
+    {
+        nodes[i].AbsPosition = quatRestore * nodes[i].AbsPosition;//spawn_position + spawn_rotation * (nodes[i].AbsPosition - spawn_position);
+        nodes[i].RelPosition = nodes[i].AbsPosition - origin;
+    }
+    
+}
+
 void Beam::resetPosition(float px, float pz, bool setInitPosition, float miny)
 {
     // horizontal displacement
@@ -1650,7 +1944,7 @@ void Beam::SyncReset()
         hydroInertia->resetCmdKeyDelay();
     parkingbrake = 0;
     cc_mode = false;
-    fusedrag = Vector3::ZERO;
+    fusedrag = Vector3::ZERO;        
     origin = Vector3::ZERO;
     float yPos = nodes[lowestcontactingnode].AbsPosition.y;
 
@@ -1763,6 +2057,301 @@ void Beam::SyncReset()
 //cosmic vole
 void Beam::SyncPartialRepair(float step)
 {
+    /*int nodesNearWheels[MAX_NODES];
+    int numNodesNearWheels = 0;
+    for (int i=0; i<free_node; i++)
+    {
+        for (int j=0; j<free_beam; j++)
+        {
+            
+        }
+    
+    }*/
+    //step = 1.0f; //A step of 1.0 along with calling resetPosition() fixes everything on the 2cv including slideNodes and props. 0.25, they do not fix. TODO What we may have to do is save all the damaged node positions, fully fix the vehicle, then reapply the partial damage before rendering.
+    hydrodirstate = 0.0;
+    hydroaileronstate = 0.0;
+    hydrorudderstate = 0.0;
+    hydroelevatorstate = 0.0;
+    hydrodirwheeldisplay = 0.0;
+    if (hydroInertia)
+        hydroInertia->resetCmdKeyDelay();
+    parkingbrake = 0;
+    cc_mode = false;
+    fusedrag = Vector3::ZERO;
+    origin = Vector3::ZERO;
+    //TODO This is min ypos used by resetPosition() and a value of 0.0 could still spawn vehicles in the air or underground on some maps!
+    //It really needs to be configurable or calculated somehow
+    //Just using nodes[lowestcontactingnode].AbsPosition.y here was making vehicles spawn high in the air near the spawn point on the F1 track. It's odd.
+    //cosmic vole February 2 2017
+    float yPos = 0.0f;//nodes[lowestcontactingnode].AbsPosition.y;
+
+    //TODO if the taunus is repaired when it is on its side or upside down, it gets put the right way up BUT in totally the wrong place in the world, a long way from where it was!
+    Vector3 cur_position = nodes[0].AbsPosition;
+    float cur_rot = getRotation();
+    Vector3 cur_dir = getDirection();
+    cur_dir.y = 0.0f;
+    
+    bool startRepair = !is_repairing;
+    is_repairing = true;
+    
+    if (engine)
+        engine->start();
+    
+    //TODO possibly randomise this at the start of the repair or better make configurable (pay for a "full repair" of a certain region of the car?)
+    float minOffset = 0.05f;
+    //TODO this startRepair flag might not work right if the key is released before the repair is synced - might be better to add a new state for m_reset_request
+    if (startRepair)
+    {
+        //TODO check whether the origin needs to be the same for each call to resetRotation() / resetPosition() - if the camera / origin node is deformed it may be relevant
+        resetRotation(cur_dir);//resetAngle(cur_rot);//Note cur_rot is the xz rotation only (yaw). This xz rotation only works in the full reset BECAUSE all the initial node coords are loaded in, which are guaranteed to have the correct roll and pitch!
+        //yPos = nodes[lowestcontactingnode].AbsPosition.y;
+        //cur_position = nodes[0].AbsPosition;
+        resetPosition(cur_position.x, cur_position.z, false, yPos); 
+        for (int i=0; i<free_node; i++)
+        {
+            //if (startRepair)
+            {
+                //Save all the initial (deformed) node positions
+                damaged_node_pos[i] = nodes[i].AbsPosition;
+            }
+            //Fully repair the nodes first, so we can find the right slide node positions as well TODO just cache initial slide node positions instead!
+            //TODO resetAngle() and resetPosition() rotated and translated nodes[] but not initial_node_pos[] so they're potentially at different angles!
+            nodes[i].AbsPosition = initial_node_pos[i];//(initial_node_pos[i]-initial_node_pos[0])+(nodes[0].AbsPosition);//= initial_node_pos[i];
+            nodes[i].RelPosition=nodes[i].AbsPosition-origin;
+            nodes[i].Velocity=Vector3::ZERO;
+            nodes[i].Forces=Vector3::ZERO;
+        }
+        
+        for (int i = 0; i < free_beam; i++)
+        {
+            beams[i].maxposstress = default_beam_deform[i];
+            beams[i].maxnegstress = -default_beam_deform[i];
+            beams[i].minmaxposnegstress = default_beam_deform[i];
+            beams[i].strength = initial_beam_strength[i];
+            beams[i].plastic_coef = default_beam_plastic_coef[i];
+            beams[i].L = beams[i].refL;
+            beams[i].stress = 0.0;
+            beams[i].broken = false;
+            beams[i].disabled = false;
+        }
+        
+        for (int i = 0; i < free_wheel; i++)
+        {
+            wheels[i].speed = 0.0;
+            wheels[i].detached = false;
+        }
+        if (buoyance)
+            buoyance->setsink(0);
+        refpressure = 50.0;
+        addPressure(0.0);
+        if (autopilot)
+            resetAutopilot();
+        for (int i = 0; i < free_flexbody; i++)
+            flexbodies[i]->reset();
+        
+        //TODO we REALLY don't want to do this but it seems vital to make the suspension fix (slide nodes?) - resetSlideNodes() alone can't do it somehow
+        //TODO the supension issue is a weird one because rear suspension stays broken too and that has shocks, not slide nodes or hydros!?
+        //No doesn't work! 
+        //cur_position = nodes[0].AbsPosition;
+        //cur_rot = getRotation();
+        resetRotation(cur_dir);//resetAngle(cur_rot);
+        //yPos = nodes[lowestcontactingnode].AbsPosition.y;
+        resetPosition(cur_position.x, cur_position.z, false, yPos); //CAUTION true actually overwrites the values in intial_node_pos[] but I think we need that
+        //TODO we really need a copy of initial_node_pos[] in which we set the correct xyz rotation and position.
+        
+        //resetSlideNodePositions(); No need to call this, as resetSlideNodes() does the same thing!
+        //updateBoundingBox();
+        //calculateAveragePosition();
+        //AHA! resetSlideNodes() uses updated coordinates for the node positions (that's what resetAngle() and resetPosition() do, they offset all the nodes' abs positions!)
+        //so any damage interp we do after needs to be in those coordinates too
+        resetSlideNodes();
+
+        //Now that we've fixed the slide nodes, put the damage back TODO maybe the thing to do is skip slide node / beams when we do this or move them a lot less
+        for (int i=0; i<free_node; i++)
+        {
+            bool isASlideNode = false;
+            /*
+            if (!mSlideNodes.empty())
+            for (std::vector<SlideNode>::iterator it = mSlideNodes.begin(); it != mSlideNodes.end(); ++it)
+            {
+                if (it->getNodeID() == nodes[i].id)
+                {
+                    isASlideNode = true;
+                    break;
+                }
+            }
+             */
+            //TODO this will almost certainly cause glitching and even possible explosions! Yeah it crushes / explodes the car if it's been rotated from it's spawn orientation
+            //TODO also rear suspension still doesn't mend and I think that doesn't even have slide nodes!
+            //if (!isASlideNode)
+            {
+                target_node_pos[i] = nodes[i].AbsPosition;
+                nodes[i].AbsPosition = damaged_node_pos[i];
+                nodes[i].RelPosition=nodes[i].AbsPosition-origin;
+            }
+            nodes[i].Velocity=Vector3::ZERO;
+            nodes[i].Forces=Vector3::ZERO;
+        }
+
+        //WRONG: we have to do this again unfortunately to get the damaged nodes into the same coordinate space as the fixed ones
+        //We can't do it again as it will screw the slide nodes back up!
+        //resetAngle(cur_rot);
+        //resetPosition(cur_position.x, cur_position.z, false, yPos);
+        
+    }
+    else
+    {
+        for (int i=0; i<free_node; i++)
+        {
+            //AHA!! This breaks if the deformed node position and the initial node position are in different coordinate systems (e.g. due to resetAngle() / resetPosition() )!!!
+            //TODO this calculation is only correcting for differences in translation, not rotation
+            Vector3 offset = target_node_pos[i] - nodes[i].AbsPosition;//(target_node_pos[i]-target_node_pos[0])-(nodes[i].AbsPosition-nodes[0].AbsPosition);//(nodes[i].AbsPosition-nodes[0].AbsPosition)-(initial_node_pos[i]-initial_node_pos[0]);//TODO WHY do these need to be back to front??? (initial_node_pos[i]-initial_node_pos[0])-(nodes[i].AbsPosition-nodes[0].AbsPosition);//(nodes[i].AbsPosition-nodes[0].AbsPosition)-(initial_node_pos[i]-initial_node_pos[0]);
+            float curStep;
+            if (nodes[i].iswheel != NOWHEEL)
+            {
+                //Attempt to fix wheels faster than the other parts
+                curStep = step * 7.0f;//3.5f;//1.0f;
+                //if (curStep < step)
+                //{
+                //    curStep = step;
+                //}
+            }
+            else
+            {
+                curStep = step;
+                for (int j=0; j<free_wheel; j++)
+                {
+                    node_t* pNode = nodes+i;
+                    if (pNode == wheels[i].arm ||
+                        pNode == wheels[i].near_attach ||
+                        pNode == wheels[i].refnode0 ||
+                        pNode == wheels[i].refnode1)
+                    {
+                        //Attempt to fix wheel attachement beams faster than the other parts
+                        curStep = step * 7.0f;//3.5f;
+                        break;
+                    }
+                }
+            }
+            float len = offset.length();
+            if (len <= minOffset)
+            {
+                nodes[i].RelPosition=nodes[i].AbsPosition-origin;
+                nodes[i].Velocity=Vector3::ZERO;
+                nodes[i].Forces=Vector3::ZERO;
+                continue;
+            }
+            if (len > curStep)
+            {
+                //offset = offset / len;
+                offset.normalise();
+                nodes[i].AbsPosition += offset * curStep;
+            }
+            else
+            {
+                nodes[i].AbsPosition += offset;//= initial_node_pos[i];//+= offset;
+            }        
+            nodes[i].RelPosition=nodes[i].AbsPosition-origin;
+            nodes[i].Velocity=Vector3::ZERO;
+            nodes[i].Forces=Vector3::ZERO;
+        }
+    }
+    
+    for (int i = 0; i < free_beam; i++)
+    {
+        beams[i].maxposstress = default_beam_deform[i];
+        beams[i].maxnegstress = -default_beam_deform[i];
+        beams[i].minmaxposnegstress = default_beam_deform[i];
+        beams[i].strength = initial_beam_strength[i];
+        beams[i].plastic_coef = default_beam_plastic_coef[i];
+        beams[i].L = beams[i].refL;
+        beams[i].stress = 0.0;
+        beams[i].broken = false;
+        beams[i].disabled = false;
+    }
+
+    disjoinInterTruckBeams();
+
+    for (std::vector<hook_t>::iterator it = hooks.begin(); it != hooks.end(); it++)
+    {
+        it->beam->disabled = true;
+        it->locked = UNLOCKED;
+        it->lockNode = 0;
+        it->lockTruck = 0;
+        it->beam->p2 = &nodes[0];
+        it->beam->p2truck = false;
+        it->beam->L = (nodes[0].AbsPosition - it->hookNode->AbsPosition).length();
+        removeInterTruckBeam(it->beam);
+    }
+    for (std::vector<rope_t>::iterator it = ropes.begin(); it != ropes.end(); it++)
+    {
+        it->locked = UNLOCKED;
+        if (it->lockedto_ropable)
+            it->lockedto_ropable->in_use = false;
+        it->lockedto = &nodes[0];
+        it->lockedtruck = 0;
+    }
+    for (std::vector<tie_t>::iterator it = ties.begin(); it != ties.end(); it++)
+    {
+        it->tied = false;
+        it->tying = false;
+        if (it->lockedto)
+            it->lockedto->in_use = false; 
+        it->beam->p2 = &nodes[0];
+        it->beam->p2truck = false;
+        it->beam->disabled = true;
+        removeInterTruckBeam(it->beam);
+    }
+
+    for (int i = 0; i < free_aeroengine; i++)
+        aeroengines[i]->reset();
+    for (int i = 0; i < free_screwprop; i++)
+        screwprops[i]->reset();
+    for (int i = 0; i < free_rotator; i++)
+        rotators[i].angle = 0.0;
+    for (int i = 0; i < free_wing; i++)
+        wings[i].fa->broken = false;
+    for (int i = 0; i < free_wheel; i++)
+    {
+        wheels[i].speed = 0.0;
+        wheels[i].detached = false;
+    }
+    if (buoyance)
+        buoyance->setsink(0);
+    refpressure = 50.0;
+    addPressure(0.0);
+    if (autopilot)
+        resetAutopilot();
+    for (int i = 0; i < free_flexbody; i++)
+        flexbodies[i]->reset();
+
+    // reset on spot with backspace
+    if (m_reset_request != REQUEST_RESET_ON_INIT_POS)
+    {
+        //resetAngle(cur_rot);
+        //resetPosition(cur_position.x, cur_position.z, false, yPos);
+    }
+
+    // reset commands (self centering && push once/twice forced to terminate moving commands)
+    for (int i = 0; i < MAX_COMMANDS; i++)
+    {
+        commandkey[i].commandValue = 0.0;
+        commandkey[i].triggerInputValue = 0.0f;
+        commandkey[i].playerInputValue = 0.0f;
+    }
+
+    resetSlideNodes();
+
+    //if (m_reset_request != REQUEST_RESET_ON_SPOT)
+    //{
+        m_reset_request = REQUEST_RESET_NONE;
+    //} else
+    //{
+    //    m_reset_request = REQUEST_RESET_FINAL;
+    //}
+      
+}
+/*{
     hydrodirstate=0.0;
     hydroaileronstate=0.0;
     hydrorudderstate=0.0;
@@ -1783,7 +2372,9 @@ void Beam::SyncPartialRepair(float step)
     //TODO consider regional repairs based on mouse location
     //When this value is set it stops a perfect repair - beams will always remain offset by at least this amount
     //TODO randomise it a bit for each beam
-    float minOffset = 0.001f;
+    //TODO This just doesn't fix the suspension and wheel positions. What we may need to do is save all the fully damaged node positions,
+    //run a full repair to get the fully fixed slide node positions and THEN interpolate towards that.
+    float minOffset = 0.0f;//0.001f;
     for (int i=0; i<free_node; i++)
     {
         Vector3 offset = nodes[i].AbsPosition-initial_node_pos[i];
@@ -1802,11 +2393,11 @@ void Beam::SyncPartialRepair(float step)
             curStep = step;
         }
         float len = offset.length();
-        if (fabsf(len) <= minOffset)
+        if (len <= minOffset)
         {
             continue;
         }
-        if (fabsf(len) > curStep)
+        if (len > curStep)
         {
             offset = offset / len;
             nodes[i].AbsPosition += offset * curStep;
@@ -1881,8 +2472,14 @@ void Beam::SyncPartialRepair(float step)
     //if (m_reset_request != REQUEST_RESET_ON_INIT_POS)
     //{
     //    resetAngle(cur_rot);
-    //    resetPosition(cur_position.x, cur_position.z, false, yPos);
+        resetPosition(cur_position.x, cur_position.z, false, yPos);
     //}
+    
+    //cosmic vole added Jan 23 2017 - TODO this already gets called from resetAngle() / resetPosition() above - add an else:
+    //TODO uncommenting resetAngle() / resetPosition STILL doesn't reposition wheels / suspension etc correctly
+    //resetSlideNodePositions();
+    //updateBoundingBox();
+    //calculateAveragePosition();   
 
     // reset commands (self centering && push once/twice forced to terminate moving commands)
     for (int i=0; i<MAX_COMMANDS; i++)
@@ -1901,6 +2498,41 @@ void Beam::SyncPartialRepair(float step)
     //{
     //    m_reset_request = REQUEST_RESET_FINAL;
     //}
+}
+*/
+
+//cosmic vole
+void Beam::SyncLoad()
+{
+    {
+        // load beam data from disk
+        std::ifstream ifs("savedtruck.ror");
+        boost::archive::text_iarchive ia(ifs);
+        // read class state from archive
+        ia >> *this;
+        // archive and stream closed when destructors are called
+    }
+    m_reset_request = REQUEST_RESET_NONE;
+}
+
+//cosmic vole
+void Beam::load()
+{
+    m_reset_request = REQUEST_RESET_LOAD_TRUCK;
+}
+
+
+//cosmic vole
+void Beam::save()
+{
+    std::ofstream ofs("savedtruck.ror");
+    // save beam to disk
+    {
+        boost::archive::text_oarchive oa(ofs);
+        // write class instance to archive
+        oa << *this;
+        // archive and stream closed when destructors are called
+    }    
 }
 
 bool Beam::replayStep()
@@ -1990,7 +2622,13 @@ void Beam::handleResetRequests(float dt)
         //cosmic vole added partial repairs
         if (m_reset_request == REQUEST_RESET_PARTIAL_REPAIR)
         {
-            SyncPartialRepair(FSETTING("Partial Repair Speed", 0.005f));
+            if (dt == 0.0f)
+                return;
+            SyncPartialRepair(dt * FSETTING("Partial Repair Speed", 0.07f));
+        }
+        else if (m_reset_request == REQUEST_RESET_LOAD_TRUCK)
+        {
+            SyncLoad();
         }
         else
         {
@@ -5909,6 +6547,7 @@ Beam::Beam(
     sprintf(truckname, "t%i", truck_number);
     memset(uniquetruckid, 0, 256);
     strcpy(uniquetruckid, "-1");
+    vehicle_ai = 0; // cosmic vole added January 14 2017
     driveable = NOT_DRIVEABLE;
     if (ismachine)
     {

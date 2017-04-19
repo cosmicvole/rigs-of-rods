@@ -49,13 +49,15 @@ public:
     void showLoad(int type, const Ogre::String& instance, const Ogre::String& box);
     void windowResized(Ogre::RenderWindow* rw); // TODO: make this private, it's public for legacy reasons.
 
-    void StartRaceTimer();
+    //cosmic vole added support for racing against multiple bots January 13 2017
 
-    float StopRaceTimer();
+    void StartRaceTimer(int truckNum = -1);
 
-    void UpdateRacingGui();
+    float StopRaceTimer(int truckNum = -1);
 
-    bool IsRaceInProgress() { return m_race_in_progress; }
+    void UpdateRacingGui(int truckNum = -1);
+
+    bool IsRaceInProgress(int truckNum = -1) { return (truckNum >= 0) ? (m_races_in_progress[truckNum]) : m_race_in_progress; }
 
     void SetReloadPos(Ogre::Vector3 position) { m_reload_pos = position; }
 
@@ -87,9 +89,14 @@ protected:
 
     unsigned long m_race_start_time;
     bool m_race_in_progress;
-    float m_race_bestlap_time;
+    float m_race_bestlap_time; //TODO shouldn't this be renamed m_race_LASTlap_time ?? cosmic vole January 13 2017
 
     double m_time;
+    
+    //Arrays of race times for racing against bots - cosmic vole January 13 2016
+    unsigned long* m_race_start_times; //TODO name this the same as what is currently called m_race_bestlap_time ?? cosmic vole January 13 2017
+    bool* m_races_in_progress;
+    float* m_race_lastlap_times;
 
     bool m_hide_gui;
     bool m_truck_info_on;

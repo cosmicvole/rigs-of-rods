@@ -253,6 +253,16 @@ class racesManager {
 			game.log("Error in racesManager::removeCallback: Event '" + event + "' does not exist.");
 		callbacks.set(event, null);
 	}
+    
+    //You need to call this regularly, for example from frameStep() to keep the race position on the overlay updated
+    //otherwise the positions will only update at race checkpoints
+    void raceUpatePositions()
+    {
+        if (this.currentRace >= 0)
+        {
+            this.calcPositions(this.currentRace);
+        }
+    }
 	
 	// This will get called when a truck is at a checkpoint
 	// You shouldn't call this manually (use the callback instead)
@@ -262,12 +272,12 @@ class racesManager {
         //this.message("cosmicvoleDEBUG racesManager::raceEvent(" + trigger_type + ", \"" + inst + "\", \"" + box + "\", " + nodeid  + ", " + eventTruckNum + ") called.", "flag_green.png");
 
 		//First see which truck triggered the event. cosmic vole.
-		//int curTruckNum = game.getCurrentTruckNumber();
+        int curTruckNum = -1;
 		//TODO see if it's an AI truck or the player's one and write to competitor data as necessary
 		racesCompetitor @competitor = null;
 		if (eventTruckNum > -1)
 		{
-			if (!competitors.get(formatInt(eventTruckNum, ''), @competitor) || competitor is null)
+			if (not competitors.get(formatInt(eventTruckNum, ''), @competitor) or competitor is null)
 			{
 				@competitor = racesCompetitor(eventTruckNum);
 				competitors.set(formatInt(eventTruckNum, ''), @competitor);
@@ -284,8 +294,19 @@ class racesManager {
 			//BeamClass @eventTruck = game.getTruckByNum(eventTruckNum);
 			VehicleAIClass @eventAI = game.getTruckAIByNum(eventTruckNum);
 			competitor.hasAI = eventAI !is null;
-			//TODO need a better way to detect the player's vehicle (e.g. camera focus?)
-			competitor.isThePlayer = !(competitor.hasAI) || !eventAI.isActive();
+			curTruckNum = game.getCurrentTruckNumber();
+            //TODO need a better way to detect the player's vehicle (e.g. camera focus?)
+            //This is NOT working with !(competitor.hasAI) || !eventAI.isActive() - AI cars that are waiting on the grid are being set as isThePlayer as well
+            //Note that truck spawn finalize sets the spawned truck as the current if (local_truck->driveable != NOT_DRIVEABLE) which may be breaking this
+            if (((not (competitor.hasAI)) or not (eventAI.isActive())) and (eventTruckNum == curTruckNum))
+            {
+                competitor.isThePlayer = true;
+            }
+            else
+            {
+                competitor.isThePlayer = false;
+            }
+            
 
 			if (eventAI !is null and eventAI.isActive())
 			{
@@ -379,6 +400,11 @@ class racesManager {
 			return;
 		competitor.lastRaceEventInstance = inst;
 		
+        if (competitor.isThePlayer)
+        {
+            this.message("cosmicvoleDEBUG set truckNum: "+eventTruckNum+" as the player (no active AI) curTruckNum when set: " + curTruckNum + " curTruckNum now: "+game.getCurrentTruckNumber(), "flag_orange.png");
+        }
+        
 		// call the callback function
 		RACE_EVENT_CALLBACK @handle;
 		if( callbacks.get("RaceEvent", @handle) and not (handle is null))
@@ -444,10 +470,10 @@ class racesManager {
 						competitor.lastCheckpointInstance = inst;
 						competitor.penaltyGiven = false;
 						this.message("cosmicvoleDEBUG truck " + competitor.truckNum + " finished the race! eventTruckNum: "+eventTruckNum, "flag_green.png");
-						if (competitor.isThePlayer)
-						{
-							this.finishCurrentRace();
-						}
+						//if (competitor.isThePlayer)
+						//{
+							this.finishCurrentRace(competitor);
+						//}
 					}
 					else
 					{
@@ -534,9 +560,12 @@ class racesManager {
 		competitor.lastCheckpoint = 0;
 		competitor.raceStartTime = game.getTime();
 		competitor.lapStartTime = this.raceStartTime;
-		game.startTimer();
+		game.startTimer(competitor.truckNum);
 		this.recalcArrow(competitor);
-		this.truckNum = competitor.truckNum;//game.getCurrentTruckNumber();
+        if (competitor.isThePlayer)
+        {
+            this.truckNum = competitor.truckNum;//game.getCurrentTruckNumber();
+        }
 		this.raceList[raceID].lastTimeTillPoint[0] = 0.0;
 		competitor.penaltyTime.resize(0);
 		competitor.penaltyTime.resize(this.raceList[raceID].checkPointsCount);
@@ -564,16 +593,16 @@ class racesManager {
 	
 	// this is private as this should only be called when the user drives through the finish checkpoint
 	// If you need to abort a race, use racesManager::cancelCurrentRace() instead.
-	void finishCurrentRace()
+	void finishCurrentRace(racesCompetitor@ competitor)
 	{
 		// debug: game.log("racesManager::finishCurrentRace() called.");
 		
-		int rid = this.currentRace;
+		int rid = competitor.currentRace;
 	
 		// get the lap time
-		double lapTime = game.getTime() - this.lapStartTime;
+		double lapTime = game.getTime() - competitor.lapStartTime;
 		// get the race time
-		double raceTime = game.getTime() - this.raceStartTime;
+		double raceTime = game.getTime() - competitor.raceStartTime;
 		
 		// calculate race time difference
 		string raceTimeDiff = "";
@@ -599,43 +628,53 @@ class racesManager {
 		this.raceList[rid].lastTimeTillPoint[this.raceList[rid].checkPointsCount-1] = lapTime;
 		bool newBestRace;
 		this.addRaceTime(rid, raceTime, newBestRace);
-		bool newBestLap;
-		this.addLapTime(rid, lapTime, newBestLap);
+        bool newBestLap = false;
+        bool newPersonalBestLap = false;
+		this.addLapTime(rid, lapTime, competitor, newBestLap, newPersonalBestLap);
 
-		game.stopTimer();
+        //if (competitor.isThePlayer) // TODO fix this for the bots - it still resets the overlay without this 'if' and I don't know why!
+        {
+            game.stopTimer(competitor.truckNum);
+        }
 
 		// reset some values
-		this.lastCheckpoint = -1;
-		this.currentRace = -1;
-		this.currentLap = -1;
-		this.state = this.STATE_NotInRace;
-		this.removeArrow();
-		this.lastRaceEventInstance = "";
+		competitor.lastCheckpoint = -1;
+		competitor.currentRace = -1;
+		competitor.currentLap = -1;
+		competitor.state = this.STATE_NotInRace;
+		if (competitor.isThePlayer)
+        {
+            this.removeArrow();
+        }
+        competitor.lastRaceEventInstance = "";
 		
-		// race completed!
-		this.raceList[rid].completed = true;
-
-		// build the message
-		this.message("Finished! You needed "+this.formatTime(raceTime)+"!"+raceTimeDiff, "flag_green.png");
-		if( this.showBestRace and newBestRace )
-			this.message("     New best race time!", "flag_green.png");
-		if( this.showBestLap and newBestLap  and this.raceList[rid].laps != this.LAPS_NoLaps and this.raceList[rid].laps != this.LAPS_One)
-			this.message("     New best lap time!"+lapTimeDiff, "flag_green.png");
-		
-		// store the new race times
-		saveRace(rid);
-		
-		// call the callback function
-		RACE_EVENT_CALLBACK @handle;
-		if( callbacks.get("RaceFinish", @handle) and not (handle is null))
-		{
-			dictionary args;
-			args.set("event", "RaceFinish");
-			args.set("raceID", rid);
-			args.set("newBestLap", newBestLap);
-			args.set("newBestRace", newBestRace);
-			handle(args);
-		}
+        if (competitor.isThePlayer)
+        {
+            // race completed!
+            this.raceList[rid].completed = true;
+        
+            // build the message
+            this.message("Finished! You needed "+this.formatTime(raceTime)+"!"+raceTimeDiff, "flag_green.png");
+            if( this.showBestRace and newBestRace )
+                this.message("     New best race time!", "flag_green.png");
+            if( this.showBestLap and newBestLap  and this.raceList[rid].laps != this.LAPS_NoLaps and this.raceList[rid].laps != this.LAPS_One)
+                this.message("     New best lap time!"+lapTimeDiff, "flag_green.png");
+            
+            // store the new race times
+            saveRace(rid);
+            
+            // call the callback function
+            RACE_EVENT_CALLBACK @handle;
+            if( callbacks.get("RaceFinish", @handle) and not (handle is null))
+            {
+                dictionary args;
+                args.set("event", "RaceFinish");
+                args.set("raceID", rid);
+                args.set("newBestLap", newBestLap);
+                args.set("newBestRace", newBestRace);
+                handle(args);
+            }
+        }
 	}
 	
 	// This is private, as you shouldn't manually advance a lap
@@ -661,10 +700,13 @@ class racesManager {
 		// do time stuff
 		//this.raceList[rid].lastTimeTillPoint[this.raceList[rid].checkPointsCount-1] = lapTime;
 		bool newBestLap = false;
-        //TODO make best lap calc work with competitors - cosmic vole January 7 2017
-		//this.addLapTime(rid, lapTime, newBestLap);
-		game.stopTimer();
-		game.startTimer();
+        bool newPersonalBestLap = false;
+		this.addLapTime(rid, lapTime, competitor, newBestLap, newPersonalBestLap);
+        //if (competitor.isThePlayer) // TODO fix this for the bots - it still resets the overlay without this 'if' and I don't know why!
+        {
+            game.stopTimer(competitor.truckNum);
+            game.startTimer(competitor.truckNum);
+        }
 		competitor.lapStartTime = game.getTime();
 		
 		// advance the lap
@@ -683,7 +725,7 @@ class racesManager {
 				
 		// build the message
 		if(competitor.isThePlayer and this.raceList[rid].laps != this.LAPS_Unlimited )
-			this.message("Lap "+(this.currentLap-1)+" done!", "flag_green.png");
+			this.message("Lap "+(competitor.currentLap-1)+" done!", "flag_green.png");
 		if(competitor.isThePlayer and this.showBestLap and newBestLap )
 			this.message("     New best lap time: "+this.formatTime(lapTime)+"!"+timeDiff, "flag_green.png");
 		else if (competitor.isThePlayer)
@@ -710,8 +752,8 @@ class racesManager {
 	
 		int rid = competitor.currentRace;
 		
-		game.stopTimer();
-		game.startTimer();
+		game.stopTimer(competitor.truckNum);
+		game.startTimer(competitor.truckNum);
 		competitor.lapStartTime = game.getTime();
 		
 		// advance the lap
@@ -771,6 +813,8 @@ class racesManager {
 		double time = game.getTime() - competitor.lapStartTime;
 		competitor.lastCheckpointTime = time;
 		calcPositions(raceID);
+        //TODO ! The player's car (or currently viewed car) may have changed positions here, in which case the race overlay (direction arrow)
+        //would need to be updated here even though competitor is not that car! - cosmic vole January 10 2017
 		
 		// calculate time difference		
 		string timeDiff = "";
@@ -823,13 +867,14 @@ class racesManager {
 		}
 	}
 
-	void calcPosition(racesCompetitor@ competitor)
+	bool calcPosition(racesCompetitor@ competitor)
 	{
 		if (competitor.state == this.STATE_NotInRace)
 		{
 			competitor.racePosition = 0;
-			return;
+			return false;
 		}
+        string debugTxt = "1. Truck " + competitor.truckNum + " is:\n";
 		int position = 1;
 		//array<string>@ keys = this.competitors.getKeys();
 		//for (int i = 0; i < keys.length(); i++)
@@ -841,25 +886,56 @@ class racesManager {
 				if (c.currentLap > competitor.currentLap)
 				{
 					position++;
+                    debugTxt += "" + position + ". behind truck " + c.truckNum + " which is on lap " + c.currentLap + ",\n";
 				}
 				else if (c.currentLap == competitor.currentLap)
 				{
 					if (c.lastCheckpoint > competitor.lastCheckpoint)
 					{
 						position++;
+                        debugTxt += "" + position + ". behind truck " + c.truckNum + " that passed chkpnt " + c.lastCheckpoint + ",\n";
 					}
 					else if (c.lastCheckpoint == competitor.lastCheckpoint)
 					{
 						//We need to compare the timings to get position at last checkpoint, or TODO better compare their on track positions to get instantaneous position
-						if (c.lastCheckpointTime < competitor.lastCheckpointTime)
-						{
-							position++;
-						}
+						//if (c.lastCheckpointTime < competitor.lastCheckpointTime)
+						//{
+						//	position++;
+						//}
+                        //else
+                        {
+                            int nextChp = this.raceList[competitor.currentRace].getNextCheckpointNum(competitor.lastCheckpoint);
+                            double[] v = this.raceList[competitor.currentRace].checkpoints[nextChp][0];//TODO Don't understand this - it crashes! Works without it and 2nd 3 digits are rotations: this.raceList[competitor.currentRace].chpInstances[nextChp]];
+                            vector3 va = vector3(v[0], v[1], v[2]);
+                            //this.message("cosmicvoleDEBUG next chp coords length " + v.length(), "flag_orange.png");
+                            vector3 comppos = vector3(game.getTruckByNum(competitor.truckNum).getVehiclePosition());
+                            vector3 cpos = vector3(game.getTruckByNum(c.truckNum).getVehiclePosition());
+                            float compdist = ((va.x-comppos.x)*(va.x-comppos.x))+((va.y-comppos.y)*(va.y-comppos.y))+((va.z-comppos.z)*(va.z-comppos.z));// va.squaredDistance(comppos) is always zero WHY?!
+                            float cdist = ((va.x-cpos.x)*(va.x-cpos.x))+((va.y-cpos.y)*(va.y-cpos.y))+((va.z-cpos.z)*(va.z-cpos.z));// both these give zero too! WHY? pow(va.x-cpos.x,2.0)+pow(va.y-cpos.y,2.0)+pow(va.z-cpos.z,2.0);// va.squaredDistance(cpos);
+                            if (cdist < compdist)
+                            {
+                                position++;
+                                debugTxt += "" + position + ". behind truck " + c.truckNum + " (cdist=" + cdist + " compdist=" + compdist + " nextChp=" + nextChp + "),\n";
+                            }
+                            else
+                            {
+                                debugTxt += "" + position + ". in front of truck " + c.truckNum + " (cdist=" + cdist + " compdist=" + compdist + " nextChp=" + nextChp + "),\n";
+                                debugTxt += " nextChp is (" + v[0] + "," + v[1] + "," + v[2] + ") cpos is (" + cpos.x + "," + cpos.y + "," + cpos.z + ")\n";
+                                debugTxt += " comppos is (" + comppos.x + "," + comppos.y + "," + comppos.z + ") chkpnt is (" + va.x + "," + va.y + "," + va.z + ")\n";
+                            }
+                            
+                        }
 					}
 				}
 			}
 		}
+        bool positionChanged = competitor.racePosition != position;
 		competitor.racePosition = position;
+        if (positionChanged)// and competitor.isThePlayer)
+        {
+            this.message(debugTxt, "flag_orange.png");
+        }
+        return positionChanged;
 	}
 
 	void calcPositions(int raceID)
@@ -872,7 +948,31 @@ class racesManager {
 			if (this.competitors.get(formatInt(i, ''), @c) and !(c is null) and c.currentRace == raceID)
 			{
 				//TODO Horribly slow - we need to sort all the competitors into position in one go instead of calculating one by one
-				calcPosition(c);
+				bool positionChanged = calcPosition(c);
+                if (positionChanged and c.isThePlayer) // or i == currentTruckNum
+                {
+                    int nextChp = this.raceList[c.currentRace].getNextCheckpointNum(c.lastCheckpoint);
+                    double[] v = this.raceList[c.currentRace].checkpoints[nextChp][0];
+                    string racePosText;
+                    string lapText;
+                    if (c.racePosition > 0)
+                    {
+                        racePosText = "\nposition " + c.racePosition + " / " + this.numCompetitors;
+                    }
+                    else
+                    {
+                        racePosText = "\nposition ";
+                    }
+                    if (c.currentLap > 0)
+                    {
+                        lapText = "\nlap " + c.currentLap + " / " + this.raceList[c.currentRace].laps;
+                    }
+                    else
+                    {
+                        lapText = "\nlap 1 / " + this.raceList[c.currentRace].laps;
+                    }
+                    game.setDirectionArrow(this.raceList[c.currentRace].raceName+"\ncheckpoint "+nextChp+" / "+(this.raceList[c.currentRace].checkPointsCount+"\n"+lapText+racePosText), vector3(v[0], v[1], v[2]));
+                }
 			}
 		}
 	}
@@ -890,11 +990,11 @@ class racesManager {
 	// Set a new best laptime (if it's better than the old best laptime)
 	//  pre: The race corresponding with the raceID exists
 	// post: The new time is checked and stored if necessary
-	void addLapTime(int raceID, double time, bool &out newBestLap)
+	void addLapTime(int raceID, double time, racesCompetitor@ competitor, bool &out newBestLap, bool &out newPersonalBestLap)
 	{
 		if( this.raceList[raceID].bestLapTime > time or this.raceList[raceID].bestLapTime == 0.0)
 		{
-			// call the callback function
+			// call the callback function TODO record truckNum / player / bot ID also! cosmic vole January 12 2017
 			RACE_EVENT_CALLBACK @handle;
 			if( callbacks.get("NewBestLap", @handle) and not (handle is null))
 			{
@@ -911,34 +1011,43 @@ class racesManager {
 		}
 		else
 			newBestLap = false;
+            
+        //check for personal best also, now that bots are also setting times - cosmic vole January 12 2017
+        if (competitor.bestLapTime > time or competitor.bestLapTime == 0.0)
+        {
+            competitor.bestLapTime = time;
+            newPersonalBestLap = true;
+        }
+        else
+            newPersonalBestLap = false;
 			
-		if( this.submitScore )
-		{				
-			string api_return;
-			dictionary dict;
-			dict.set("raceManagerVersion", ""+this.raceManagerVersion);
-			dict.set("raceName", ""+this.raceList[raceID].raceName);
-			dict.set("raceVersion", ""+this.raceList[raceID].raceVersion);
-			dict.set("laptime", time);
-			string times = "0.0";
-			for( uint i = 1; i < this.raceList[raceID].lastTimeTillPoint.length() ; i++ )
-			{
-				times += ";"+this.raceList[raceID].lastTimeTillPoint[i];
-				// dict.set("chptime"+i, this.raceList[raceID].lastTimeTillPoint[i]);
-			}
-			dict.set("chptimes", ""+times);
-			
-			times = ""+this.penaltyTime[0];
-			for( uint i = 1; i < this.penaltyTime.length() ; i++ )
-			{
-				times += ";"+this.penaltyTime[i];
-			}
-			dict.set("penaltytimes", ""+times);
-			
-			int res = game.useOnlineAPI("/submit_race_time/", dict, api_return);
-			// debug: game.log("useOnlineAPI returned: " + res);
-			// debug: game.log("useOnlineAPI return string: " + api_return);
-		}
+		//if( this.submitScore and competitor.isThePlayer)
+		//{				
+		//	string api_return;
+		//	dictionary dict;
+		//	dict.set("raceManagerVersion", ""+this.raceManagerVersion);
+		//	dict.set("raceName", ""+this.raceList[raceID].raceName);
+		//	dict.set("raceVersion", ""+this.raceList[raceID].raceVersion);
+		//	dict.set("laptime", time);
+		//  string times = "0.0";
+		//  for( uint i = 1; i < this.raceList[raceID].lastTimeTillPoint.length() ; i++ )
+		//  {
+		//  	times += ";"+this.raceList[raceID].lastTimeTillPoint[i];
+		//  	// dict.set("chptime"+i, this.raceList[raceID].lastTimeTillPoint[i]);
+		//  }
+		//  dict.set("chptimes", ""+times);
+		//  
+		//  times = ""+this.penaltyTime[0];
+		//  for( uint i = 1; i < this.penaltyTime.length() ; i++ )
+		//  {
+		//  	times += ";"+this.penaltyTime[i];
+		//  }
+		//  dict.set("penaltytimes", ""+times);
+		//  
+		//  int res = game.useOnlineAPI("/submit_race_time/", dict, api_return);
+		//  // debug: game.log("useOnlineAPI returned: " + res);
+		//  // debug: game.log("useOnlineAPI return string: " + api_return);
+		//}
 	}
 	
 	// Set a new best racetime (if it's better than the old best racetime)
@@ -971,8 +1080,15 @@ class racesManager {
 	void eventCallback(int eventnum, int value)
 	{
 		// debug: game.log("raceManager::eventCallback("+eventnum+", "+value+") called");
+        
+        //TODO ideally this needs a truckNum. cosmic vole January 13 2017 For now, we'll just do this:
+        racesCompetitor@ competitor;
+        if (!competitors.get(formatInt(this.truckNum, ''), @competitor) or competitor is null)
+        {
+            return;
+        }
 		
-		if( this.state != this.STATE_Racing )
+		if( competitor.state != this.STATE_Racing )
 			return;
 
 		// this never gets called
@@ -980,7 +1096,7 @@ class racesManager {
 		{
 			if( this.abortOnVehicleExit )
 			{
-				this.cancelCurrentRace();
+				this.cancelCurrentRace(competitor);
 				this.message("Race aborted.", "stop.png");
 			}
 			else if( !this.silentMode )
@@ -988,7 +1104,7 @@ class racesManager {
 		}
 		else if( eventnum == SE_TRUCK_ENTER and this.truckNum != game.getCurrentTruckNumber() and !this.allowVehicleChanging)
 		{
-			this.cancelCurrentRace();
+			this.cancelCurrentRace(competitor);
 			this.message("You cannot switch vehicles during a race! Race aborted.", "stop.png");
 		}
 		else if( eventnum == SE_GENERIC_DELETED_TRUCK )
@@ -1007,7 +1123,7 @@ class racesManager {
 		}
 		else if( eventnum == SE_ANGELSCRIPT_MANIPULATIONS )
 		{
-			this.cancelCurrentRace();
+			this.cancelCurrentRace(competitor);
 			this.message("AngelScript injection is not allowed during races! Race aborted.", "stop.png");
 		}
 	}
@@ -1069,8 +1185,31 @@ class racesManager {
 		this.currentRace = -1;
 		this.currentLap = -1;
 		this.state = this.STATE_NotInRace;
-		game.stopTimer();
+		game.stopTimer(-1);
 		this.removeArrow();
+	}
+    
+    void cancelCurrentRace(racesCompetitor @competitor)
+	{		
+		// call the callback function
+		RACE_EVENT_CALLBACK @handle;
+		if( callbacks.get("RaceCancel", @handle) and not (handle is null))
+		{
+			dictionary args;
+			args.set("event", "RaceCancel");
+			args.set("raceID", this.currentRace);
+			handle(args);
+		}
+		
+		competitor.lastCheckpoint = -1;
+		competitor.currentRace = -1;
+		competitor.currentLap = -1;
+		competitor.state = this.STATE_NotInRace;
+		game.stopTimer(competitor.truckNum);
+        if (competitor.isThePlayer)
+        {
+            this.removeArrow();
+        }
 	}
 	
 	bool raceCompleted(int raceID)
@@ -1708,10 +1847,10 @@ class raceBuilder {
 		// Only load the race if it's exactly the same
 		// (this also returns if the race was never saved before)
 		if( (d.get("raceName") != raceName)
-			|| (d.get("terrain") != terrain)
-			|| (d.get("raceBuilderVersion") != raceBuilderVersion)
-			|| (d.get("raceVersion") != raceVersion)
-			|| (d.getInt("checkPointsCount") != checkPointsCount)
+			or (d.get("terrain") != terrain)
+			or (d.get("raceBuilderVersion") != raceBuilderVersion)
+			or (d.get("raceVersion") != raceVersion)
+			or (d.getInt("checkPointsCount") != checkPointsCount)
 		)
 			return;
 
@@ -1781,6 +1920,7 @@ class racesCompetitor {
 		this.penaltyGiven = true;
 		this.lastLapTime     = 0.0;
 		this.lastCheckpointTime = 0.0;
+        this.bestLapTime = 0.0;
 	}
 
 

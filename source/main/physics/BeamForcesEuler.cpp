@@ -743,9 +743,23 @@ void Beam::calcForcesEulerCompute(int doUpdate, Real dt, int step, int maxsteps)
         if (hydrodircommand != 0 && hydroSpeedCoupling)
         {
             if (hydrodirstate > hydrodircommand)
+            {
                 hydrodirstate -= dt * rate;
+                //comsic vole - experimental - prevent oversheet - April 12 2017
+                //if (hydrodirstate < hydrodircommand)
+                //{
+                //    hydrodirstate = hydrodircommand;
+                //}
+            }
             else
+            {
                 hydrodirstate += dt * rate;
+                //comsic vole - experimental - prevent oversheet - April 12 2017
+                //if (hydrodirstate > hydrodircommand)
+                //{
+                //    hydrodirstate = hydrodircommand;
+                //}
+            }
         }
         if (hydroSpeedCoupling)
         {
@@ -1295,6 +1309,9 @@ bool Beam::calcForcesEulerPrepare(int doUpdate, Ogre::Real dt, int step, int max
         return false;
     if (state != SIMULATED)
         return false;
+    //cosmic vole - disable physics while a partial repair is in progress January 30 2017
+    if (is_repairing)
+        return false;
 
     BES_START(BES_CORE_WholeTruckCalc);
 
@@ -1721,6 +1738,11 @@ void Beam::calcNodes(int doUpdate, Ogre::Real dt, int step, int maxsteps)
                 // reverted this construct to the old form, don't mess with it, the binary operator is intentionally! cosmic vole added trucknum arg to keep track of collisions with AI cars
 				if ((contacted=gEnv->collisions->groundCollision(&nodes[i], nodes[i].collTestTimer, &gm, &ns)) | gEnv->collisions->nodeCollision(&nodes[i], contacted, nodes[i].collTestTimer, &ns, &gm, trucknum))
                 {
+                    //Make wheelslip information accessible (for AI) even when not skidding - cosmic vole March 11 2017
+                    if (doUpdate && nodes[i].iswheel)
+                    {
+                        wheels[nodes[i].wheelid].lastSlip = ns;
+                    }
                     // FX
                     if (gm && doUpdate && !nodes[i].disable_particles)
                     {
