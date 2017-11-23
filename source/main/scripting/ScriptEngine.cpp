@@ -58,6 +58,7 @@
 
 #include "BeamFactory.h"
 #include "VehicleAI.h"
+#include "ChampionshipManager.h"
 
 const char *ScriptEngine::moduleName = "RoRScript";
 
@@ -294,16 +295,56 @@ void ScriptEngine::init()
     result = engine->RegisterObjectType("VehicleAIClass", sizeof(VehicleAI), AngelScript::asOBJ_REF); MYASSERT(result >= 0);
     result = engine->RegisterObjectMethod("VehicleAIClass", "void addWaypoint(string &in, vector3 &in)", AngelScript::asMETHOD(VehicleAI, AddWaypoint), AngelScript::asCALL_THISCALL); MYASSERT(result >= 0);
     result = engine->RegisterObjectMethod("VehicleAIClass", "void addWaypoints(dictionary &in)", AngelScript::asMETHOD(VehicleAI, AddWaypoint), AngelScript::asCALL_THISCALL); MYASSERT(result >= 0);
+    //cosmic vole added addRoadEdgePointLeft() & Right() June 25 2017
+    result = engine->RegisterObjectMethod("VehicleAIClass", "void addRoadEdgePointLeft(vector3 &in)", AngelScript::asMETHOD(VehicleAI, AddRoadEdgePointLeft), AngelScript::asCALL_THISCALL); MYASSERT(result >= 0);
+    result = engine->RegisterObjectMethod("VehicleAIClass", "void addRoadEdgePointRight(vector3 &in)", AngelScript::asMETHOD(VehicleAI, AddRoadEdgePointRight), AngelScript::asCALL_THISCALL); MYASSERT(result >= 0);
     result = engine->RegisterObjectMethod("VehicleAIClass", "void setActive(bool)", AngelScript::asMETHOD(VehicleAI, SetActive), AngelScript::asCALL_THISCALL); MYASSERT(result >= 0);
+    //cosmic vole added SetNumWaypointsInLap() August 8 2017
+    result = engine->RegisterObjectMethod("VehicleAIClass", "void SetNumWaypointsInLap(int)", AngelScript::asMETHOD(VehicleAI, SetNumWaypointsInLap), AngelScript::asCALL_THISCALL); MYASSERT(result >= 0);
+    //cosmic vole added SetRaceID() August 23 2017
+    result = engine->RegisterObjectMethod("VehicleAIClass", "void SetRaceID(int)", AngelScript::asMETHOD(VehicleAI, SetRaceID), AngelScript::asCALL_THISCALL); MYASSERT(result >= 0);
+    //cosmic vole September 4 2017
+    result = engine->RegisterObjectMethod("VehicleAIClass", "void AllowRollCorrection(bool)", AngelScript::asMETHOD(VehicleAI, AllowRollCorrection), AngelScript::asCALL_THISCALL); MYASSERT(result >= 0);
+    
     //cosmic vole registered VehicleAIClass::isActive()
     result = engine->RegisterObjectMethod("VehicleAIClass", "bool isActive()", AngelScript::asMETHOD(VehicleAI, IsActive), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("VehicleAIClass", "void addEvent(string &in,int &in)", AngelScript::asMETHOD(VehicleAI, AddEvent), AngelScript::asCALL_THISCALL); MYASSERT(result >= 0);
     result = engine->RegisterObjectMethod("VehicleAIClass", "void setValueAtWaypoint(string &in, int &in, float &in)", AngelScript::asMETHOD(VehicleAI, SetValueAtWaypoint), AngelScript::asCALL_THISCALL); MYASSERT(result >= 0);
+    //cosmic vole registered VehicleAIClass::FindNextWaypointID() and SetCurrentWaypoint() July 9 2017
+    result = engine->RegisterObjectMethod("VehicleAIClass", "string FindNextWaypointID(vector3 &in, int, int)", AngelScript::asMETHOD(VehicleAI, FindNextWaypointID), AngelScript::asCALL_THISCALL); MYASSERT(result >= 0);
+    result = engine->RegisterObjectMethod("VehicleAIClass", "void SetCurrentWaypoint(string &in)", AngelScript::asMETHOD(VehicleAI, SetCurrentWaypoint), AngelScript::asCALL_THISCALL); MYASSERT(result >= 0);
     result = engine->RegisterObjectBehaviour("VehicleAIClass", AngelScript::asBEHAVE_ADDREF, "void f()", AngelScript::asMETHOD(VehicleAI, addRef), AngelScript::asCALL_THISCALL); MYASSERT(result >= 0);
     result = engine->RegisterObjectBehaviour("VehicleAIClass", AngelScript::asBEHAVE_RELEASE, "void f()", AngelScript::asMETHOD(VehicleAI, release), AngelScript::asCALL_THISCALL); MYASSERT(result >= 0);
 
-
-
+    //class Race (used in championships) - cosmic vole November 11 2017
+    result = engine->RegisterObjectType("RaceClass", sizeof(Race), AngelScript::asOBJ_REF); MYASSERT(result>=0);
+    result = engine->RegisterObjectMethod("RaceClass", "int GetID()", AngelScript::asMETHOD(Race, GetID), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    result = engine->RegisterObjectMethod("RaceClass", "int GetNumberOfLaps()", AngelScript::asMETHOD(Race, GetNumberOfLaps), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    result = engine->RegisterObjectMethod("RaceClass", "double GetRaceStartTime()", AngelScript::asMETHOD(Race, GetRaceStartTime), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    result = engine->RegisterObjectMethod("RaceClass", "bool IsRunning()", AngelScript::asMETHOD(Race, IsRunning), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    result = engine->RegisterObjectMethod("RaceClass", "bool IsPaused()", AngelScript::asMETHOD(Race, IsPaused), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    result = engine->RegisterObjectMethod("RaceClass", "bool IsFinshed()", AngelScript::asMETHOD(Race, IsFinished), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    result = engine->RegisterObjectMethod("RaceClass", "string GetTrackName()", AngelScript::asMETHOD(Race, GetTrackName), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    result = engine->RegisterObjectMethod("RaceClass", "string GetTerrain()", AngelScript::asMETHOD(Race, GetTerrain), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    result = engine->RegisterObjectMethod("RaceClass", "RaceClass& opAssign(const RaceClass &in)", AngelScript::asMETHODPR(Race, operator=, (const Race&), Race&), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    result = engine->RegisterObjectBehaviour("RaceClass", AngelScript::asBEHAVE_ADDREF, "void f()", AngelScript::asMETHOD(Race, addRef), AngelScript::asCALL_THISCALL); MYASSERT(result >= 0);
+    result = engine->RegisterObjectBehaviour("RaceClass", AngelScript::asBEHAVE_RELEASE, "void f()", AngelScript::asMETHOD(Race, release), AngelScript::asCALL_THISCALL); MYASSERT(result >= 0);
+    result = engine->RegisterObjectBehaviour("RaceClass", AngelScript::asBEHAVE_FACTORY, "RaceClass@ f()", AngelScript::asFUNCTION(RaceFactory), AngelScript::asCALL_CDECL); MYASSERT(result>=0);
+   
+    // enum ChampionshipState - cosmic vole November 11 2017
+    result = engine->RegisterEnum("ChampionshipState"); MYASSERT(result>=0);
+    result = engine->RegisterEnumValue("ChampionshipState", "CS_None", CS_None); MYASSERT(result>=0);
+    result = engine->RegisterEnumValue("ChampionshipState", "CS_RacePending", CS_RacePending); MYASSERT(result>=0);
+    result = engine->RegisterEnumValue("ChampionshipState", "CS_RaceScheduled", CS_RaceScheduled); MYASSERT(result>=0);
+    result = engine->RegisterEnumValue("ChampionshipState", "CS_RaceRunning", CS_RaceRunning); MYASSERT(result>=0);
+    
+    // class ChampionshipManager - cosmic vole November 11 2017
+    result = engine->RegisterObjectType("ChampionshipManagerClass", sizeof(ChampionshipManager), AngelScript::asOBJ_VALUE | AngelScript::asOBJ_POD | AngelScript::asOBJ_APP_CLASS); MYASSERT(result>=0);
+    result = engine->RegisterObjectMethod("ChampionshipManagerClass", "bool hasCurrentRace()", AngelScript::asMETHOD(ChampionshipManager, hasCurrentRace), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    result = engine->RegisterObjectMethod("ChampionshipManagerClass", "RaceClass @getCurrentRace()", AngelScript::asMETHOD(ChampionshipManager, getCurrentRace), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    result = engine->RegisterObjectMethod("ChampionshipManagerClass", "ChampionshipState getState()", AngelScript::asMETHOD(ChampionshipManager, getState), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    result = engine->RegisterObjectMethod("ChampionshipManagerClass", "int allocateRaceID(string &in, string &in)", AngelScript::asMETHOD(ChampionshipManager, allocateRaceID), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    
     // Register everything
     // class Beam
     result = engine->RegisterObjectType("BeamClass", sizeof(Beam), AngelScript::asOBJ_REF); MYASSERT(result>=0);
@@ -453,6 +494,10 @@ void ScriptEngine::init()
     //cosmic vole added optional truckNum argument to timer methods - January 13 2017
     result = engine->RegisterObjectMethod("GameScriptClass", "void startTimer(int)", AngelScript::asMETHOD(GameScript,startTimer), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("GameScriptClass", "float stopTimer(int)", AngelScript::asMETHOD(GameScript,stopTimer), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    result = engine->RegisterObjectMethod("GameScriptClass", "void setTimer(int, float, bool)", AngelScript::asMETHOD(GameScript,setTimer), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    result = engine->RegisterObjectMethod("GameScriptClass", "float scheduleRaceStart(int, float)", AngelScript::asMETHOD(GameScript,scheduleRaceStart), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    result = engine->RegisterObjectMethod("GameScriptClass", "double getRaceStartTime(int)", AngelScript::asMETHOD(GameScript,getRaceStartTime), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    
     //cosmic vole commented these out as Angelscript function overloading doesn't seem to work - January 14 2017
     //result = engine->RegisterObjectMethod("GameScriptClass", "void startTimer()", AngelScript::asMETHOD(GameScript,startTimer), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     //result = engine->RegisterObjectMethod("GameScriptClass", "float stopTimer()", AngelScript::asMETHOD(GameScript,stopTimer), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
@@ -466,6 +511,7 @@ void ScriptEngine::init()
     
     result = engine->RegisterObjectMethod("GameScriptClass", "void loadTerrain(const string &in)", AngelScript::asMETHOD(GameScript,loadTerrain), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("GameScriptClass", "int getLoadedTerrain(string &out)", AngelScript::asMETHOD(GameScript,getLoadedTerrain), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    result = engine->RegisterObjectMethod("GameScriptClass", "int getLoadedTerrainFilename(string &out)", AngelScript::asMETHOD(GameScript,getLoadedTerrainFilename), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("GameScriptClass", "bool getCaelumAvailable()", AngelScript::asMETHOD(GameScript,getCaelumAvailable), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("GameScriptClass", "string getCaelumTime()", AngelScript::asMETHOD(GameScript,getCaelumTime), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("GameScriptClass", "void setCaelumTime(float)", AngelScript::asMETHOD(GameScript,setCaelumTime), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
@@ -493,7 +539,7 @@ void ScriptEngine::init()
     result = engine->RegisterObjectMethod("GameScriptClass", "int getCurrentTruckNumber()", AngelScript::asMETHOD(GameScript,getCurrentTruckNumber), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("GameScriptClass", "void boostCurrentTruck(float)", AngelScript::asMETHOD(GameScript, boostCurrentTruck), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     //adjust performance of specified truck - cosmic vole January 6 2017
-    result = engine->RegisterObjectMethod("GameScriptClass", "void tuneTruck(int, bool, float, float, float, float)", AngelScript::asMETHOD(GameScript, tuneTruck), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
+    result = engine->RegisterObjectMethod("GameScriptClass", "void tuneTruck(int, bool, float, float, float, float, float)", AngelScript::asMETHOD(GameScript, tuneTruck), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("GameScriptClass", "int getNumTrucks()", AngelScript::asMETHOD(GameScript,getNumTrucks), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("GameScriptClass", "BeamClass @getCurrentTruck()", AngelScript::asMETHOD(GameScript,getCurrentTruck), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
     result = engine->RegisterObjectMethod("GameScriptClass", "BeamClass @getTruckByNum(int)", AngelScript::asMETHOD(GameScript,getTruckByNum), AngelScript::asCALL_THISCALL); MYASSERT(result>=0);
@@ -588,6 +634,7 @@ void ScriptEngine::init()
     result = engine->RegisterGlobalProperty("GameScriptClass game", gamescript); MYASSERT(result>=0);
     //result = engine->RegisterGlobalProperty("CacheSystemClass cache", &CacheSystem::getSingleton()); MYASSERT(result>=0);
     result = engine->RegisterGlobalProperty("SettingsClass settings", &SETTINGS); MYASSERT(result>=0);
+    result = engine->RegisterGlobalProperty("ChampionshipManagerClass championshipManager", &ChampionshipManager::getSingleton()); MYASSERT(result>=0);
 
     SLOG("Type registrations done. If you see no error above everything should be working");
 }

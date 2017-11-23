@@ -348,6 +348,11 @@ enum events
     EV_TRUCK_TOGGLE_IMPORTCOMMANDS, //!< toggle importcommands
     EV_TRUCK_TOGGLE_VIDEOCAMERA, //!< toggle videocamera update
     EV_TRUCK_TRACTION_CONTROL, //!< toggle antilockbrake system
+    //Truck AI lane following controls - cosmic vole July 6 2017
+    EV_TRUCK_FOLLOW_LANE_1, //!< toggle truck AI following lane 1
+    EV_TRUCK_FOLLOW_LANE_2, //!< toggle truck AI following lane 2
+    EV_TRUCK_FOLLOW_LANE_3, //!< toggle truck AI following lane 3
+    EV_TRUCK_FOLLOW_LANE_4, //!< toggle truck AI following lane 4
 
     // position storage now
     EV_TRUCK_SAVE_POS01,

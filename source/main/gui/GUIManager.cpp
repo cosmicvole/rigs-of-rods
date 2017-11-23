@@ -43,6 +43,7 @@
 #include "GUI_GameSettings.h"
 #include "GUI_GamePauseMenu.h"
 #include "GUI_GameRacingMenu.h" // cosmic vole
+#include "GUI_RaceSelector.h" // cosmic vole
 #include "GUI_GameChatBox.h"
 #include "GUI_LoadingWindow.h"
 #include "GUI_MessageBox.h"
@@ -82,6 +83,7 @@ struct GuiManagerImpl
     GUI::GameChatBox            panel_ChatBox;
     GUI::RigSpawnerReportWindow panel_SpawnerReport;
     GUI::VehicleDescription     panel_VehicleDescription;
+    GUI::RaceSelector           panel_RaceSelector; //cosmic vole added race selector October 9 2017
 //cosmic vole added fix for non SocketW builds December 24 2016
 #ifdef USE_SOCKETW    
     GUI::MpClientList           panel_MpClientList;
@@ -150,6 +152,7 @@ GUI::MultiplayerSelector*   GUIManager::GetMpSelector()        { return &m_impl-
 GUI::FrictionSettings*      GUIManager::GetFrictionSettings()  { return &m_impl->panel_FrictionSettings    ; }
 GUI::SimUtils*              GUIManager::GetSimUtils()          { return &m_impl->panel_SimUtils            ; }
 GUI::TopMenubar*            GUIManager::GetTopMenubar()        { return &m_impl->panel_TopMenubar          ; }
+GUI::RaceSelector*          GUIManager::GetRaceSelector()      { return &m_impl->panel_RaceSelector        ; } // cosmic vole October 9 2017
 
 GUIManager::GUIManager() :
     m_renderwindow_closed(false),
@@ -177,6 +180,9 @@ GUIManager::GUIManager() :
     MyGUI::ResourceManager::getInstance().load(RESOURCE_FILENAME);
 
     MyGUI::ResourceManager::getInstance().load(LanguageEngine::getSingleton().getMyGUIFontConfigFilename());
+    
+    // load fonts for race results - cosmic vole October 17 2017
+    //MyGUI::ResourceManager::getInstance().load("MyGUI_FontsRaces.xml");
 
     m_impl = new GuiManagerImpl();
     m_impl->mygui_platform = mygui_platform;

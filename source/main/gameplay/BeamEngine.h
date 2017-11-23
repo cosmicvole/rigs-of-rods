@@ -183,7 +183,7 @@ public:
     void updateAudio(int doUpdate);
     
     // Code to adjust the performance of a specified truck (intended to adjust AI difficulty but could be used for power-ups / cheats!) cosmic vole January 6 2017
-    void tune(bool relative, float maxTorque, float maxRPM, float brakingTorque, float grip);
+    void tune(bool relative, float maxTorque, float maxRPM, float inertia);
 
     enum autoswitch
     {

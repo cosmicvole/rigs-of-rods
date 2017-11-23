@@ -1,0 +1,15 @@
+<mesh>
+    <sharedgeometry vertexcount="0">
+        <vertexbuffer positions="true" normals="true" texture_coord_dimensions_0="float2" texture_coords="1">
+        </vertexbuffer>
+    </sharedgeometry>
+    <submeshes>
+        <submesh material="seat" usesharedvertices="true" use32bitindexes="false" operationtype="triangle_list">
+            <faces count="0">
+            </faces>
+        </submesh>
+    </submeshes>
+    <submeshnames>
+        <!--submeshname name="ellipse" index="0" /-->
+    </submeshnames>
+</mesh>

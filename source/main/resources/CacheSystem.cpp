@@ -40,6 +40,9 @@
 #include "SHA1.h"
 #include "SoundScriptManager.h"
 #include "TerrainManager.h"
+#include "ChampionshipManager.h"
+#include "RaceResult.h"
+#include "Race.h"
 #include "Utils.h"
 
 #ifdef USE_MYGUI
@@ -131,6 +134,7 @@ CacheSystem::CacheSystem() :
     known_extensions.push_back("trailer");
     known_extensions.push_back("load");
     known_extensions.push_back("train");
+    known_extensions.push_back("champ"); // cosmic vole added championships October 13 2017
 }
 
 CacheSystem::~CacheSystem()
@@ -1455,6 +1459,10 @@ void CacheSystem::addFile(String filename, String archiveType, String archiveDir
             {
                 fillTerrainDetailInfo(entry, ds, filename);
             }
+            else if (ext == "champ")
+            {
+                fillChampionshipDetailInfo(entry, ds, filename);
+            }
             else
             {
                 entry.dname = ds->getLine();
@@ -2073,6 +2081,32 @@ void CacheSystem::fillTerrainDetailInfo(CacheEntry& entry, Ogre::DataStreamPtr d
     entry.categoryid = tm.getCategoryID();
     entry.uniqueid = tm.getGUID();
     entry.version = tm.getVersion();
+}
+
+// cosmic vole October 13 2017
+void CacheSystem::fillChampionshipDetailInfo(CacheEntry& entry, Ogre::DataStreamPtr ds, Ogre::String fname)
+{
+    ChampionshipManager& cm = ChampionshipManager::getSingleton();
+    cm.loadChampionship(ds);
+    //tm.loadTerrainConfigBasics(ds);
+
+    //parsing the current file
+    auto& authors = cm.getAuthors();
+    auto itor_end = authors.end();
+    for (auto itor = authors.begin(); itor != itor_end; ++itor)
+    {
+        AuthorInfo a;
+        a.id = itor->id;
+        a.email = itor->email;
+        a.name = itor->name;
+        a.type = itor->type;
+        entry.authors.push_back(a);
+    }
+
+    entry.dname = cm.getName();
+    entry.categoryid = cm.getCategoryID();
+    entry.uniqueid = cm.getGUID();
+    entry.version = cm.getVersion();
 }
 
 int CacheSystem::getCategoryUsage(int category)

@@ -81,3 +81,98 @@ void ConfigFile::SetString(Ogre::String key, Ogre::String value, Ogre::String se
     // add key
     set->insert(std::multimap<Ogre::String, Ogre::String>::value_type(key, value));
 }
+
+/// load from a data stream - overloaded to allow multiline values - cosmic vole October 22 2017
+/// Original code for this function was copied from the
+/// OGRE 1.9 ConfigFile source: Copyright (c) 2000-2014 Torus Knot Software Ltd
+void ConfigFile::load(const Ogre::DataStreamPtr& stream, const Ogre::String& separators, bool trimWhitespace, bool multiline)
+{
+    /* Clear current settings map */
+    clear();
+
+    Ogre::String currentSection = Ogre::StringUtil::BLANK;
+    Ogre::ConfigFile::SettingsMultiMap* currentSettings = OGRE_NEW_T(Ogre::ConfigFile::SettingsMultiMap, Ogre::MEMCATEGORY_GENERAL)();
+    mSettings[currentSection] = currentSettings;
+
+    /* Process the file line for line */
+    Ogre::String line, optName, optVal, lastLine;
+    while (!stream->eof())
+    {
+        line = stream->getLine();
+        /* Ignore comments & blanks */
+        if (line.length() > 0 && line.at(0) != '#' && line.at(0) != '@')
+        {
+            if (line.at(0) == '[' && line.at(line.length()-1) == ']')
+            {
+                // Section
+                currentSection = line.substr(1, line.length() - 2);
+                Ogre::ConfigFile::SettingsBySection::const_iterator seci = mSettings.find(currentSection);
+                
+                //Store any previous multiline setting - cosmic vole October 22 2017
+                if (multiline && optName.length() > 0)
+                {
+                    //We store it under the previous section before we update currentSettings
+                    currentSettings->insert(Ogre::ConfigFile::SettingsMultiMap::value_type(optName, optVal));
+                    //Reset multiline state ready for next key / value pair
+                    optName = optVal = "";
+                }
+                
+                if (seci == mSettings.end())
+                {
+                    currentSettings = OGRE_NEW_T(Ogre::ConfigFile::SettingsMultiMap, Ogre::MEMCATEGORY_GENERAL)();
+                    mSettings[currentSection] = currentSettings;
+                }
+                else
+                {
+                    currentSettings = seci->second;
+                }
+            }
+            else
+            {
+                /* Find the first separator character and split the string there */
+                Ogre::String::size_type separator_pos = line.find_first_of(separators, 0);
+                if (separator_pos != Ogre::String::npos)
+                {
+                    //If multiline enabled, store any previous key and value - cosmic vole October 22 2017
+                    if (multiline && optName.length() > 0)
+                    {
+                        currentSettings->insert(Ogre::ConfigFile::SettingsMultiMap::value_type(optName, optVal));
+                        //Reset multiline state ready for next key / value pair
+                        optName = optVal = "";                        
+                    }
+                    optName = line.substr(0, separator_pos);
+                    /* Find the first non-separator character following the name */
+                    Ogre::String::size_type nonseparator_pos = line.find_first_not_of(separators, separator_pos);
+                    /* ... and extract the value */
+                    /* Make sure we don't crash on an empty setting (it might be a valid value) */
+                    optVal = (nonseparator_pos == Ogre::String::npos) ? "" : line.substr(nonseparator_pos);
+                    if (trimWhitespace)
+                    {
+                        Ogre::StringUtil::trim(optVal);
+                        Ogre::StringUtil::trim(optName);
+                    }
+                    //Only save the setting straight away if multiline is disabled - cosmic vole October 22 2017
+                    if (!multiline)
+                    {
+                        currentSettings->insert(Ogre::ConfigFile::SettingsMultiMap::value_type(optName, optVal));
+                    }
+                }
+                else if (multiline && optName.length() > 0) //If multiline enabled, keep appending lines to current value - cosmic vole October 22 2017
+                {
+                    if (trimWhitespace)
+                    {
+                        Ogre::StringUtil::trim(line);
+                    }
+                    optVal += line;
+                }
+            }
+        }
+    }
+    
+    //We reached EOF so store any final multiline setting - cosmic vole October 22 2017
+    if (multiline && optName.length() > 0)
+    {
+        currentSettings->insert(Ogre::ConfigFile::SettingsMultiMap::value_type(optName, optVal));
+    }
+}
+

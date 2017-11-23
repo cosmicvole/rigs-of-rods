@@ -50,14 +50,22 @@ public:
     void windowResized(Ogre::RenderWindow* rw); // TODO: make this private, it's public for legacy reasons.
 
     //cosmic vole added support for racing against multiple bots January 13 2017
+    
+    void SetRaceTimer(int truckNum, float time, bool raceIsInProgress);
 
     void StartRaceTimer(int truckNum = -1);
 
     float StopRaceTimer(int truckNum = -1);
+    
+    void ScheduleRaceStart(int raceID, double secondsDelay); // cosmic vole August 23 2017
 
     void UpdateRacingGui(int truckNum = -1);
 
     bool IsRaceInProgress(int truckNum = -1) { return (truckNum >= 0) ? (m_races_in_progress[truckNum]) : m_race_in_progress; }
+    
+    bool IsRacePending(int truckNum); // cosmic vole August 23 2017
+    
+    bool IsRaceFinished(int truckNum); // cosmic vole August 23 2017 TODO ideally we could do with an enum for race state
 
     void SetReloadPos(Ogre::Vector3 position) { m_reload_pos = position; }
 
@@ -87,14 +95,14 @@ protected:
     int m_last_screenshot_id;
     Ogre::String m_last_screenshot_date;
 
-    unsigned long m_race_start_time;
+    double m_race_start_time; //cosmic vole changed from long to double August 23 2017
     bool m_race_in_progress;
-    float m_race_bestlap_time; //TODO shouldn't this be renamed m_race_LASTlap_time ?? cosmic vole January 13 2017
+    double m_race_bestlap_time; //TODO shouldn't this be renamed m_race_LASTlap_time ?? cosmic vole January 13 2017
 
     double m_time;
     
     //Arrays of race times for racing against bots - cosmic vole January 13 2016
-    unsigned long* m_race_start_times; //TODO name this the same as what is currently called m_race_bestlap_time ?? cosmic vole January 13 2017
+    double* m_race_start_times; //TODO name this the same as what is currently called m_race_bestlap_time ?? cosmic vole January 13 2017
     bool* m_races_in_progress;
     float* m_race_lastlap_times;
 

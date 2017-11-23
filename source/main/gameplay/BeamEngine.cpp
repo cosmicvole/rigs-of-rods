@@ -118,27 +118,31 @@ BeamEngine::~BeamEngine()
 }
 
 // Code to adjust the performance of a specified truck (intended to adjust AI difficulty but could be used for power-ups / cheats!) cosmic vole January 6 2017
-void BeamEngine::tune(bool relative, float maxTorque, float maxRPM, float brakingTorque, float grip)
+void BeamEngine::tune(bool relative, float maxTorque, float maxRPM, float inertia)
 {
+    /*
+    brakingTorque = -torque / 5.0f
+    engineTorque = torque - brakingTorque
+    => torque = engineTorque + brakingTorque
+    */
+    float torque = engineTorque + brakingTorque;
     if (relative)
     {
         if (maxTorque > 0.0f)
         {
             //TorqueCurve tc = b->engine->getTorqueCurve();
             //TODO examine torque curve and work out a scaling factor based on old and new max torque!
-            engineTorque *= maxTorque;
+            torque *= maxTorque;
+            brakingTorque = -torque / 5.0f;
+            this->engineTorque = torque - brakingTorque;
         }
         if (maxRPM > 0.0f)
         {
             this->maxRPM *= maxRPM;
         }
-        if (brakingTorque > 0.0f)
+        if (inertia > 0.0f)
         {
-            this->brakingTorque *= brakingTorque;
-        }
-        if (grip > 0.0f)
-        {
-            //TODO !!
+            this->inertia *= inertia;
         }
    
     }
@@ -147,20 +151,17 @@ void BeamEngine::tune(bool relative, float maxTorque, float maxRPM, float brakin
         if (maxTorque > 0.0f)
         {
             //TorqueCurve tc = b->engine->getTorqueCurve();
-            //TODO examine torque curve and work out a scaling factor based on old and new max torque!
-            this->engineTorque = maxTorque;
+            //TODO examine torque curve and work out a scaling factor based on old and new max torque
+            this->brakingTorque = -maxTorque / 5.0f;
+            this->engineTorque = maxTorque - this->brakingTorque;
         }
         if (maxRPM > 0.0f)
         {
             this->maxRPM = maxRPM;
         }
-        if (brakingTorque > 0.0f)
+        if (inertia > 0.0f)
         {
-            this->brakingTorque = brakingTorque;
-        }
-        if (grip > 0.0f)
-        {
-            //TODO !!
+            this->inertia = inertia;
         }
     
     }

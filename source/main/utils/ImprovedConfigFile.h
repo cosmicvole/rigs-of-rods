@@ -46,14 +46,14 @@ public:
     {
         this->separators = separators;
         this->filename = filename;
-        ConfigFile::load(filename, separators, trimWhitespace);
+        Ogre::ConfigFile::load(filename, separators, trimWhitespace);
     }
 
     void load(const Ogre::DataStreamPtr& ptr, const Ogre::String& separators, bool trimWhitespace)
     {
         this->separators = separators;
         this->filename = "";
-        ConfigFile::load(ptr, separators, trimWhitespace);
+        Ogre::ConfigFile::load(ptr, separators, trimWhitespace);
     }
 
     void loadFromString(const Ogre::String str, const Ogre::String& separators, bool trimWhitespace)
@@ -61,7 +61,7 @@ public:
         Ogre::DataStreamPtr ds(Ogre::DataStreamPtr(OGRE_NEW Ogre::MemoryDataStream((void*)str.c_str(), str.size(), false, true)));
         this->separators = separators;
         this->filename = "";
-        ConfigFile::load(ds, separators, trimWhitespace);
+        Ogre::ConfigFile::load(ds, separators, trimWhitespace);
     }
 
     bool hasSetting(Ogre::String key, Ogre::String section = "")

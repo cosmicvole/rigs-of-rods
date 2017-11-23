@@ -100,6 +100,7 @@ public:
     GUI::FrictionSettings*      GetFrictionSettings();
     GUI::SimUtils*              GetSimUtils();
     GUI::TopMenubar*            GetTopMenubar();
+    GUI::RaceSelector*          GetRaceSelector(); // cosmic vole October 9 2017
 
     // GUI manipulation
     void pushMessageChatBox(Ogre::String txt);

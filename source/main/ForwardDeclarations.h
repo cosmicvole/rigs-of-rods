@@ -51,6 +51,7 @@ namespace RoR
         class  MpClientList;
         class  MultiplayerSelector;
         class  FrictionSettings;
+        class  RaceSelector; // cosmic vole October 9 2017
     }
 }
 

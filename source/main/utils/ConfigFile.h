@@ -31,6 +31,7 @@
 #include <OgreColourValue.h>
 #include <OgreString.h>
 
+
 namespace RoR {
 
 /** Adds direct parsing of custom types.
@@ -75,6 +76,15 @@ public:
     Ogre::String GetStringEx(Ogre::String const& key, Ogre::String const& section, Ogre::String const& defaultValue = "");
 
     void SetString(Ogre::String key, Ogre::String value, Ogre::String section = Ogre::StringUtil::BLANK);
+    
+    /// load from a data stream - overloaded to allow multiline values - cosmic vole October 22 2017
+    void load(const Ogre::DataStreamPtr& stream, const Ogre::String& separators = "\t:=", bool trimWhitespace = true, bool multiline = false);
+    
+    /// load from a filename (not using resource group locations)
+    void load(const Ogre::String& filename, const Ogre::String& separators = "\t:=", bool trimWhitespace = true)
+    {
+        Ogre::ConfigFile::load(filename, separators, trimWhitespace);
+    }
 
 private:
     //Block access to Ogre::ConfigFile::getSetting() - not UTF8 safe!

@@ -38,9 +38,11 @@ set( SOURCE_FILES
   gameplay/AircraftSimulation.{h,cpp}
   gameplay/AutoPilot.{h,cpp}
   gameplay/BeamEngine.{h,cpp}
+  gameplay/ChampionshipManager.{h,cpp}
   gameplay/Character.{h,cpp}
   gameplay/CharacterFactory.{h,cpp}
   gameplay/ChatSystem.{h,cpp}
+  gameplay/CollisionAvoidance_GridQuad.{h,cpp}
   gameplay/Landusemap.{h,cpp}
   gameplay/LandVehicleSimulation.{h,cpp}
   gameplay/MaterialReplacer.{h,cpp}
@@ -48,6 +50,8 @@ set( SOURCE_FILES
   gameplay/PlayerColours.{h,cpp}
   gameplay/PositionStorage.{h,cpp}
   gameplay/ProceduralManager.{h,cpp}
+  gameplay/Race.{h,cpp}
+  gameplay/RaceResult.{h,cpp}
   gameplay/Replay.{h,cpp}
   gameplay/Road.{h,cpp}
   gameplay/Road2.{h,cpp}
@@ -164,6 +168,8 @@ set( SOURCE_FILES
   gui/panels/GUI_MultiplayerSelectorLayout.{h,cpp}
   gui/panels/GUI_MultiplayerClientList.{h,cpp} 
   gui/panels/GUI_OpenSaveFileDialog.{h,cpp}
+  gui/panels/GUI_RaceSelector.{h,cpp}
+  gui/panels/GUI_RaceSelectorLayout.{h,cpp}
   gui/panels/GUI_RigSpawnerReportWindow.{h,cpp}
   gui/panels/GUI_RigSpawnerReportWindowLayout.{h,cpp}
   gui/panels/GUI_SimUtils.{h,cpp}

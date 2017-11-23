@@ -1,0 +1,31 @@
+<mesh>
+    <sharedgeometry vertexcount="3">
+        <vertexbuffer positions="true" normals="true" texture_coord_dimensions_0="float2" texture_coords="1">
+            <vertex>
+                <position x="-0.29" y="-7.45058e-09" z="0.19" />
+                <normal x="-0.941423" y="0.174619" z="0.288499" />
+                <texcoord u="0.0131926" v="0.0328664" />
+            </vertex>
+            <vertex>
+                <position x="-0.29" y="-7.45058e-09" z="0.19" />
+                <normal x="-0.941423" y="0.174619" z="0.288499" />
+                <texcoord u="0.0131926" v="0.0328664" />
+            </vertex>
+	    <vertex>
+                <position x="-0.29" y="-7.45058e-09" z="0.19" />
+                <normal x="-0.941423" y="0.174619" z="0.288499" />
+                <texcoord u="0.0131926" v="0.0328664" />
+            </vertex>
+        </vertexbuffer>
+    </sharedgeometry>
+    <submeshes>
+        <submesh material="seat" usesharedvertices="true" use32bitindexes="false" operationtype="triangle_list">
+            <faces count="1">
+                <face v1="0" v2="1" v3="2" />
+            </faces>
+        </submesh>
+    </submeshes>
+    <submeshnames>
+        <submeshname name="ellipse" index="0" />
+    </submeshnames>
+</mesh>

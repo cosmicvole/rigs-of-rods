@@ -1760,6 +1760,31 @@ eventInfo_t eventInfo[] = {
         "Keyboard Z",
         _L("move camera down")
     },
+    //cosmic vole added truck AI lane following controls July 6 2017
+    {
+        "TRUCK_FOLLOW_LANE_1",
+        EV_TRUCK_FOLLOW_LANE_1,
+        "Keyboard EXPL+SHIFT+1",
+        _L("truck follow lane 1")
+    },    
+    {
+        "TRUCK_FOLLOW_LANE_2",
+        EV_TRUCK_FOLLOW_LANE_2,
+        "Keyboard EXPL+SHIFT+2",
+        _L("truck follow lane 2")
+    },
+    {
+        "TRUCK_FOLLOW_LANE_3",
+        EV_TRUCK_FOLLOW_LANE_3,
+        "Keyboard EXPL+SHIFT+3",
+        _L("truck follow lane 3")
+    },
+    {
+        "TRUCK_FOLLOW_LANE_4",
+        EV_TRUCK_FOLLOW_LANE_4,
+        "Keyboard EXPL+SHIFT+4",
+        _L("truck follow lane 4")
+    },    
 
     // now position storage
     {"TRUCK_SAVE_POS1", EV_TRUCK_SAVE_POS01, "Keyboard EXPL+ALT+CTRL+1", _L("save position as slot 1")},

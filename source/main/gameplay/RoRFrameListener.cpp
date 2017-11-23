@@ -90,6 +90,13 @@
 #include "BeamStats.h"
 #endif //FEAT_TIMING
 
+//Includes for championship race results - cosmic vole October 22 2017
+#ifdef USE_ANGELSCRIPT
+#include "RaceResult.h"
+#include "Race.h"
+#include "ChampionshipManager.h"
+#endif
+
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
 #include <Windows.h>
 #else
@@ -177,9 +184,12 @@ RoRFrameListener::RoRFrameListener() :
     m_truck_info_on(false)
 {
     //Arrays of race times for racing against bots - cosmic vole January 13 2017
-    m_race_start_times = new unsigned long[MAX_TRUCKS];
+    m_race_start_times = new double[MAX_TRUCKS];
     m_races_in_progress = new bool[MAX_TRUCKS];
     m_race_lastlap_times = new float[MAX_TRUCKS];
+    memset(m_race_start_times, 0, sizeof(double) * MAX_TRUCKS);
+    memset(m_races_in_progress, 0, sizeof(bool) * MAX_TRUCKS);
+    memset(m_race_lastlap_times, 0, sizeof(float) * MAX_TRUCKS);
 }
 
 RoRFrameListener::~RoRFrameListener()
@@ -190,16 +200,39 @@ RoRFrameListener::~RoRFrameListener()
     delete[] m_race_lastlap_times;
 }
 
+void RoRFrameListener::SetRaceTimer(int truckNum, float time, bool raceIsInProgress) //cosmic vole November 13 2017
+{
+    if (truckNum >= 0)
+    {
+        LOG("SetRaceTimer() for truckNum: " + TOSTRING(truckNum) + " Start time was: " + TOSTRING(m_race_start_times[truckNum]) + " New start time: " + TOSTRING(time) + ".");
+        m_race_start_times[truckNum] = (double)time;
+        m_races_in_progress[truckNum] = raceIsInProgress;
+    }
+    else
+    {
+        m_race_start_time = time;
+        m_race_in_progress = raceIsInProgress;
+    }
+    OverlayWrapper* ow = RoR::App::GetOverlayWrapper();
+    if (ow)
+    {
+        ow->ShowRacingOverlay();
+        ow->laptimes->show();
+        ow->laptimems->show();
+        ow->laptimemin->show();
+    }
+}
+
 void RoRFrameListener::StartRaceTimer(int truckNum) //cosmic vole added optional truckNum January 13 2017
 {
     if (truckNum >= 0)
     {
-        m_race_start_times[truckNum] = (int)m_time;
+        m_race_start_times[truckNum] = m_time;
         m_races_in_progress[truckNum] = true;
     }
     else
     {
-        m_race_start_time = (int)m_time;
+        m_race_start_time = m_time;
         m_race_in_progress = true;
     }
     OverlayWrapper* ow = RoR::App::GetOverlayWrapper();
@@ -220,13 +253,39 @@ float RoRFrameListener::StopRaceTimer(int truckNum) //cosmic vole added optional
     {
         if (m_races_in_progress[truckNum])
         {
-            time = static_cast<float>(m_time - m_race_start_times[truckNum]);
+            time = m_time - m_race_start_times[truckNum];
             m_race_lastlap_times[truckNum] = time;
+#ifdef USE_ANGELSCRIPT
+            ChampionshipManager &cm = ChampionshipManager::getSingleton();
+            Race *race = cm.getCurrentRace();
+            if (race != nullptr)
+            {
+                RaceResult result = race->GetRaceResult(truckNum);
+                //If it's a new result, we need to set the truckNum and ID.
+                result.SetTruckNum(truckNum);
+                result.SetRaceID(race->GetID());
+                result.SetLastLapTime(time);
+                result.SetTotalTime(result.GetTotalTime() + time);
+                if (time < result.GetPersonalBestLapTime() || result.GetPersonalBestLapTime() <= 0.0)
+                {
+                    result.SetPersonalBestLapTime(time);
+                }
+                if (time < race->GetFastestLapTime() || race->GetFastestLapTime() <= 0.0)
+                {
+                    race->SetFastestLapTime(time);
+                }
+                if (time < race->GetLapRecord() || race->GetLapRecord() <= 0.0)
+                {
+                    race->SetLapRecord(time);
+                }
+                race->SetRaceResult(result);
+            }
+#endif
         }
     }
     else if (m_race_in_progress)
     {
-        time = static_cast<float>(m_time - m_race_start_time);
+        time = m_time - m_race_start_time;
         m_race_bestlap_time = time;
     }
 
@@ -264,6 +323,59 @@ float RoRFrameListener::StopRaceTimer(int truckNum) //cosmic vole added optional
     return time;
 }
 
+void RoRFrameListener::ScheduleRaceStart(int raceID, double secondsDelay) //The race timer will start after the specified delay - cosmic vole August 23 2017
+{
+    double raceStartTime = m_time + secondsDelay;
+    int free_truck = BeamFactory::getSingleton().getTruckCount();
+    Beam** trucks = BeamFactory::getSingleton().getTrucks();
+    for (int i = 0; i < free_truck; i++)
+    {
+        Beam* truck = trucks[i];
+        if (!truck)
+            continue;
+        VehicleAI* truckAI = truck->getVehicleAI();
+        if (truckAI && truckAI->GetRaceID() == raceID)
+        {
+            int truckNum = truck->trucknum;
+            m_race_start_times[truckNum] = raceStartTime;
+            //m_races_in_progress[truckNum] = true;
+            LOG("Race start scheduled for truck: " + TOSTRING(truckNum) + " raceID: " + TOSTRING(raceID) + ".");
+        }
+    }
+    OverlayWrapper* ow = RoR::App::GetOverlayWrapper();
+    if (ow)
+    {
+        ow->ShowRacingOverlay();
+        ow->laptimes->show();
+        ow->laptimems->show();
+        ow->laptimemin->show();
+    }
+}
+
+bool RoRFrameListener::IsRacePending(int truckNum) // cosmic vole August 23 2017
+{
+    double startTime = m_race_start_times[truckNum];
+    return startTime > m_time;
+}
+    
+bool RoRFrameListener::IsRaceFinished(int truckNum) // cosmic vole August 23 2017 TODO ideally we could do with an enum for race state
+{
+    if (IsRacePending(truckNum))
+        return false;
+    if (IsRaceInProgress(truckNum))
+        return false;
+    Beam* truck = BeamFactory::getSingleton().getTruck(truckNum);
+    if (!truck)
+        return false;
+    VehicleAI *truckAI = truck->getVehicleAI();
+    if (!truckAI)
+        return false;
+    //TODO Compare the truck's current waypoint ID against number of waypoints in lap and number of laps in race
+    //int raceID = truckAI->GetRaceID();
+    //TODO what about stopping the race timer at the end?
+    return true;
+}
+
 void RoRFrameListener::UpdateRacingGui(int truckNum) //cosmic vole added optional truckNum January 13 2017
 {
     OverlayWrapper* ow = RoR::App::GetOverlayWrapper();
@@ -279,10 +391,11 @@ void RoRFrameListener::UpdateRacingGui(int truckNum) //cosmic vole added optiona
     {
         time = static_cast<float>(m_time - m_race_start_time);
     }
+    
     //cosmic vole TODO - need more defintive logic to see if this is the currently viewed truck! getCurrentTruckNumber() doesn't seem to do it!
     if (/*truckNum < 0 ||*/ ((truckNum == BeamFactory::getSingleton().getCurrentTruckNumber())))// && (!(BeamFactory::getSingleton().getTruck(truckNum)->getVehicleAI()) || !BeamFactory::getSingleton().getTruck(truckNum)->getVehicleAI()->IsActive())))//truckNum == BeamFactory::getSingleton().getCurrentTruckNumber()) // cosmic vole added support for multiple AI trucks January 13 2017
     {
-        if (time < 0.0 || time > 200000.0)
+        if (/*time < 0.0 ||*/ time > 200000.0)
         {
             time = 0.0;
         }
@@ -881,17 +994,18 @@ bool RoRFrameListener::updateEvents(float dt)
             else // we are in a vehicle
             {
                 //cosmic vole added recording waypoints - March 13 2017 - TODO make configurable
-                #if 0
+                //#if 0
                 static Vector3 lastPosition = Vector3::ZERO;
                 Vector3 newPosition = curr_truck->getPosition();
                 float speed = curr_truck->getVelocity().length();
                 if (newPosition.distance(lastPosition) >= 10.0f && speed > 3.0f)
                 {
                     float power = curr_truck->engine->getEnginePower(curr_truck->engine->getRPM());//Mostly returns zero - getAcc();
-                    LOG(_L("{ ") + TOSTRING(newPosition.x) + ", " + TOSTRING(newPosition.y) + ", " + TOSTRING(newPosition.z) + ", " + TOSTRING(speed * 3.6f) + ", " + TOSTRING(power) + "},\n");
+                    float brake = curr_truck->brake / curr_truck->brakeforce;
+                    LOG(_L("{ ") + TOSTRING(newPosition.x) + ", " + TOSTRING(newPosition.y) + ", " + TOSTRING(newPosition.z) + ", " + TOSTRING(speed * 3.6f) + ", " + TOSTRING(power) + ", " + TOSTRING(brake) + "},\n");
                     lastPosition = newPosition;
                 }
-                #endif
+                //#endif
                 if (RoR::App::GetInputEngine()->getEventBoolValue(EV_COMMON_RESET_TRUCK) && !curr_truck->replaymode)
                 {
                     StopRaceTimer(curr_truck->trucknum);//cosmic vole added trucknum
@@ -1838,6 +1952,51 @@ bool RoRFrameListener::frameStarted(const FrameEvent& evt)
 
 #ifdef USE_ANGELSCRIPT
     ScriptEngine::getSingleton().framestep(dt);
+    
+    //Start the trucks racing if a race is scheduled to start now - cosmic vole August 23 2017
+    Beam** trucks = BeamFactory::getSingleton().getTrucks();
+    int free_trucks = BeamFactory::getSingleton().getTruckCount();
+    for (int i = 0; i < free_trucks; i++)
+    {
+        Beam* truck = trucks[i];
+        if (!truck)
+            continue;
+        if (m_time >= m_race_start_times[i] && m_race_start_times[i] > 0)
+        {
+            if (!m_races_in_progress[i])
+                LOG("Starting race for truck " + TOSTRING(i) + ".");
+            m_races_in_progress[i] = true;
+            VehicleAI* truckAI = truck->getVehicleAI();
+            if (truckAI && truckAI->GetNumberOfWaypoints() > 0)
+            {
+                int raceID = truckAI->GetRaceID();
+                Race *race = ChampionshipManager::getSingleton().getRace(raceID);
+                if (race != nullptr && (!race->IsRunning() || race->GetRaceStartTime() <= 0.0f))
+                {
+                    LOG("Setting start time in Race object to: " + TOSTRING(m_race_start_times[i]) + " for raceID: " + TOSTRING(raceID) + ".");
+                    race->Start(m_race_start_times[i]);
+                }
+                //if (truck->state != SIMULATED) //== SLEEPING)
+                truck->state = SIMULATED;
+                //We have to keep resetting this to 0 while the race is running, otherwise the truck will sleep again after 10 seconds
+                truck->sleeptime = 0.0f;
+                if (!truckAI->IsActive())
+                {
+                    if (truck->parkingbrake)
+                    {
+                        truck->parkingbrakeToggle();
+                    }
+                    truckAI->SetActive(true);
+                }
+            }
+        }
+        else
+        {
+            //LOG("Not yet time to start race from truck " + TOSTRING(i) + " Time: " + TOSTRING(m_time) + " start: " + TOSTRING(m_race_start_times[i]) + ".");
+        }
+    }
+    //update 'curr_truck' again since the parkingbreakToggle event might have changed it
+    curr_truck = BeamFactory::getSingleton().getCurrentTruck();
 #endif
 
     // one of the input modes is immediate, so update the movement vector

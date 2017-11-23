@@ -34,6 +34,7 @@
 #include "DynamicCollisions.h"
 #include "GUIManager.h"
 #include "GUI_TopMenubar.h"
+#include "InputEngine.h"
 #include "Language.h"
 #include "MainThread.h"
 #include "Mirrors.h"
@@ -1040,8 +1041,31 @@ void BeamFactory::update(float dt)
         m_trucks[t]->updateAngelScriptEvents(dt);
 
 #ifdef USE_ANGELSCRIPT
+        if (m_trucks[t]->vehicle_ai && t == m_current_truck)
+        {
+            //Toggle lane following. This requires waypoints, edge points and lanes to have been generated for the current track.
+            //This will also attempt to activate the vehicle AI. cosmic vole July 6 2017
+            if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_TRUCK_FOLLOW_LANE_1))
+            {
+                m_trucks[t]->vehicle_ai->FollowLaneToggle(0);
+            }
+            else if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_TRUCK_FOLLOW_LANE_2))
+            {
+                m_trucks[t]->vehicle_ai->FollowLaneToggle(1);
+            }
+            else if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_TRUCK_FOLLOW_LANE_3))
+            {
+                m_trucks[t]->vehicle_ai->FollowLaneToggle(2);
+            }
+            else if (RoR::App::GetInputEngine()->getEventBoolValueBounce(EV_TRUCK_FOLLOW_LANE_4))
+            {
+                m_trucks[t]->vehicle_ai->FollowLaneToggle(3);
+            }
+        }
         if (m_trucks[t]->vehicle_ai && (m_trucks[t]->vehicle_ai->IsActive()))
+        {
             m_trucks[t]->vehicle_ai->update(dt, 0);
+        }
 #endif // USE_ANGELSCRIPT
 
         switch (m_trucks[t]->state)
@@ -1072,6 +1096,31 @@ void BeamFactory::update(float dt)
             break;
         }
     }
+
+#ifdef USE_ANGELSCRIPT
+    //Run collision avoidance algorithm for all truck AIs. cosmic vole June 21 2017
+    static float current_time = 0.0f;
+    current_time += dt;
+    //TODO Make the call to AvoidCollisions static so we don't have to find a VehicleAI to call it with. cosmic vole June 21 2017
+    for (int t = 0; t < m_free_truck; t++)
+    {
+        if (!m_trucks[t] || !m_trucks[t]->vehicle_ai)
+            continue;
+        VehicleAI *pVehicleAI = m_trucks[t]->vehicle_ai;
+        //Debugging - follow lane!
+        //if (true)//t == m_current_truck)
+        {            
+        //    pVehicleAI->CollisionAvoidance_FollowLane(0);
+        }
+        //else
+        {
+            //TODO Replace the waypoint and edge point args with values stored in a race object. cosmic vole June 21 2017
+            pVehicleAI->CollisionAvoidance_AvoidCollisions(current_time /*, pVehicleAI->waypoints, pVehicleAI->road_edge_points_left, pVehicleAI->road_edge_points_right*/);
+            break;
+        }
+    }
+#endif // USE_ANGELSCRIPT
+
 
     m_simulated_truck = m_current_truck;
 

@@ -152,3 +152,10 @@ enum LoaderType
     LT_SKIN,
     LT_AllBeam 
 };
+
+//Separate loader for selecting championships and races - cosmic vole September 11 2017
+enum RaceLoaderType 
+{ 
+    RT_Championship,
+    RT_Race
+};

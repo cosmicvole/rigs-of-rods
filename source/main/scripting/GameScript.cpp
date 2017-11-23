@@ -44,6 +44,7 @@
 #include "BeamEngine.h"
 #include "BeamFactory.h"
 #include "Character.h"
+#include "ChampionshipManager.h"
 #include "Collisions.h"
 #include "GUI_GameConsole.h"
 #include "GUIManager.h"
@@ -173,7 +174,33 @@ float GameScript::stopTimer(int truckNum) // cosmic vole added truckNum to handl
 
 void GameScript::startTimer(int truckNum) // cosmic vole added truckNum to handle AI competitors
 {
-    return mse->GetFrameListener()->StartRaceTimer(truckNum);
+    mse->GetFrameListener()->StartRaceTimer(truckNum);
+}
+
+void GameScript::setTimer(int truckNum, float time, bool raceIsInProgress)
+{
+    mse->GetFrameListener()->SetRaceTimer(truckNum, time, raceIsInProgress);
+}
+
+void GameScript::scheduleRaceStart(int raceID, float secondsDelay) // cosmic vole August 23 2017
+{
+    mse->GetFrameListener()->ScheduleRaceStart(raceID, (double)secondsDelay);
+}
+
+double GameScript::getRaceStartTime(int raceID)
+{
+    ChampionshipManager &cm = ChampionshipManager::getSingleton();
+    Race *race = cm.getRace(raceID);
+    if (race == nullptr)
+    {
+        LOG("GameScript::getRaceStartTime() for raceID " + TOSTRING(raceID) + " .");
+        return 0.0;
+    }
+    else
+    {
+        double startTime = race->GetRaceStartTime();
+        LOG("GameScript::getRaceStartTime() for raceID " + TOSTRING(raceID) + " startTime: " + TOSTRING(startTime) + ".");
+    }
 }
 
 void GameScript::setWaterHeight(float value)
@@ -554,6 +581,15 @@ int GameScript::getLoadedTerrain(String& result)
     return !terrainName.empty();
 }
 
+//cosmic vole November 18 2017
+int GameScript::getLoadedTerrainFilename(String& result)
+{
+    String terrainFilename(RoR::App::GetSimActiveTerrain());
+    LOG("GameScript::getLoadedTerrainFilename. Filename is: " + terrainFilename);
+    result = terrainFilename;
+    return !result.empty();
+}
+
 void GameScript::clearEventCache()
 {
     if (gEnv->collisions)
@@ -903,26 +939,47 @@ void GameScript::boostCurrentTruck(float factor)
 }
 
 // Code to adjust the performance of a specified truck (intended to adjust AI difficulty but could be used for power-ups / cheats!) cosmic vole January 6 2017
-void GameScript::tuneTruck(int truckNum, bool relative, float maxTorque, float maxRPM, float brakingTorque, float grip)
+void GameScript::tuneTruck(int truckNum, bool relative, float maxTorque, float maxRPM, float inertia, float brakingForce, float grip)
 {
     Beam* b = BeamFactory::getSingleton().getTruck(truckNum);
     if (b && b->engine)
     {
-        b->engine->tune(relative, maxTorque, maxRPM, brakingTorque, grip);
+        b->engine->tune(relative, maxTorque, maxRPM, inertia);
         if (relative)
         {
+            if (brakingForce >= 0.0f)
+            {
+                b->brakeforce *= brakingForce;
+            }
             if (grip > 0.0f)
             {
-                //TODO !!
+               for (int i = 0; i < b->free_wheel; i++)
+               {
+                   wheel_t & wheel = b->wheels[i];
+                   for (int n = 0; n < wheel.nbnodes; n++)
+                   {
+                       wheel.nodes[n]->friction_coef *= grip;
+                   }
+               }
             }
        
         }
         else
         {
-
+            if (brakingForce >= 0.0f)
+            {
+                b->brakeforce = brakingForce;
+            }
             if (grip > 0.0f)
             {
-                //TODO !!
+                for (int i = 0; i < b->free_wheel; i++)
+                {
+                    wheel_t & wheel = b->wheels[i];
+                    for (int n = 0; n < wheel.nbnodes; n++)
+                    {
+                        wheel.nodes[n]->friction_coef = grip;
+                    }
+                }
             }
         
         }

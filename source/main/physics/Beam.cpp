@@ -661,6 +661,34 @@ Vector3 Beam::getDirection()
     return cur_dir;
 }
 
+Vector3 Beam::getInitialDirection()
+{
+    Vector3 cur_dir = initial_node_pos[0];
+    if (cameranodepos[0] != cameranodedir[0] && cameranodepos[0] >= 0 && cameranodepos[0] < MAX_NODES && cameranodedir[0] >= 0 && cameranodedir[0] < MAX_NODES)
+    {
+        cur_dir = initial_node_pos[cameranodepos[0]] - initial_node_pos[cameranodedir[0]];
+    }
+    else if (free_node > 1)
+    {
+        float max_dist = 0.0f;
+        int furthest_node = 1;
+        for (int i = 0; i < free_node; i++)
+        {
+            float dist = initial_node_pos[i].squaredDistance(initial_node_pos[0]);
+            if (dist > max_dist)
+            {
+                max_dist = dist;
+                furthest_node = i;
+            }
+        }
+        cur_dir = initial_node_pos[0] - initial_node_pos[furthest_node];
+    }
+
+    cur_dir.normalise();
+
+    return cur_dir;
+}
+
 Vector3 Beam::getPosition()
 {
     return position; //the position is already in absolute position
@@ -675,13 +703,18 @@ void Beam::getCorners2D(Ogre::Vector3& frontLeft, Ogre::Vector3& frontRight, Ogr
     {
         scale = 0.0f;
     }
-    //TODO Feb 27 2017 This will need to use the cameras to work out what is front, rear, left and right for the vehicle.
+    
+    //This uses the cameras to try to work out what is front, rear, left and right for the vehicle.
+    Vector3 forward = getInitialDirection();
+    
     //We use initial node pos, so this will be inaccurate for an extremely deformed vehicle.
     //The (slow) alternative would be to make a rotated axis aligned copy of the deformed nodes to find the bounding corners.
-    float left = initial_node_pos[0].x;
-    float right = left;
-    float front = initial_node_pos[0].z;
-    float rear = front;
+    //We also unfortunately currently rely on the initial vehicle node positions being axis aligned. cosmic vole July 3 2017
+    float left, right, front, rear;
+    left = initial_node_pos[0].x;
+    right = left;
+    front = initial_node_pos[0].z;
+    rear = front;
     
     //These will store which nodes had the min and max x and z
     int leftIndex = 0;
@@ -733,6 +766,38 @@ void Beam::getCorners2D(Ogre::Vector3& frontLeft, Ogre::Vector3& frontRight, Ogr
     avgPos = avgPos / free_node;
     avgPos.y = 0.0f;
     
+    //Sorry, this is horrible, but it should work for a properly axis aligned model.
+    if (forward.x > 0.5f && abs(forward.z) < 0.5f)
+    {
+        //Positive x is forwards. Rearrange.
+        Vector3 temp = frontLeft;
+        frontLeft = frontRight;
+        Vector3 temp2 = rearLeft;
+        rearLeft = temp;
+        frontRight = rearRight;
+        rearRight = temp2;        
+    }
+    else if (forward.x < -0.5f && abs(forward.z) < 0.5f)
+    {
+        //Negative x is forwards. Rearrange.
+        Vector3 temp = frontRight;
+        frontRight = frontLeft;
+        Vector3 temp2 = rearRight;
+        rearRight = temp;
+        frontLeft = rearLeft;
+        rearLeft = temp2;        
+    }
+    else if (abs(forward.x) < 0.5f && forward.z < -0.5f)
+    {
+        //Negative z is forwards. Rearrange.
+        Vector3 temp = frontLeft;        
+        frontLeft = rearRight;
+        Vector3 temp2 = frontRight;
+        frontRight = rearLeft;
+        rearRight = temp;
+        rearLeft = temp2;
+    }
+    
     //We've found the bounding box for the initial node positions.
     //Now we need to just rotate the corners to be aligned with the vehicle's current xz rotation
     //Note this code won't work if the vehicle is upside down, but it should be OK for AI driving control
@@ -761,21 +826,21 @@ void Beam::getCorners2D(Ogre::Vector3& frontLeft, Ogre::Vector3& frontRight, Ogr
     // Now move each corner back to origin, apply rotation matrix, and move corner back to correct world position
     if (scale != 0.0f)
     {
-        frontLeft -= avgPos;
+        frontLeft -= origin;//avgPos;
         frontLeft *= scale;
-        frontLeft += avgPos;
+        frontLeft += origin;//avgPos;
         
-        frontRight -= avgPos;
+        frontRight -= origin;//avgPos;
         frontRight *= scale;
-        frontRight += avgPos;
+        frontRight += origin;//avgPos;
         
-        rearLeft -= avgPos;
+        rearLeft -= origin;//avgPos;
         rearLeft *= scale;
-        rearLeft += avgPos;
+        rearLeft += origin;//avgPos;
         
-        rearRight -= avgPos;
+        rearRight -= origin;//avgPos;
         rearRight *= scale;
-        rearRight += avgPos;
+        rearRight += origin;//avgPos;
     }
 
     frontLeft -= origin;
@@ -1156,9 +1221,14 @@ void Beam::calc_masses2(Real total, bool reCalc)
     {
         it->beam->p2->mass = 100.0f;
     }
-    //fix camera mass
-    for (int i = 0; i < freecinecamera; i++)
-        nodes[cinecameranodepos[i]].mass = 20.0f;
+    
+     // Apply pre-defined cinecam node mass
+    for (int i = 0; i < this->freecinecamera; ++i)
+    {
+        // TODO: this expects all cinecams to be defined in root module (i.e. outside 'section/end_section')
+        nodes[cinecameranodepos[i]].mass = m_definition->root_module->cinecam[i].node_mass;
+    }
+
 
     //hooks must be heavy
     //for (std::vector<hook_t>::iterator it=hooks.begin(); it!=hooks.end(); it++)
@@ -1931,6 +2001,44 @@ Ogre::Vector3 Beam::getRotationCenter()
     }
 
     return rotation_center;
+}
+
+float Beam::getVehicleHealth()
+{
+    //taken from TruckHUD.cpp, needs cleanup
+    beam_t* beam = getBeams();
+    float average_deformation = 0.0f;
+    float beamstress = 0.0f;
+    float current_deformation = 0.0f;
+    float mass = getTotalMass();
+    int beamCount = getBeamCount();
+    int beambroken = 0;
+    int beamdeformed = 0;
+
+    for (int i = 0; i < beamCount; i++, beam++)
+    {
+        if (beam->broken != 0)
+        {
+            beambroken++;
+        }
+        beamstress += beam->stress;
+        current_deformation = fabs(beam->L - beam->refL);
+        if (fabs(current_deformation) > 0.0001f && beam->type != BEAM_HYDRO && beam->type != BEAM_INVISIBLE_HYDRO)
+        {
+            beamdeformed++;
+        }
+        average_deformation += current_deformation;
+    }
+
+    float health = ((float)beambroken / (float)beamCount) * 10.0f + ((float)beamdeformed / (float)beamCount);
+    if (health < 1.0f)
+    {
+        return (1.0f - health) * 100.0f;
+    }
+    else
+    {
+        return 0.0f;
+    }
 }
 
 void Beam::SyncReset()

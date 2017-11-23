@@ -72,7 +72,11 @@
 #include <OgreString.h>
 
 #ifdef USE_ANGELSCRIPT
+#    include "RaceResult.h"
+#    include "Race.h"
+#    include "ChampionshipManager.h"
 #    include "ScriptEngine.h"
+#    include "VehicleAI.h"
 #endif
 
 #include <chrono>
@@ -556,12 +560,212 @@ bool MainThread::SetupGameplayLoop()
         App::GetGuiManager()->SetVisible_LoadingWindow(false);
         return false;
     }
+    
+    bool championshipActive = false;
+#ifdef USE_ANGELSCRIPT
+    // ========================================================================
+    // Loading vehicles for race starting grid
+    // ========================================================================
+    ChampionshipManager& cm = ChampionshipManager::getSingleton();
+    Race *pRace = cm.getCurrentRace();
+    if (cm.getState() == CS_RacePending && pRace != nullptr)
+    {
+        championshipActive = true;
+        const std::vector<RaceCompetitor>& competitors = cm.getCompetitors();
+        int numCompetitors = competitors.size();
+        Race& race = *pRace;
+        int raceID = race.GetID();
+        //TODO number of competitors needs to be read from the GUI instead
+        const std::map<int, int>& grid = race.GenerateGridPositions(numCompetitors);
+        Vector3 gridPositionA = race.GetGridPosition1();
+        Vector3 gridPositionB = race.GetGridPosition2();
+        Vector3 gridStep = race.GetGridStep();
+        Vector3 rot = race.GetVehicleGridRotation();
+        Ogre::Quaternion rotation = Quaternion(Degree(rot.x), Vector3::UNIT_X) * Quaternion(Degree(rot.y), Vector3::UNIT_Y) * Quaternion(Degree(rot.z), Vector3::UNIT_Z);
+        Ogre::String model;
+        /****** TEMP HARD CODED difficulty (30 == Hard, 40 == Expert) ****/
+        cm.SetCurrentDifficultyLevel(30);
+        const DifficultyLevel *difficulty = cm.GetCurrentDifficultyLevel();
+        bool hasCompetitors = false;
+        
+        //Create the player's truck first, just so that they will always be the top truck on the menu
+        Beam *playerTruck = nullptr;
+        if (competitors.size() > 0)
+        {
+            const RaceCompetitor &player = competitors[0];
+            Vector3 pos;
+            int gridPos = player.GetGridPosition() - 1;
+            int row = gridPos / 2;
+            if (gridPos % 2 == 0)
+            {
+                pos = gridPositionA + gridStep * row; 
+            }
+            else
+            {
+                pos = gridPositionB + gridStep * row;
+            }
+            model = player.GetModel();
+            if (model == "")
+            {
+                //TODO championship needs to control selection of player truck model
+                model = "FordTaunusSedan.truck";
+            }
+            playerTruck = BeamFactory::getSingleton().CreateLocalRigInstance(pos, rotation, model);
+        }
+        
+        for (std::map<int, int>::const_iterator it = grid.begin(); it != grid.end(); ++it)
+        {
+            Ogre::String model;
+            int competitorIndex = it->second - 1;
+
+            if (!(competitorIndex >= 0 && competitorIndex < competitors.size()))
+            {
+                //TODO championship needs to control selection of player truck model
+                //model = "FordTaunusSedan.truck";
+                LOG("Invalid competitor index" + TOSTRING(competitorIndex) + ".");
+                continue;
+            }
+            
+            /*const RaceCompetitor& competitor*/RaceCompetitor competitor = competitors[competitorIndex];
+            model = competitor.GetModel();
+            if (model == "")
+            {
+                //TODO championship needs to control selection of player truck model
+                model = "FordTaunusSedan.truck";
+                competitor.SetModel(model);
+            }
+            
+            Vector3 pos;
+            int gridPos = it->first - 1;
+            if (gridPos % 2 == 0)
+            {
+                pos = gridPositionA;
+                gridPositionA += gridStep;
+            }
+            else
+            {
+                pos = gridPositionB;
+                gridPositionB += gridStep;
+            }
+            
+            //pos.y = 100.0f;
+
+            Beam *truck;
+            bool isPlayer = (competitorIndex == 0);
+            if (!isPlayer)
+            {
+                truck = BeamFactory::getSingleton().CreateLocalRigInstance(pos, rotation, model);
+            }
+            else
+            {
+                truck = playerTruck;
+            }
+            
+            if (truck != nullptr && truck->free_node > 0)
+            {
+                truck->setDriverScale(competitor.GetDriverScale());
+                
+                //This is really important now to set the truckNums and allow the ChampionshipManager to update its dictionary
+                competitor.SetTruckNum(truck->trucknum);
+                //competitorsByTruckNum[competitor.GetTruckNum()] = &competitor;
+                cm.updateCompetitorByIndex(competitor, competitorIndex);
+                
+                // Calculate translational offset for node[0] to align the trucks rotation center with m_reload_pos
+                Vector3 translation = pos - truck->getRotationCenter();
+                truck->resetPosition(truck->nodes[0].AbsPosition + Vector3(translation.x, 0.0f, translation.z), true);
+                truck->updateFlexbodiesPrepare();
+                truck->updateFlexbodiesFinal();
+                
+                VehicleAI *ai = truck->getVehicleAI();
+                if (ai)
+                {
+                    ai->SetRaceID(raceID);
+                    hasCompetitors = true;
+                    if (isPlayer)
+                    {
+                        //This is the player's race car on the grid
+                        if (competitor.GetName() == "")
+                        {
+                            competitor.SetName("Player");
+                            cm.updateCompetitorByIndex(competitor, competitorIndex);
+                        }
+                        BeamFactory::getSingleton().setCurrentTruck(truck->trucknum);              
+                    }
+                    else
+                    {
+                        race.AddWaypointsToVehicle(ai);
+                    }
+                    
+                    if (truck->engine && difficulty)
+                    {
+                        float maxTorque = (isPlayer)? difficulty->GetPlayerTorqueMultiplier() :
+                            (competitor.GetTorqueMultiplier() * difficulty->GetAIBaseTorqueMultiplier());
+                        float maxRPM = (isPlayer) ? 1.0f : 1.06f;
+                        float brakingForce = (isPlayer) ? difficulty->GetPlayerBrakingMultiplier() :
+                            (competitor.GetBrakingMultiplier() * difficulty->GetAIBaseBrakingMultiplier());
+                        float inertia = (isPlayer)? difficulty->GetPlayerInertiaMultiplier() :
+                            difficulty->GetAIBaseInertiaMultiplier();
+                        float grip = (isPlayer) ? difficulty->GetPlayerGripMultiplier() :
+                            (competitor.GetGripMultiplier() * difficulty->GetAIBaseGripMultiplier());
+                        LOG("Tuning for truck " + TOSTRING(truck->trucknum) + "- torque: " + TOSTRING(maxTorque) + " rpm: " + TOSTRING(maxRPM) + " inertia: " + TOSTRING(inertia) + " braking: " + TOSTRING(brakingForce) + " grip: " + TOSTRING(grip) + ".");
+                        LOG("Competitor torque: " + TOSTRING(competitor.GetTorqueMultiplier()) + " AI Base Torque: " + TOSTRING(difficulty->GetAIBaseTorqueMultiplier()));
+                        LOG("At difficulty level: " + TOSTRING(difficulty->GetLevel()));
+                        truck->engine->tune(true, maxTorque, maxRPM, inertia);
+                        if (brakingForce >= 0.0f)
+                        {
+                            truck->brakeforce *= brakingForce;
+                        }
+                        if (grip > 0.0f)
+                        {
+                           for (int i = 0; i < truck->free_wheel; i++)
+                           {
+                               wheel_t & wheel = truck->wheels[i];
+                               for (int n = 0; n < wheel.nbnodes; n++)
+                               {
+                                   wheel.nodes[n]->friction_coef *= grip;
+                               }
+                           }
+                        }
+                    }
+                   
+                    //TODO would be cool if we could measure the pitch of the vehicle to decide
+                    //whether the parking brake is actually needed on this track.
+                    //Should we offer to auto release it on race start for the player?
+                    if (!truck->parkingbrake)
+                    {
+                        truck->parkingbrake = true;
+                        //truck->parkingbrakeToggle();
+                    }
+                    if (truck->engine)
+                    {
+                        truck->engine->start();
+                    }  
+                }
+                truck->updateVisual();
+            }
+        }
+        if (hasCompetitors)
+        {
+            //Schedule the race start
+            cm.setState(CS_RaceScheduled);
+            double raceDelaySeconds = 10.0;
+            App::GetMainThreadLogic()->GetFrameListener()->ScheduleRaceStart(raceID, raceDelaySeconds);
+        }
+        else
+        {
+            //Cancel the race
+            cm.setState(CS_None);
+            championshipActive = false;
+            //TODO We should possibly just go back to the main menu and certainly log what was wrong!
+        }
+    }
+#endif
 
     // ========================================================================
     // Loading vehicle
     // ========================================================================
 
-    if (App::GetDiagPreselectedVehicle() != "")
+    if (App::GetDiagPreselectedVehicle() != "" && !championshipActive)
     {
         if (App::GetDiagPreselectedVehConfig() != "")
         {

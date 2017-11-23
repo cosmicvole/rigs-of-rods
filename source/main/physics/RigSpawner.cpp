@@ -440,6 +440,8 @@ void RigSpawner::InitializeRig()
 
     // Lights mode
     m_rig->m_flares_mode = App::GetGfxFlaresMode();
+    
+    m_rig->m_definition = m_file;
 
     m_flex_factory = RoR::FlexFactory(
         m_rig->materialFunctionMapper, 

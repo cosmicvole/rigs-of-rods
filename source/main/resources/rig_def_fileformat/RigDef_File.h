@@ -452,13 +452,15 @@ struct Cinecam
     Cinecam():
         position(Ogre::Vector3::ZERO),
         spring(8000),
-        damping(800)
+        damping(800),
+        node_mass(20.f)
     {}
 
     Ogre::Vector3 position;
     Node::Ref nodes[8];
     float spring;
     float damping;
+    float node_mass;
     std::shared_ptr<BeamDefaults> beam_defaults;
     std::shared_ptr<NodeDefaults> node_defaults;
 };

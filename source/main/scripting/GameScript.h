@@ -82,7 +82,7 @@ public:
     void boostCurrentTruck(float factor);
     
     //adjust performance of specified truck - cosmic vole January 6 2017
-    void tuneTruck(int truckNum, bool relative, float maxTorque, float maxRPM, float brakingTorque, float grip);
+    void tuneTruck(int truckNum, bool relative, float maxTorque, float maxRPM, float inertia, float brakingForce, float grip);
 
     /**
      * sets the character position
@@ -338,8 +338,11 @@ public:
 
     int getNumTrucksByFlag(int flag);
     bool getCaelumAvailable();
-    float stopTimer(int truckNum = -1); // cosmic vole added truckNum to handle AI competitors);
-    void startTimer(int truckNum = -1); // cosmic vole added truckNum to handle AI competitors);
+    float stopTimer(int truckNum = -1); // cosmic vole added truckNum to handle AI competitors;
+    void startTimer(int truckNum = -1); // cosmic vole added truckNum to handle AI competitors;
+    void setTimer(int truckNum, float time, bool raceIsInProgress);// cosmic vole November 2017
+    void scheduleRaceStart(int raceID, float secondsDelay); // cosmic vole August 23 2017
+    double getRaceStartTime(int raceID); // cosmic vole November 20 2017
     Ogre::String getSetting(const Ogre::String& str);
     void hideDirectionArrow();
     int setMaterialAmbient(const Ogre::String& materialName, float red, float green, float blue);
@@ -368,6 +371,7 @@ public:
     int useOnlineAPIDirectly(OnlineAPIParams_t params);
 
     int getLoadedTerrain(Ogre::String& result);
+    int getLoadedTerrainFilename(Ogre::String& result);
     Ogre::Vector3 getPersonPosition();
 
     void clearEventCache();

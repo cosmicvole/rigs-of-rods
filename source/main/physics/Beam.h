@@ -111,6 +111,7 @@ public:
     Ogre::Vector3 getDirection();
     Ogre::Vector3 getPosition();
     float getSpawnRotation();//cosmic vole
+    Ogre::Vector3 getInitialDirection();//cosmic vole July 3 2017
     /**
     * In world coordinates this returns the current positions of the bounding corners of the vehicle (based on 2D xz bounds).
     * This is not the same as boundingBox because this is vehicle aligned, not axis aligned.
@@ -150,6 +151,11 @@ public:
      * Return the rotation center of the truck
      */
     Ogre::Vector3 getRotationCenter();
+    
+    /**
+     * Calculates and returns the vehicle health. cosmic vole August 12 2017 
+     */
+    float getVehicleHealth();
 
     /**
     * Spawns vehicle.
@@ -711,6 +717,7 @@ protected:
     float stabsleep;
     Replay *replay;
     PositionStorage *posStorage;
+    std::shared_ptr<RigDef::File> m_definition;
 
     RoR::PerVehicleCameraContext m_camera_context;
 
@@ -836,3 +843,21 @@ struct truckDistanceSort
         return fromPos.distance(a->getPosition()) < fromPos.distance(b->getPosition());
     }
 };
+
+/* TODO needs ifdef ANGELSCRIPT and include VehicleAI.h
+//cosmic vole June 2 2017
+struct truckCollisionTimeSort
+{
+    inline bool operator()(Beam * a, Beam * b) const 
+    {
+        VehicleAI * aiA = a->vehicle_ai;
+        VehicleAI * aiB = b->vehicle_ai;
+        //Vehicles that have AI come first in the list
+        if (!aiA)
+            return false;
+        if (!aiB)
+            return true;
+        return aiA->soonestCollisionTime() < aiB->soonestCollisionTime();
+    }
+};
+*/

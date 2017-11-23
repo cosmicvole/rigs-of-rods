@@ -28,6 +28,7 @@
 #include "Application.h"
 #include "GUIManager.h"
 #include "GUI_MainSelector.h"
+#include "GUI_RaceSelector.h" //cosmic vole October 9 2017
 #include "MainThread.h"
 
 #include <MyGUI.h>
@@ -113,8 +114,17 @@ void CLASS::eventMouseButtonClickSingleRaceButton(MyGUI::WidgetPtr _sender)
 
 void CLASS::eventMouseButtonClickChampionshipButton(MyGUI::WidgetPtr _sender)
 {
-    Hide();
-    App::SetPendingAppState(App::APP_STATE_SHUTDOWN);
+    this->Hide();
+    //TODO If a championship is already running we should probably go straight to the race menu Show(RT_RACE) OR
+    //a simplified dialog that says Do you want to continue xxx championship ? Or start new??
+    if (App::GetDiagPreselectedTerrain() == "")
+    {
+        App::GetGuiManager()->GetRaceSelector()->Show(RT_Championship);//App::GetGuiManager()->GetMainSelector()->Show(LT_Terrain);
+    }
+    else
+    {
+        App::SetPendingAppState(App::APP_STATE_SIMULATION);
+    }
 }
 
 void CLASS::eventMouseButtonClickMainMenuButton(MyGUI::WidgetPtr _sender)

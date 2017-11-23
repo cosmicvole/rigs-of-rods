@@ -211,6 +211,7 @@ protected:
     // reads all advanced information out of the entry's file
     void fillTerrainDetailInfo(CacheEntry &entry, Ogre::DataStreamPtr ds, Ogre::String fname);
     void fillTruckDetailInfo(CacheEntry &entry, Ogre::DataStreamPtr ds, Ogre::String fname);
+    void fillChampionshipDetailInfo(CacheEntry& entry, Ogre::DataStreamPtr ds, Ogre::String fname); // cosmic vole October 13 2017
 
     /// Checks if update is needed
     CacheValidityState IsCacheValid();
