@@ -37,6 +37,7 @@
 #include "FlexAirfoil.h"
 #include "InputEngine.h"
 #include "Replay.h"
+#include "RoRFrameListener.h"
 #include "ScrewProp.h"
 #include "SoundScriptManager.h"
 #include "Water.h"
@@ -77,7 +78,7 @@ void Beam::calcForcesEulerCompute(int doUpdate, Real dt, int step, int maxsteps)
         it->timer = std::max(0.0f, it->timer - dt);
     }
 
-    if (this == BeamFactory::getSingleton().getCurrentTruck()) //force feedback sensors
+    if (this == m_sim_controller->GetBeamFactory()->getCurrentTruck()) //force feedback sensors
     {
         if (doUpdate)
         {
@@ -656,11 +657,8 @@ void Beam::calcForcesEulerCompute(int doUpdate, Real dt, int step, int maxsteps)
     BES_STOP(BES_CORE_Wheels);
     BES_START(BES_CORE_Shocks);
 
-    //update position
-    //		if (free_node != 0)
-    //			aposition/=(Real)(free_node);
     //variable shocks for stabilization
-    if (free_active_shock && stabcommand)
+    if (this->has_active_shocks && stabcommand)
     {
         if ((stabcommand == 1 && stabratio < 0.1) || (stabcommand == -1 && stabratio > -0.1))
             stabratio = stabratio + (float)stabcommand * dt * STAB_RATE;
@@ -674,7 +672,7 @@ void Beam::calcForcesEulerCompute(int doUpdate, Real dt, int step, int maxsteps)
         }
     }
     //auto shock adjust
-    if (free_active_shock && doUpdate)
+    if (this->has_active_shocks && doUpdate)
     {
         stabsleep -= dt * maxsteps;
 
@@ -1172,7 +1170,7 @@ void Beam::calcForcesEulerCompute(int doUpdate, Real dt, int step, int maxsteps)
             engine->setPrime(requested);
         }
 
-        if (doUpdate && this == BeamFactory::getSingleton().getCurrentTruck())
+        if (doUpdate && this == m_sim_controller->GetBeamFactory()->getCurrentTruck())
         {
 #ifdef USE_OPENAL
             if (active > 0)
@@ -1734,9 +1732,9 @@ void Beam::calcNodes(int doUpdate, Ogre::Real dt, int step, int maxsteps)
             {
                 float ns = 0;
                 ground_model_t* gm = 0; // this is used as result storage, so we can use it later on
-                bool contacted = false;
+                bool contacted = gEnv->collisions->groundCollision(&nodes[i], nodes[i].collTestTimer, &gm, &ns);
                 // reverted this construct to the old form, don't mess with it, the binary operator is intentionally! cosmic vole added trucknum arg to keep track of collisions with AI cars
-				if ((contacted=gEnv->collisions->groundCollision(&nodes[i], nodes[i].collTestTimer, &gm, &ns)) | gEnv->collisions->nodeCollision(&nodes[i], contacted, nodes[i].collTestTimer, &ns, &gm, trucknum))
+                if (contacted | gEnv->collisions->nodeCollision(&nodes[i], contacted, nodes[i].collTestTimer, &ns, &gm, trucknum)) //TODO check this, it changed in Upstream to split the condition and we have the trucknum param
                 {
                     //Make wheelslip information accessible (for AI) even when not skidding - cosmic vole March 11 2017
                     if (doUpdate && nodes[i].iswheel)
@@ -1891,9 +1889,10 @@ void Beam::calcNodes(int doUpdate, Ogre::Real dt, int step, int maxsteps)
 
 void Beam::forwardCommands()
 {
-    Beam* current_truck = BeamFactory::getSingleton().getCurrentTruck();
-    Beam** trucks = BeamFactory::getSingleton().getTrucks();
-    int numtrucks = BeamFactory::getSingleton().getTruckCount();
+    auto bf = m_sim_controller->GetBeamFactory();
+    Beam* current_truck = bf->getCurrentTruck();
+    Beam** trucks = bf->getTrucks();
+    int numtrucks = bf->getTruckCount();
 
     // forward things to trailers
     if (numtrucks > 1 && this == current_truck && forwardcommands)

@@ -591,6 +591,7 @@ static const char* CONF_MP_NICKNAME     = "Nickname";
 static const char* CONF_MP_HOSTNAME     = "Server name";
 static const char* CONF_MP_PORT         = "Server port";
 static const char* CONF_MP_PASSWORD     = "Server password";
+static const char* CONF_MP_PORTAL_URL   = "Multiplayer portal URL";
 // Sim
 static const char* CONF_SIM_GEARBOX     = "GearboxMode";
 static const char* CONF_SIM_MULTITHREAD = "Multi-threading";
@@ -619,6 +620,7 @@ static const char* CONF_GFX_PARTICLES   = "Particles";
 static const char* CONF_GFX_GLOW        = "Glow";
 static const char* CONF_GFX_HDR         = "HDR";
 static const char* CONF_GFX_HEATHAZE    = "HeatHaze";
+static const char* CONF_GFX_VIDEOCAMS   = "gfx_enable_videocams";
 static const char* CONF_GFX_SKIDMARKS   = "Skidmarks";
 static const char* CONF_ENVMAP_RATE     = "EnvmapUpdateRate";
 static const char* CONF_ENVMAP_ENABLED  = "Envmap";
@@ -641,6 +643,7 @@ static const char* CONF_LOG_RIG_IMPORT  = "RigImporter_PrintMessagesToLog";
 static const char* CONF_COLLISION_DBG   = "Debug Collisions";
 static const char* CONF_TRUCKMASS_DBG   = "Debug TruckMass";
 static const char* CONF_ENVMAP_DEBUG    = "EnvMapDebug";
+static const char* CONF_VIDEOCAM_DEBUG  = "VideoCameraDebug";
 static const char* CONF_PRESELECTED_TERRAIN     = "Preselected Map";
 static const char* CONF_PRESELECTED_TRUCK       = "Preselected Truck";
 static const char* CONF_PRESELECTED_TRUCK_CFG   = "Preselected TruckConfig";
@@ -669,6 +672,7 @@ bool Settings::ParseGlobalVarSetting(std::string const & k, std::string const & 
     if (k == CONF_MP_HOSTNAME     ) { App::SetMpServerHost         (S(v)); return true; }
     if (k == CONF_MP_PORT         ) { App::SetMpServerPort         (I(v)); return true; }
     if (k == CONF_MP_PASSWORD     ) { App::SetMpServerPassword     (S(v)); return true; }
+    if (k == CONF_MP_PORTAL_URL   ) { App::SetMpPortalUrl          (S(v)); return true; }
     // Sim
     if (k == CONF_SIM_GEARBOX     ) { App__SetSimGearboxMode       (S(v)); return true; }
     if (k == CONF_SIM_MULTITHREAD ) { App::SetAppMultithread       (B(v)); return true; }
@@ -697,6 +701,7 @@ bool Settings::ParseGlobalVarSetting(std::string const & k, std::string const & 
     if (k == CONF_GFX_GLOW        ) { App::SetGfxEnableGlow        (B(v)); return true; }
     if (k == CONF_GFX_HDR         ) { App::SetGfxEnableHdr         (B(v)); return true; }
     if (k == CONF_GFX_HEATHAZE    ) { App::SetGfxUseHeathaze       (B(v)); return true; }
+    if (k == CONF_GFX_VIDEOCAMS   ) { App::SetGfxEnableVideocams   (B(v)); return true; }
     if (k == CONF_GFX_SKIDMARKS   ) { App::SetGfxSkidmarksMode     (M(v)); return true; }
     if (k == CONF_ENVMAP_RATE     ) { App__SetGfxEnvmapRate        (S(v)); return true; }
     if (k == CONF_ENVMAP_ENABLED  ) { App::SetGfxEnvmapEnabled     (B(v)); return true; }
@@ -719,6 +724,7 @@ bool Settings::ParseGlobalVarSetting(std::string const & k, std::string const & 
     if (k == CONF_COLLISION_DBG   ) { App::SetDiagCollisions       (B(v)); return true; }
     if (k == CONF_TRUCKMASS_DBG   ) { App::SetDiagTruckMass        (B(v)); return true; }
     if (k == CONF_ENVMAP_DEBUG    ) { App::SetDiagEnvmap           (B(v)); return true; }
+    if (k == CONF_VIDEOCAM_DEBUG  ) { App::SetDiagVideoCameras     (B(v)); return true; }
     if (k == CONF_PRESELECTED_TERRAIN     ) { App::SetDiagPreselectedTerrain   (S(v)); return true; }
     if (k == CONF_PRESELECTED_TRUCK       ) { App::SetDiagPreselectedVehicle   (S(v)); return true; }
     if (k == CONF_PRESELECTED_TRUCK_CFG   ) { App::SetDiagPreselectedVehConfig (S(v)); return true; }
@@ -926,6 +932,7 @@ void Settings::SaveSettings()
     f << CONF_MP_HOSTNAME     << "=" << _(App::GetMpServerHost        ()) << endl;
     f << CONF_MP_PORT         << "=" << _(App::GetMpServerPort        ()) << endl;
     f << CONF_MP_PASSWORD     << "=" << _(App::GetMpServerPassword    ()) << endl;
+    f << CONF_MP_PORTAL_URL   << "=" << _(App::GetMpPortalUrl         ()) << endl;
     f                                                                     << endl;
     f << "; Simulation"                                                   << endl;
     f << CONF_SIM_GEARBOX     << "=" << _(App__SimGearboxToStr        ()) << endl;
@@ -957,6 +964,7 @@ void Settings::SaveSettings()
     f << CONF_GFX_GLOW        << "=" << B(App::GetGfxEnableGlow       ()) << endl;
     f << CONF_GFX_HDR         << "=" << B(App::GetGfxEnableHdr        ()) << endl;
     f << CONF_GFX_HEATHAZE    << "=" << B(App::GetGfxUseHeathaze      ()) << endl;
+    f << CONF_GFX_VIDEOCAMS   << "=" << B(App::GetGfxEnableVideocams  ()) << endl;
     f << CONF_GFX_SKIDMARKS   << "=" << Y(App::GetGfxSkidmarksMode    ()) << endl;
     f << CONF_ENVMAP_ENABLED  << "=" << B(App::GetGfxEnvmapEnabled    ()) << endl;
     f << CONF_ENVMAP_RATE     << "=" << _(App::GetGfxEnvmapRate       ()) << endl;

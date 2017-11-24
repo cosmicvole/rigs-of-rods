@@ -20,7 +20,7 @@ using namespace Ogre;
 #   define PROGRESS_WINDOW(x, y) { LOG(Ogre::String("  ## ") + y) }
 #endif //USE_MYGUI
 
-ChampionshipManager::ChampionshipManager()
+ChampionshipManager::ChampionshipManager() : m_sim_controller(nullptr)
 {
     file_hash = "";
     guid = "";
@@ -55,7 +55,8 @@ void ChampionshipManager::loadChampionship(Ogre::DataStreamPtr& ds)//(Ogre::Stri
     }
     */
 
-    PROGRESS_WINDOW(10, _L("Loading Championship Configuration"));
+	//No point in putting this up - it is behind the loading window!
+    //PROGRESS_WINDOW(10, _L("Loading Championship Configuration"));
 
     LOG(" ===== LOADING CHAMPIONSHIP " + ds->getName());
 

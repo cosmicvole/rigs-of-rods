@@ -1,30 +1,36 @@
 /*
-This source file is part of Rigs of Rods
-Copyright 2005,2006,2007,2008,2009 Pierre-Michel Ricordel
-Copyright 2007,2008,2009 Thomas Fischer
+    This source file is part of Rigs of Rods
+    Copyright 2005-2009 Pierre-Michel Ricordel
+    Copyright 2007-2009 Thomas Fischer
+    Copyright 2013-2017 Petr Ohlidal & contributors
 
-For more information, see http://www.rigsofrods.org/
+    For more information, see http://www.rigsofrods.org/
 
-Rigs of Rods is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3, as
-published by the Free Software Foundation.
+    Rigs of Rods is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 3, as
+    published by the Free Software Foundation.
 
-Rigs of Rods is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    Rigs of Rods is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with Rigs of Rods.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
-#include <Ogre.h>
 
-#include "ImprovedConfigFile.h"
-#include "OISKeyboard.h"
+#include "RoRConfig.h"
+
+#include <OgreConfigFile.h>
+#include <OgreRoot.h>
+
+#include <memory>
+
+// --------- TODO: check and cleanup these includes -----------
+
+#include "RoRnet.h"
 #include "RoRVersion.h"
 #include "conf_file.h"
-#include "rornet.h"
-#include "Utils.h" // RoR utils
 #include "wxValueChoice.h" // a control we wrote
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_LINUX
@@ -39,8 +45,6 @@ mode_t getumask(void)
     return mask;
 }
 #endif
-
-#include <memory>
 
 #include "statpict.h"
 #include <wx/cmdline.h>
@@ -67,7 +71,6 @@ mode_t getumask(void)
 #include <wx/version.h>
 #include <wx/wfstream.h>
 #include <wx/wx.h>
-#include <wx/zipstrm.h>
 
 #if wxCHECK_VERSION(2, 8, 0)
 #include <wx/hyperlink.h>
@@ -88,9 +91,6 @@ mode_t getumask(void)
 // xpm images
 #include "config.xpm"
 #include "opencllogo.xpm"
-
-// de-comment this to enable network stuff
-#define NETWORK
 
 wxLocale lang_locale;
 wxLanguageInfo *language=0;
@@ -119,83 +119,12 @@ std::map<std::string, std::string> settings;
 #include <gdk/gdkx.h>
 #endif
 
-// Define a new application type, each program should derive a class from wxApp
-class MyApp : public wxApp
-{
-public:
-    // override base class virtuals
-    // ----------------------------
-
-    // this one is called on application startup and is a good place for the app
-    // initialization (doing it here and not in the ctor allows to have an error
-    // return: if OnInit() returns false, the application terminates)
-    virtual bool OnInit();
-    virtual int OnRun();
-    virtual void OnInitCmdLine(wxCmdLineParser& parser);
-    virtual bool OnCmdLineParsed(wxCmdLineParser& parser);
-
-    bool filesystemBootstrap();
-    void recurseCopy(wxString sourceDir, wxString destinationDir);
-    void initLogging();
-    bool checkUserPath();
-    bool extractZipFiles(const wxString& aZipFile, const wxString& aTargetDir);
-    //private:
-    wxString UserPath;
-    wxString ProgramPath;
-    wxString SkeletonPath;
-    wxString languagePath;
-
-    bool postinstall;
-};
-
-static const wxCmdLineEntryDesc g_cmdLineDesc [] =
-{
-#if wxCHECK_VERSION(2, 9, 0)
-    { wxCMD_LINE_SWITCH, ("postinstall"), ("postinstall"), ("do not use this")},
-#else // old wxWidgets support
-    { wxCMD_LINE_SWITCH, wxT("postinstall"), wxT("postinstall"), wxT("do not use this")},
-#endif
-    { wxCMD_LINE_NONE }
-};
-
-// from wxWidetgs wiki: http://wiki.wxwidgets.org/Calling_The_Default_Browser_In_WxHtmlWindow
-class HtmlWindow: public wxHtmlWindow
-{
-public:
-    HtmlWindow(wxWindow *parent, wxWindowID id = -1,
-        const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize,
-        long style = wxHW_SCROLLBAR_AUTO, const wxString& name = wxT("htmlWindow"));
-    void OnLinkClicked(const wxHtmlLinkInfo& link);
-};
-
-HtmlWindow::HtmlWindow(wxWindow *parent, wxWindowID id, const wxPoint& pos,
-    const wxSize& size, long style, const wxString& name)
-: wxHtmlWindow(parent, id, pos, size, style, name)
-{
-}
-
-void HtmlWindow::OnLinkClicked(const wxHtmlLinkInfo& link)
-{
-    wxString linkhref = link.GetHref();
-    if (linkhref.StartsWith(wxT("http://")))
-    {
-        if(!wxLaunchDefaultBrowser(linkhref))
-            // failed to launch externally, so open internally
-            wxHtmlWindow::OnLinkClicked(link);
-    }
-    else
-    {
-        wxHtmlWindow::OnLinkClicked(link);
-    }
-}
-
-class KeySelectDialog;
 // Define a new frame type: this is going to be our main frame
 class MyDialog : public wxDialog
 {
 public:
     // ctor(s)
-    MyDialog(const wxString& title, MyApp *_app);
+    MyDialog(const wxString& title);
     void loadOgre();
     void addAboutEntry(wxString name, wxString desc, wxString url, int &x, int &y);
     void addAboutTitle(wxString name, int &x, int &y);
@@ -206,56 +135,32 @@ public:
     void updateSettingsControls(); // use after loading or after manually updating the settings map
     void getSettingsControls();    // puts the control's status into the settings map
     // event handlers (these functions should _not_ be virtual)
-    void OnQuit(wxCloseEvent& event);
-    void OnTimer(wxTimerEvent& event);
-    void OnTimerReset(wxTimerEvent& event);
-    void OnButCancel(wxCommandEvent& event);
-    void OnButSave(wxCommandEvent& event);
-    void OnButPlay(wxCommandEvent& event);
-    void OnButRestore(wxCommandEvent& event);
-    void OnButTestNet(wxCommandEvent& event);
-    void OnButGetUserToken(wxCommandEvent& event);
-#if wxCHECK_VERSION(2, 8, 0)
-    void OnClickedHtmlLinkMain(wxHtmlLinkEvent& event);
-    void OnClickedHtmlLinkUpdate(wxHtmlLinkEvent& event);
-#endif // version 2.8
-    void OnChoiceShadow(wxCommandEvent& event);
-    void OnChoiceLanguage(wxCommandEvent& event);
-    //void OnButRemap(wxCommandEvent& event);
-    void OnChoiceRenderer(wxCommandEvent& event);
-    //void OnMenuClearClick(wxCommandEvent& event);
-    //void OnMenuTestClick(wxCommandEvent& event);
-    //void OnMenuDeleteClick(wxCommandEvent& event);
-    //void OnMenuDuplicateClick(wxCommandEvent& event);
-    //void OnMenuEditEventNameClick(wxCommandEvent& event);
-    //void OnMenuCheckDoublesClick(wxCommandEvent& event);
-    void OnButRegenCache(wxCommandEvent& event);
-    void OnButClearCache(wxCommandEvent& event);
-    void OnButUpdateRoR(wxCommandEvent& event);
-    void OnButCheckOpenCL(wxCommandEvent& event);
-    void OnButCheckOpenCLBW(wxCommandEvent& event);
-    void updateRoR();
-    void OnScrollSightRange(wxScrollEvent& event);
-    void OnScrollVolume(wxScrollEvent& event);
+    void OnQuit               (wxCloseEvent& event);
+    void OnTimer              (wxTimerEvent& event);
+    void OnTimerReset         (wxTimerEvent& event);
+    void OnButCancel          (wxCommandEvent& event);
+    void OnButSave            (wxCommandEvent& event);
+    void OnButPlay            (wxCommandEvent& event);
+    void OnButRestore         (wxCommandEvent& event);
+    void OnButGetUserToken    (wxCommandEvent& event);
+    void OnChoiceShadow       (wxCommandEvent& event);
+    void OnChoiceLanguage     (wxCommandEvent& event);
+    void OnChoiceRenderer     (wxCommandEvent& event);
+    void OnButRegenCache      (wxCommandEvent& event);
+    void OnButClearCache      (wxCommandEvent& event);
+    void OnButUpdateRoR       (wxCommandEvent& event);
+    void OnButCheckOpenCL     (wxCommandEvent& event);
+    void OnButCheckOpenCLBW   (wxCommandEvent& event);
+    void OnButReloadControllerInfo(wxCommandEvent& event);
+    void OnScrollSightRange   (wxScrollEvent& event);
+    void OnScrollVolume       (wxScrollEvent& event);
     void OnScrollForceFeedback(wxScrollEvent& event);
-    void OnScrollFPSLimiter(wxScrollEvent& event);
-    void OnChangedNotebook1(wxNotebookEvent& event);
-    void OnChangedNotebook2(wxNotebookEvent& event);
+    void OnScrollFPSLimiter   (wxScrollEvent& event);
+    void updateRoR();
     std::string readVersionInfo();
-
-//    void checkLinuxPaths();
-    MyApp *app;
 
 private:
 
-    //bool postinstall;
-    //wxButton *btnRemap;
-    //wxCheckBox *autodl;
-    //wxCheckBox *hydrax;
-    //wxCheckBox *rtshader;
-    //wxComboBox *ctrlTypeCombo;
-    //wxStaticText *controlText;
-    KeySelectDialog *kd;
     Ogre::Root *ogreRoot;
     int controlItemCounter;
     std::map<int,wxTreeItemId> treeItems;
@@ -265,6 +170,7 @@ private:
     wxButton *btnAddKey;
     wxButton *btnDeleteKey;
     wxButton *btnUpdate, *btnToken;
+    wxButton *btnLoadInputDeviceInfo;
     wxCheckBox *advanced_logging;
     wxCheckBox *arcadeControls;
     wxCheckBox *beam_break_debug;
@@ -322,6 +228,7 @@ private:
     wxTextCtrl *fovint, *fovext;
     wxTextCtrl *gputext;
     wxTextCtrl *presel_map, *presel_truck;
+    wxTextCtrl *controllerInfo;
     wxTimer *timer1;
     wxValueChoice *flaresMode;
     wxValueChoice *gearBoxMode;
@@ -336,115 +243,40 @@ private:
     wxValueChoice *vegetationMode;
     wxValueChoice *water;
 
-#ifdef NETWORK
-    wxCheckBox *network_enable;
-    wxTextCtrl *nickname;
-    wxTextCtrl *servername;
-    wxTextCtrl *serverport;
-    wxTextCtrl *serverpassword;
-    wxTextCtrl *usertoken;
-    wxHtmlWindow *networkhtmw;
-    wxHtmlWindow *helphtmw;
-//    wxTextCtrl *p2pport;
-#endif
-
     void tryLoadOpenCL();
     int openCLAvailable;
-//    wxTextCtrl *deadzone;
-    //wxTimer *controlstimer;
-    // any class wishing to process wxWidgets events must use this macro
     DECLARE_EVENT_TABLE()
     bool loadOgrePlugins(Ogre::String pluginsfile);
 };
 
-
-class IDData : public wxTreeItemData
-{
-public:
-    IDData(int id) : id(id) {}
-    int id;
-};
-
-enum control_ids
-{
-    button_add_key = 1,
-    button_cancel,
-    button_check_opencl,
-    button_check_opencl_bw,
-    button_clear_cache,
-    button_delete_key,
-    button_get_user_token,
-    button_load_keymap,
-    button_net_test,
-    button_play,
-    button_regen_cache,
-    button_restore,
-    button_save,
-    button_save_keymap,
-    button_update_ror,
-    changed_notebook_1,
-    changed_notebook_2,
-    changed_notebook_3,
-    choice_language,
-    choice_renderer,
-    choice_shadow,
-    clicked_html_link_main,
-    clicked_html_link_update,
-    scroll_force_feedback,
-    scroll_fps_limiter,
-    scroll_sight_range,
-    scroll_volume,
-    timer_controls,
-    timer_update_reset,
-};
-
-// ----------------------------------------------------------------------------
-// event tables and other macros for wxWidgets
-// ----------------------------------------------------------------------------
-// the event tables connect the wxWidgets events with the functions (event
-// handlers) which process them. It can be also done at run-time, but for the
-// simple menu events like this the static method is much simpler.
+// ====== Bind wxWidgets events to handler functions ======
 BEGIN_EVENT_TABLE(MyDialog, wxDialog)
-    EVT_BUTTON(button_cancel, MyDialog::OnButCancel)
-    EVT_BUTTON(button_check_opencl, MyDialog::OnButCheckOpenCL)
-    EVT_BUTTON(button_check_opencl_bw, MyDialog::OnButCheckOpenCLBW)
-    EVT_BUTTON(button_clear_cache, MyDialog::OnButClearCache)
-    EVT_BUTTON(button_get_user_token, MyDialog::OnButGetUserToken)
-    EVT_BUTTON(button_net_test, MyDialog::OnButTestNet)
-    EVT_BUTTON(button_play, MyDialog::OnButPlay)
-    EVT_BUTTON(button_regen_cache, MyDialog::OnButRegenCache)
-    EVT_BUTTON(button_restore, MyDialog::OnButRestore)
-    EVT_BUTTON(button_save, MyDialog::OnButSave)
-    EVT_BUTTON(button_update_ror, MyDialog::OnButUpdateRoR)
-    EVT_CHOICE(choice_language, MyDialog::OnChoiceLanguage)
-    EVT_CHOICE(choice_renderer, MyDialog::OnChoiceRenderer)
-    EVT_CHOICE(choice_shadow, MyDialog::OnChoiceShadow)
-    EVT_CLOSE(MyDialog::OnQuit)
-    EVT_COMMAND_SCROLL(scroll_force_feedback, MyDialog::OnScrollForceFeedback)
-    EVT_COMMAND_SCROLL(scroll_fps_limiter, MyDialog::OnScrollFPSLimiter)
-    EVT_COMMAND_SCROLL(scroll_sight_range, MyDialog::OnScrollSightRange)
-    EVT_COMMAND_SCROLL(scroll_volume, MyDialog::OnScrollVolume)
-#if wxCHECK_VERSION(2, 8, 0)
-    EVT_HTML_LINK_CLICKED(clicked_html_link_main, MyDialog::OnClickedHtmlLinkMain)
-    EVT_HTML_LINK_CLICKED(clicked_html_link_update, MyDialog::OnClickedHtmlLinkUpdate)
-#endif  // wxCHECK_VERSION(2, 8, 0)
-    EVT_NOTEBOOK_PAGE_CHANGED(changed_notebook_1, MyDialog::OnChangedNotebook1)
-    EVT_NOTEBOOK_PAGE_CHANGED(changed_notebook_2, MyDialog::OnChangedNotebook2)
-    EVT_TIMER(timer_controls, MyDialog::OnTimer)
-    EVT_TIMER(timer_update_reset, MyDialog::OnTimerReset)
+
+    EVT_BUTTON(              ID_BUTTON_CANCEL,            MyDialog::OnButCancel)
+    EVT_BUTTON(              ID_BUTTON_CHECK_OPENCL,      MyDialog::OnButCheckOpenCL)
+    EVT_BUTTON(              ID_BUTTON_CHECK_OPENCL_BW,   MyDialog::OnButCheckOpenCLBW)
+    EVT_BUTTON(              ID_BUTTON_CLEAR_CACHE,       MyDialog::OnButClearCache)
+    EVT_BUTTON(              ID_BUTTON_GET_USER_TOKEN,    MyDialog::OnButGetUserToken)
+    EVT_BUTTON(              ID_BUTTON_PLAY,              MyDialog::OnButPlay)
+    EVT_BUTTON(              ID_BUTTON_REGEN_CACHE,       MyDialog::OnButRegenCache)
+    EVT_BUTTON(              ID_BUTTON_SCAN_CONTROLLERS,  MyDialog::OnButReloadControllerInfo)
+    EVT_BUTTON(              ID_BUTTON_RESTORE,           MyDialog::OnButRestore)
+    EVT_BUTTON(              ID_BUTTON_SAVE,              MyDialog::OnButSave)
+    EVT_BUTTON(              ID_BUTTON_UPDATE_ROR,        MyDialog::OnButUpdateRoR)
+    EVT_CHOICE(              ID_CHOICE_LANGUAGE,          MyDialog::OnChoiceLanguage)
+    EVT_CHOICE(              ID_CHOICE_RENDERER,          MyDialog::OnChoiceRenderer)
+    EVT_CHOICE(              ID_CHOICE_SHADOW,            MyDialog::OnChoiceShadow)
+    EVT_COMMAND_SCROLL(      ID_SCROLL_FORCE_FEEDBACK,    MyDialog::OnScrollForceFeedback)
+    EVT_COMMAND_SCROLL(      ID_SCROLL_FPS_LIMITER,       MyDialog::OnScrollFPSLimiter)
+    EVT_COMMAND_SCROLL(      ID_SCROLL_SIGHT_RANGE,       MyDialog::OnScrollSightRange)
+    EVT_COMMAND_SCROLL(      ID_SCROLL_VOLUME,            MyDialog::OnScrollVolume)
+    EVT_TIMER(               ID_TIMER_CONTROLS,           MyDialog::OnTimer)
+    EVT_TIMER(               ID_TIMER_UPDATE_RESET,       MyDialog::OnTimerReset)
+    EVT_CLOSE(                                            MyDialog::OnQuit)
+
 END_EVENT_TABLE()
 
-// Create a new application object: this macro will allow wxWidgets to create
-// the application object during program execution (it's better than using a
-// static object for many reasons) and also implements the accessor function
-// wxGetApp() which will return the reference of the right type (i.e. MyApp and
-// not wxApp)
-
-#ifdef USE_CONSOLE
-IMPLEMENT_APP_CONSOLE(MyApp)
-#else
-IMPLEMENT_APP(MyApp)
-#endif
+IMPLEMENT_APP(RoRConfigApp) // Defines `wxGetApp()` which returns instance of RoRConfigApp
 
 // ============================================================================
 // implementation
@@ -467,7 +299,8 @@ const wxLanguageInfo *getLanguageInfoByName(const wxString name)
             if(cn == name)
                 return info;
         }
-    } else
+    }
+    else
     {
         for(int i=0;i<wxLANGUAGE_USER_DEFINED;i++)
         {
@@ -484,7 +317,7 @@ const wxLanguageInfo *getLanguageInfoByName(const wxString name)
 int getAvLang(wxString dir, std::vector<wxLanguageInfo*> &files)
 {
     if(!wxDir::Exists(dir)) return 1;
-    
+
     //WX portable version
     wxDir dp(dir);
     if (!dp.IsOpened())
@@ -511,7 +344,8 @@ int getAvLang(wxString dir, std::vector<wxLanguageInfo*> &files)
             if(li)
             {
                 files.push_back(li);
-            } else
+            }
+            else
             {
                 wxLogStatus(wxT("failed to get Language: "+name));
             }
@@ -530,7 +364,7 @@ void initLanguage(wxString languagePath, wxString userpath)
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
     dirsep = wxT("\\");
 #endif
-    //basedir = basedir + dirsep + wxString("languages");
+
     wxLocale::AddCatalogLookupPathPrefix(languagePath);
 
     // get all available languages
@@ -547,7 +381,8 @@ void initLanguage(wxString languagePath, wxString userpath)
                 wxLogStatus(wxT(" * ") + (*it)->Description + wxT("(") + (*it)->CanonicalName + wxT(")"));
             }
         }
-    } else
+    }
+    else
     {
         wxLogStatus(wxT("no Languages found!"));
     }
@@ -555,14 +390,15 @@ void initLanguage(wxString languagePath, wxString userpath)
     try
     {
         wxString rorcfg=userpath + dirsep + wxT("config") + dirsep + wxT("RoR.cfg");
-        ImprovedConfigFile cfg;
+        Ogre::ConfigFile cfg;
         // Don't trim whitespace
         cfg.load((const char*)rorcfg.mb_str(wxConvUTF8), "=:\t", false);
-        wxString langSavedName = conv(cfg.GetString("Language"));
+        wxString langSavedName = conv(cfg.getSetting("Language"));
 
         if(langSavedName.size() > 0)
             language = const_cast<wxLanguageInfo *>(getLanguageInfoByName(langSavedName));
-    }catch(...)
+    }
+    catch (...)
     {
         wxLogError(wxT(" unable to load RoR.cfg"));
     }
@@ -574,7 +410,8 @@ void initLanguage(wxString languagePath, wxString userpath)
         if(language)
         {
             wxLogStatus(wxT(" system returned: ") + language->Description + wxT("(") + language->CanonicalName + wxT(")"));
-        } else
+        }
+        else
         {
             wxLogStatus(wxT("Failed to detect system language."));
             return;
@@ -612,170 +449,77 @@ void initLanguage(wxString languagePath, wxString userpath)
     }
 }
 
-void MyApp::recurseCopy(wxString sourceDir, wxString destinationDir)
+bool RoRConfigApp::CheckAndPrepareUserDirectory()
 {
-    if (!wxDir::Exists(sourceDir) || !wxDir::Exists(destinationDir)) return;
-
-    wxDir srcd(sourceDir);
-    wxString src;
-    if (!srcd.GetFirst(&src)) return; //empty dir!
-    do
-    {
-        //ignore files and directories beginning with "." (important, for SVN!)
-        if (src.StartsWith(wxT("."))) continue;
-        //check if it id a directory
-        wxFileName tsfn=wxFileName(sourceDir, wxEmptyString);
-        tsfn.AppendDir(src);
-        if (wxDir::Exists(tsfn.GetPath()))
-        {
-            //this is a directory, create dest dir and recurse
-            wxFileName tdfn=wxFileName(destinationDir, wxEmptyString);
-            tdfn.AppendDir(src);
-            if (!wxDir::Exists(tdfn.GetPath())) tdfn.Mkdir();
-            recurseCopy(tsfn.GetPath(), tdfn.GetPath());
-        }
-        else
-        {
-            //this is a file, copy file
-            tsfn=wxFileName(sourceDir, src);
-            wxFileName tdfn=wxFileName(destinationDir, src);
-            //policy to be defined
-            if (tdfn.FileExists())
-            {
-                //file already exists, should we overwrite?
-//                ::wxCopyFile(tsfn.GetFullPath(), tdfn.GetFullPath());
-            }
-            else
-            {
-                ::wxCopyFile(tsfn.GetFullPath(), tdfn.GetFullPath());
-            }
-        }
-    } while (srcd.GetNext(&src));
-}
-
-// from http://wiki.wxwidgets.org/WxZipInputStream
-bool MyApp::extractZipFiles(const wxString& aZipFile, const wxString& aTargetDir)
-{
-    bool ret = true;
-    //wxFileSystem fs;
-    std::unique_ptr<wxZipEntry> entry(new wxZipEntry());
-    do
-    {
-        wxFileInputStream in(aZipFile);
-        if (!in)
-        {
-            wxLogError(_T("Can not open file '")+aZipFile+wxT("'."));
-            ret = false;
-            break;
-        }
-        wxZipInputStream zip(in);
-
-        while (entry.reset(zip.GetNextEntry()), entry.get() != NULL)
-        {
-            // access meta-data
-            wxString name = entry->GetName();
-            name = aTargetDir + wxFileName::GetPathSeparator() + name;
-
-            // read 'zip' to access the entry's data
-            if (entry->IsDir())
-            {
-                int perm = entry->GetMode();
-                wxFileName::Mkdir(name, perm, wxPATH_MKDIR_FULL);
-            } else
-            {
-                zip.OpenEntry(*entry.get());
-                if (!zip.CanRead())
-                {
-                    wxLogError(_T("Can not read zip entry '") + entry->GetName() + wxT("'."));
-                    ret = false;
-                    break;
-                }
-
-                wxFileOutputStream file(name);
-
-                if (!file)
-                {
-                    wxLogError(_T("Can not create file '")+name+wxT("'."));
-                    ret = false;
-                    break;
-                }
-                zip.Read(file);
-            }
-        }
-    } while(false);
-    return ret;
-}
-
-bool MyApp::checkUserPath()
-{
-    wxFileName configPath = wxFileName(UserPath, wxEmptyString);
+    wxFileName configPath = wxFileName(this->GetUserPath(), wxEmptyString);
     configPath.AppendDir(wxT("config"));
     wxString configPathStr = configPath.GetFullPath();
     // check if the user path is valid, if not create it
 
-    if (!wxFileName::DirExists(UserPath) || !wxFileName::DirExists(configPathStr))
+    if (wxFileName::DirExists(m_user_path) && wxFileName::DirExists(this->GetConfigPath()))
     {
-        if(!wxFileName::DirExists(UserPath))
-            wxFileName::Mkdir(UserPath);
+        if (!wxFileName::DirExists (this->GetCachePath ()))
+        {
+            wxLogInfo (wxT ("Checking if cache path exist: ") + this->GetCachePath ());
+            wxFileName::Mkdir (this->GetCachePath ());
+        }
 
-        std::unique_ptr< wxZipEntry > entry;
+        if (!wxFileName::DirExists (this->GetLogPath ()))
+        {
+            wxLogInfo (wxT ("Creating log path: ") + this->GetLogPath ());
+            wxFileName::Mkdir (this->GetLogPath ());
+        }
+        return true;
+    }
 
-        // first: figure out the zip path
-        wxFileName skeletonZip = wxFileName(ProgramPath, wxEmptyString);
+    if (!wxFileName::DirExists (m_user_path))
+    {
+        wxLogInfo (wxT ("Preparing user directory: ") + m_user_path);
+        wxFileName::Mkdir (m_user_path);
+    }
+    // first: figure out the zip path
+    wxFileName skeletonZip = wxFileName(m_program_path, wxEmptyString);
+    skeletonZip.AppendDir(wxT("resources"));
+    skeletonZip.SetFullName(wxT("skeleton.zip"));
+    wxString skeletonZipFile = skeletonZip.GetFullPath();
+
+    if(!wxFileName::FileExists(skeletonZipFile))
+    {
+        // try the dev dir as well
+        skeletonZip = wxFileName(m_program_path, wxEmptyString);
+        skeletonZip.RemoveLastDir();
         skeletonZip.AppendDir(wxT("resources"));
         skeletonZip.SetFullName(wxT("skeleton.zip"));
-        wxString skeletonZipFile = skeletonZip.GetFullPath();
+        skeletonZipFile = skeletonZip.GetFullPath();
+    }
 
-        if(!wxFileName::FileExists(skeletonZipFile))
-        {
-            // try the dev dir as well
-            skeletonZip = wxFileName(ProgramPath, wxEmptyString);
-            skeletonZip.RemoveLastDir();
-            skeletonZip.AppendDir(wxT("resources"));
-            skeletonZip.SetFullName(wxT("skeleton.zip"));
-            skeletonZipFile = skeletonZip.GetFullPath();
-        }
-
-        if(!wxFileName::FileExists(skeletonZipFile))
-        {
-            // tell the user
-            wxString warning = wxString::Format(_("Rigs of Rods User directory missing:\n%s\n\nit could not be created since skeleton.zip was not found in\n %s"), UserPath.c_str(), skeletonZipFile.c_str());
-            wxString caption = _("error upon loading RoR user directory");
-            wxMessageDialog *w = new wxMessageDialog(NULL, warning, caption, wxOK|wxICON_ERROR|wxSTAY_ON_TOP, wxDefaultPosition);
-            w->ShowModal();
-            delete(w);
-            exit(1);
-        }
-
-        // unpack
-        extractZipFiles(skeletonZipFile, UserPath);
-
+    if(!wxFileName::FileExists(skeletonZipFile))
+    {
         // tell the user
-        wxLogInfo(wxT("User directory created as it was not existing: ") + UserPath);
-        /*
-        wxString warning = wxString::Format(_("Rigs of Rods User directory recreated, as it was missing:\n%s"), UserPath.c_str());
+        wxString warning = wxString::Format(_("Rigs of Rods User directory missing:\n%s\n\nit could not be created since skeleton.zip was not found in\n %s"), m_user_path.c_str(), skeletonZipFile.c_str());
         wxString caption = _("error upon loading RoR user directory");
         wxMessageDialog *w = new wxMessageDialog(NULL, warning, caption, wxOK|wxICON_ERROR|wxSTAY_ON_TOP, wxDefaultPosition);
         w->ShowModal();
-        */
-    } else
-    {
-        wxLogInfo(wxT("User directory seems to be valid: ") + UserPath);
+        delete(w);
+        exit(1); // TODO: return FALSE from `OnInit()` instead! ~ only_a_ptr, 02/2017
     }
+
+    ExtractZipFiles(skeletonZipFile, m_user_path);
+
     return true;
 }
 
-bool MyApp::filesystemBootstrap()
+bool RoRConfigApp::InitFilesystem()
 {
-    UserPath    = conv(SETTINGS.GetUserPath());
-    ProgramPath = conv(SETTINGS.GetProgramPath());
+    m_user_path    = conv(SETTINGS.GetUserPath());
+    m_program_path = conv(SETTINGS.GetProgramPath());
 
 
-    checkUserPath();
+    this->CheckAndPrepareUserDirectory();
     return true;
 }
 
-void MyApp::initLogging()
+void RoRConfigApp::InitLogging()
 {
     // log everything
     wxLog::SetLogLevel(wxLOG_Max);
@@ -785,7 +529,7 @@ void MyApp::initLogging()
     wxLog *logger_cout = new wxLogStream(&std::cout);
     wxLog::SetActiveTarget(logger_cout);
 
-    wxFileName clfn=wxFileName(UserPath, wxEmptyString);
+    wxFileName clfn=wxFileName(m_user_path, wxEmptyString);
     clfn.AppendDir(wxT("logs"));
     clfn.SetFullName(wxT("configlog.txt"));
     FILE *f = fopen(conv(clfn.GetFullPath()).c_str(), "w");
@@ -799,7 +543,7 @@ void MyApp::initLogging()
 }
 
 // this is run to enter the main loop
-int MyApp::OnRun()
+int RoRConfigApp::OnRun()
 {
     // our special run method to catch exceptions
     int res = 0;
@@ -821,7 +565,7 @@ int MyApp::OnRun()
 }
 
 // 'Main program' equivalent: the program execution "starts" here
-bool MyApp::OnInit()
+bool RoRConfigApp::OnInit()
 {
     try
     {
@@ -829,10 +573,10 @@ bool MyApp::OnInit()
         if(!SETTINGS.setupPaths())
             return false;
 
-        if (!filesystemBootstrap()) return false;
+        if (!this->InitFilesystem()) return false;
 
-        initLogging();
-        initLanguage(wxT("languages"), UserPath);
+        this->InitLogging();
+        initLanguage(wxT("languages"), m_user_path);
 
         // call the base class initialization method, currently it only parses a
         // few common command-line options but it could be do more in the future
@@ -842,7 +586,7 @@ bool MyApp::OnInit()
         wxLogStatus(wxT("Creating dialog"));
         // create the main application window
         wxString title = wxString::Format(_("Rigs of Rods version %s configuration"), wxString(ROR_VERSION_STRING, wxConvUTF8).c_str());
-        MyDialog *dialog = new MyDialog(title, this);
+        MyDialog *dialog = new MyDialog(title);
 
         // and show it (the frames, unlike simple controls, are not shown when
         // created initially)
@@ -854,7 +598,8 @@ bool MyApp::OnInit()
         // loop and the application will run. If we returned false here, the
         // application would exit immediately.
         wxLogStatus(wxT("App ready"));
-    } catch (std::exception &e)
+    }
+    catch (std::exception &e)
     {
         wxLogError(wxT("Cought exception:"));
         wxLogError(wxString(e.what(), wxConvUTF8));
@@ -863,20 +608,7 @@ bool MyApp::OnInit()
         wxMessageDialog *w = new wxMessageDialog(NULL, warning, caption, wxOK|wxICON_ERROR|wxSTAY_ON_TOP, wxDefaultPosition);
         w->ShowModal();
         delete(w);
-    }    
-    return true;
-}
-
-void MyApp::OnInitCmdLine(wxCmdLineParser& parser)
-{
-    parser.SetDesc (g_cmdLineDesc);
-    // must refuse '/' as parameter starter or cannot use "/path" style paths
-    parser.SetSwitchChars (conv("/"));
-}
-
-bool MyApp::OnCmdLineParsed(wxCmdLineParser& parser)
-{
-    postinstall = parser.Found(conv("postinstall"));
+    }
     return true;
 }
 
@@ -885,65 +617,45 @@ bool MyApp::OnCmdLineParsed(wxCmdLineParser& parser)
 // ----------------------------------------------------------------------------
 
 // frame constructor
-MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY, title,  wxPoint(100, 100), wxSize(500, 580), wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER), openCLAvailable(0)
+MyDialog::MyDialog(const wxString& title) : wxDialog(NULL, wxID_ANY, title,  wxPoint(100, 100), wxSize(500, 580), wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER), openCLAvailable(0)
 {
-    app=_app;
-
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE
     SetWindowVariant(wxWINDOW_VARIANT_MINI); //smaller texts for macOS
 #endif
     SetWindowStyle(wxRESIZE_BORDER | wxCAPTION);
-    //SetMinSize(wxSize(300,300));
-    
-    kd=0;
-
-
-    //postinstall = _postinstall;
 
     wxFileSystem::AddHandler( new wxInternetFSHandler );
-    //build dialog here
     wxToolTip::Enable(true);
     wxToolTip::SetDelay(100);
-    //image
-//    wxBitmap *bitmap=new wxBitmap("data\\config.png", wxBITMAP_TYPE_BMP);
-    //wxLogStatus(wxT("Loading bitmap"));
     wxSizer *mainsizer = new wxBoxSizer(wxVERTICAL);
     mainsizer->SetSizeHints(this);
 
-    // using xpm now
     const wxBitmap bm(config_xpm);
     wxStaticPicture *imagePanel = new wxStaticPicture(this, -1, bm,wxPoint(0, 0), wxSize(500, 100), wxNO_BORDER);
     mainsizer->Add(imagePanel, 0, wxGROW);
 
     //notebook
-    nbook=new wxNotebook(this, changed_notebook_1, wxPoint(3, 100), wxSize(490, 415));
+    nbook=new wxNotebook(this, wxID_ANY, wxPoint(3, 100), wxSize(490, 415));
     mainsizer->Add(nbook, 1, wxGROW);
 
     wxSizer *btnsizer = new wxBoxSizer(wxHORIZONTAL);
-    //buttons
-    if(!app->postinstall)
-    {
-        wxButton *btnRestore = new wxButton( this, button_restore, _("Restore Defaults"), wxPoint(35,520), wxSize(100,25));
-        btnRestore->SetToolTip(_("Restore the default configuration."));
-        btnsizer->Add(btnRestore, 1, wxGROW | wxALL, 5);
 
-        wxButton *btnPlay = new wxButton( this, button_play, _("Save and Play"), wxPoint(140,520), wxSize(100,25));
-        btnPlay->SetToolTip(_("Save the current configuration and start RoR."));
-        btnsizer->Add(btnPlay, 1, wxGROW | wxALL, 5);
+    wxButton *btnRestore = new wxButton( this, ID_BUTTON_RESTORE, _("Restore Defaults"), wxPoint(35,520), wxSize(100,25));
+    btnRestore->SetToolTip(_("Restore the default configuration."));
+    btnsizer->Add(btnRestore, 1, wxGROW | wxALL, 5);
 
-        wxButton *btnSaveAndExit = new wxButton( this, button_save, _("Save and Exit"), wxPoint(245,520), wxSize(100,25));
-        btnSaveAndExit->SetToolTip(_("Save the current configuration and close the configuration program."));
-        btnsizer->Add(btnSaveAndExit, 1, wxGROW | wxALL, 5);
+    wxButton *btnPlay = new wxButton( this, ID_BUTTON_PLAY, _("Save and Play"), wxPoint(140,520), wxSize(100,25));
+    btnPlay->SetToolTip(_("Save the current configuration and start RoR."));
+    btnsizer->Add(btnPlay, 1, wxGROW | wxALL, 5);
 
-        wxButton *btnClose = new wxButton( this, button_cancel, _("Cancel"), wxPoint(350,520), wxSize(100,25));
-        btnClose->SetToolTip(_("Cancel the configuration changes and close the configuration program."));
-        btnsizer->Add(btnClose, 1, wxGROW | wxALL, 5);
-    } else
-    {
-        wxButton *btnPlay = new wxButton( this, button_play, _("Save and Play"), wxPoint(350,520), wxSize(100,25));
-        btnPlay->SetToolTip(_("Save the current configuration and start RoR."));
-        btnsizer->Add(btnPlay, 1, wxGROW | wxALL, 5);
-    }
+    wxButton *btnSaveAndExit = new wxButton( this, ID_BUTTON_SAVE, _("Save and Exit"), wxPoint(245,520), wxSize(100,25));
+    btnSaveAndExit->SetToolTip(_("Save the current configuration and close the configuration program."));
+    btnsizer->Add(btnSaveAndExit, 1, wxGROW | wxALL, 5);
+
+    wxButton *btnClose = new wxButton( this, ID_BUTTON_CANCEL, _("Cancel"), wxPoint(350,520), wxSize(100,25));
+    btnClose->SetToolTip(_("Cancel the configuration changes and close the configuration program."));
+    btnsizer->Add(btnClose, 1, wxGROW | wxALL, 5);
+
     mainsizer->Add(btnsizer, 0, wxGROW);
     this->SetSizer(mainsizer);
 
@@ -951,10 +663,10 @@ MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY
     settingsPanel=new wxPanel(nbook, -1);
     nbook->AddPage(settingsPanel, _("Settings"), true);
     wxSizer *settingsSizer = new wxBoxSizer(wxVERTICAL);
-    //settingsSizer->SetSizeHints(this);
     settingsPanel->SetSizer(settingsSizer);
+
     // second notebook containing the settings tabs
-    wxNotebook *snbook=new wxNotebook(settingsPanel, changed_notebook_2, wxPoint(0, 0), wxSize(100,250));
+    wxNotebook *snbook=new wxNotebook(settingsPanel, wxID_ANY, wxPoint(0, 0), wxSize(100,250));
     settingsSizer->Add(snbook, 1, wxGROW);
 
     rsPanel=new wxPanel(snbook, -1);
@@ -972,7 +684,7 @@ MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY
     wxSizer *controlsSizer = new wxBoxSizer(wxVERTICAL);
     controlsPanel->SetSizer(controlsSizer);
     // third notebook for control tabs
-    wxNotebook *ctbook=new wxNotebook(controlsPanel, changed_notebook_3, wxPoint(0, 0), wxSize(100,250));
+    wxNotebook *ctbook=new wxNotebook(controlsPanel, wxID_ANY, wxPoint(0, 0), wxSize(100,250));
     controlsSizer->Add(ctbook, 1, wxGROW);
 
     wxPanel *ctsetPanel=new wxPanel(ctbook, -1);
@@ -985,10 +697,10 @@ MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY
 
     wxPanel *ffPanel=new wxPanel(ctbook, -1);
     ctbook->AddPage(ffPanel, _("Force Feedback"), false);
-#ifdef NETWORK
-    wxPanel *netPanel=new wxPanel(nbook, -1);
-    nbook->AddPage(netPanel, _("Network"), false);
-#endif
+
+    wxPanel* controller_info_panel = new wxPanel(ctbook, -1);
+    ctbook->AddPage(controller_info_panel, _("Device info"), false);
+
     wxPanel *advancedPanel=new wxPanel(snbook, -1);
     snbook->AddPage(advancedPanel, _("Advanced"), false);
 
@@ -1015,7 +727,7 @@ MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY
 
     // clear the renderer settings and fill them later
     dText = new wxStaticText(rsPanel, -1, _("Render System"), wxPoint(10, 28));
-    renderer = new wxValueChoice(rsPanel, choice_renderer, wxPoint(220, 25), wxSize(220, -1), 0);
+    renderer = new wxValueChoice(rsPanel, ID_CHOICE_RENDERER, wxPoint(220, 25), wxSize(220, -1), 0);
     // renderer options done, do the rest
 
     // gamePanel
@@ -1023,7 +735,7 @@ MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY
     int x_row1 = 150, x_row2 = 300;
 
     dText = new wxStaticText(gamePanel, -1, _("Language:"), wxPoint(10, y));
-    languageMode=new wxValueChoice(gamePanel, choice_language, wxPoint(x_row1, y), wxSize(200, -1), wxCB_READONLY);
+    languageMode=new wxValueChoice(gamePanel, ID_CHOICE_LANGUAGE, wxPoint(x_row1, y), wxSize(200, -1), wxCB_READONLY);
 
     int sel = 0;
     languageMode->AppendValueItem(wxT("English (U.S.)"));
@@ -1070,11 +782,7 @@ MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY
     arcadeControls->SetToolTip(_("Braking will switch into reverse gear and accelerate."));
     y+=25;
 
-    dText = new wxStaticText(gamePanel, -1, _("User Token: "), wxPoint(10,y+3));
-    usertoken=new wxTextCtrl(gamePanel, -1, wxString(), wxPoint(x_row1, y), wxSize(200, -1));
-    usertoken->SetToolTip(_("Your rigsofrods.org User Token."));
-    btnToken = new wxButton(gamePanel, button_get_user_token, _("Get Token"), wxPoint(x_row1+210, y), wxSize(90,25));
-    y+=35;
+    y+=35; // Removed widget: Multiplayer token field (not supported at the moment ~ 02/2017)
 
 #ifdef USE_OPENAL
     // creak sound?
@@ -1094,14 +802,7 @@ MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY
     dText = new wxStaticText(aboutPanel, -1, wxString::Format(_("Network Protocol version: %s"), wxString(RORNET_VERSION, wxConvUTF8).c_str()), wxPoint(x_row1 + 15, y));
     y += dText->GetSize().GetHeight() + 2;
 
-    // those required SVN Keyword to work properly, broken since the switch to HG
-    //dText = new wxStaticText(aboutPanel, -1, wxString::Format(_("Revision: %s"), wxT(SVN_REVISION)), wxPoint(x_row1 + 15, y));
-    //y += dText->GetSize().GetHeight() + 2;
-
-    //dText = new wxStaticText(aboutPanel, -1, wxString::Format(_("Full revision: %s"), wxT(SVN_ID)), wxPoint(x_row1 + 15, y));
-    //y += dText->GetSize().GetHeight() + 2;
-
-    dText = new wxStaticText(aboutPanel, -1, wxString::Format(_("Build time: %s, %s"), wxT(__DATE__), wxT(__TIME__)), wxPoint(x_row1 + 15, y));
+    dText = new wxStaticText(aboutPanel, -1, wxString::Format(_("Build time: %s, %s"), ROR_BUILD_DATE, ROR_BUILD_TIME), wxPoint(x_row1 + 15, y));
     y += dText->GetSize().GetHeight() + 2;
 
 
@@ -1141,9 +842,6 @@ MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY
     size.x = 400;
     aboutPanel->SetVirtualSize(size);
     aboutPanel->SetScrollRate(20, 25);
-    
-    // complete about panel
-    //aboutPanel->FitInside();
 
     // debugPanel
     y = 10;
@@ -1188,7 +886,7 @@ MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY
     debug_triggers=new wxCheckBox(debugPanel, -1, _("Trigger Debug"), wxPoint(10, y));
     debug_triggers->SetToolTip(_("Enables Trigger debug messages"));
     y+=15;
-    
+
     dcm=new wxCheckBox(debugPanel, -1, _("Debug Collision Meshes"), wxPoint(10, y));
     dcm->SetToolTip(_("Shows all Collision meshes in Red to be able to position them correctly. Only use for debugging!"));
     y+=15;
@@ -1243,7 +941,7 @@ MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY
     y+=25;
 
     dText = new wxStaticText(graphicsPanel, wxID_ANY, _("Shadow type:"), wxPoint(10,y+3));
-    shadow=new wxValueChoice(graphicsPanel, choice_shadow, wxPoint(x_row1, y), wxSize(200, -1), 0);
+    shadow=new wxValueChoice(graphicsPanel, ID_CHOICE_SHADOW, wxPoint(x_row1, y), wxSize(200, -1), 0);
     shadow->AppendValueItem(wxT("No shadows (fastest)"), _("No shadows (fastest)"));
     shadow->AppendValueItem(wxT("Texture shadows"), _("Texture shadows"));
 #if OGRE_VERSION>0x010602
@@ -1254,7 +952,7 @@ MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY
     y+=25;
 
     dText = new wxStaticText(graphicsPanel, wxID_ANY, _("Sightrange:"), wxPoint(10,y+3));
-    sightRange=new wxSlider(graphicsPanel, scroll_sight_range, 5000, 10, 5000, wxPoint(x_row1, y), wxSize(200, -1));
+    sightRange=new wxSlider(graphicsPanel, ID_SCROLL_SIGHT_RANGE, 5000, 10, 5000, wxPoint(x_row1, y), wxSize(200, -1));
     sightRange->SetToolTip(_("determines how far you can see in meters"));
     sightRangeText = new wxStaticText(graphicsPanel, wxID_ANY, _("Unlimited"), wxPoint(x_row1 + 210,y+3));
     y+=25;
@@ -1265,7 +963,7 @@ MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY
 
     dText = new wxStaticText(graphicsPanel, -1, _("Water type:"), wxPoint(10,y+3));
     water=new wxValueChoice(graphicsPanel, -1, wxPoint(x_row1, y), wxSize(200, -1), 0);
-    //water->AppendValueItem(wxT("None"), _("None")); //we don't want that!
+    //water->AppendValueItem(wxT("None"), _("None")); //we don't want that! // WTF?? ~ only_a_ptr, 02/2017
     water->AppendValueItem(wxT("Basic (fastest)"), _("Basic (fastest)"));
     water->AppendValueItem(wxT("Reflection"), _("Reflection"));
     water->AppendValueItem(wxT("Reflection + refraction (speed optimized)"), _("Reflection + refraction (speed optimized)"));
@@ -1315,7 +1013,6 @@ MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY
 
     skidmarks=new wxCheckBox(graphicsPanel, -1, _("Skidmarks"), wxPoint(x_row2, y));
     skidmarks->SetToolTip(_("Adds tire tracks to the ground."));
-    //skidmarks->Disable();
     y+=15;
 
     envmap=new wxCheckBox(graphicsPanel, -1, _("HQ reflections"), wxPoint(x_row1, y));
@@ -1336,27 +1033,26 @@ MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY
     screenShotFormat->AppendValueItem(wxT("png"), _("png (bigger, no quality loss)"));
     screenShotFormat->SetToolTip(_("In what Format should screenshots be saved?"));
 
-
     //force feedback panel
     ffEnable=new wxCheckBox(ffPanel, -1, _("Enable Force Feedback"), wxPoint(150, 25));
 
     dText = new wxStaticText(ffPanel, -1, _("Overall force level:"), wxPoint(20,53));
-    ffOverall=new wxSlider(ffPanel, scroll_force_feedback, 100, 0, 1000, wxPoint(150, 50), wxSize(200, 40));
+    ffOverall=new wxSlider(ffPanel, ID_SCROLL_FORCE_FEEDBACK, 100, 0, 1000, wxPoint(150, 50), wxSize(200, 40));
     ffOverall->SetToolTip(_("Adjusts the level of all the forces."));
     ffOverallText=new wxStaticText(ffPanel, -1, wxString(), wxPoint(360,53));
 
     dText = new wxStaticText(ffPanel, -1, _("Steering feedback level:"), wxPoint(20,103));
-    ffHydro=new wxSlider(ffPanel, scroll_force_feedback, 100, 0, 4000, wxPoint(150, 100), wxSize(200, 40));
+    ffHydro=new wxSlider(ffPanel, ID_SCROLL_FORCE_FEEDBACK, 100, 0, 4000, wxPoint(150, 100), wxSize(200, 40));
     ffHydro->SetToolTip(_("Adjusts the contribution of forces coming from the wheels and the steering mechanism."));
     ffHydroText=new wxStaticText(ffPanel, -1, wxString(), wxPoint(360,103));
 
     dText = new wxStaticText(ffPanel, -1, _("Self-centering level:"), wxPoint(20,153));
-    ffCenter=new wxSlider(ffPanel, scroll_force_feedback, 100, 0, 4000, wxPoint(150, 150), wxSize(200, 40));
+    ffCenter=new wxSlider(ffPanel, ID_SCROLL_FORCE_FEEDBACK, 100, 0, 4000, wxPoint(150, 150), wxSize(200, 40));
     ffCenter->SetToolTip(_("Adjusts the self-centering effect applied to the driving wheel when driving at high speed."));
     ffCenterText=new wxStaticText(ffPanel, -1, wxString(), wxPoint(360,153));
 
     dText = new wxStaticText(ffPanel, -1, _("Inertia feedback level:"), wxPoint(20,203));
-    ffCamera=new wxSlider(ffPanel, scroll_force_feedback, 100, 0, 4000, wxPoint(150, 200), wxSize(200, 40));
+    ffCamera=new wxSlider(ffPanel, ID_SCROLL_FORCE_FEEDBACK, 100, 0, 4000, wxPoint(150, 200), wxSize(200, 40));
     ffCamera->SetToolTip(_("Adjusts the contribution of forces coming shocks and accelerations (this parameter is currently unused)."));
     ffCamera->Enable(false);
     ffCameraText=new wxStaticText(ffPanel, -1, wxString(), wxPoint(360,203));
@@ -1365,49 +1061,15 @@ MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY
     wxScrollEvent dummye;
     OnScrollForceFeedback(dummye);
 
-    //network panel
-#ifdef NETWORK
-    wxSizer *sizer_net = new wxBoxSizer(wxVERTICAL);
+    // [Controller] / [Device info] panel
 
-    wxPanel *panel_net_top = new wxPanel(netPanel);
-    network_enable=new wxCheckBox(panel_net_top, -1, _("Enable network mode"), wxPoint(5, 5));
-    network_enable->SetToolTip(_("This switches RoR into network mode.\nBe aware that many features are not available in network mode.\nFor example, you not be able to leave your vehicle or hook objects."));
+    controllerInfo = new wxTextCtrl(
+        controller_info_panel, wxID_ANY, wxString(), wxPoint(0,0), wxSize(465,330), wxTE_MULTILINE);
 
-    dText = new wxStaticText(panel_net_top, -1, _("Nickname: "), wxPoint(230,7));
-    nickname=new wxTextCtrl(panel_net_top, -1, _("Anonymous"), wxPoint(300, 2), wxSize(170, -1));
-    nickname->SetToolTip(_("Your network name. Maximum 20 Characters."));
+    btnLoadInputDeviceInfo = new wxButton(
+        controller_info_panel, ID_BUTTON_SCAN_CONTROLLERS,
+        _("(Re)load info"), wxPoint(300, 335), wxSize(165, 33));
 
-    sizer_net->Add(panel_net_top, 0, wxGROW);
-
-    //dText = new wxStaticText(netPanel, -1, wxString("Servers list: "), wxPoint(5,5));
-    wxSizer *sizer_net_middle = new wxBoxSizer(wxHORIZONTAL);
-    networkhtmw = new wxHtmlWindow(netPanel, clicked_html_link_main, wxPoint(0, 30), wxSize(480, 270));
-    //networkhtmw->LoadPage(REPO_HTML_SERVERLIST);
-    networkhtmw->SetPage(_("<p>How to play in Multiplayer:</p><br><ol><li>Click on the <b>Update</b> button to see available servers here.</li><li>Click on any underlined Server in the list.</li><li>Click on <b>Save and Play</b> button to start the game.</li></ol>"));
-    networkhtmw->SetToolTip(_("Click on blue hyperlinks to select a server."));
-    sizer_net_middle->Add(networkhtmw);
-    sizer_net->Add(networkhtmw, 2, wxGROW | wxALL);
-
-    wxPanel *panel_net_bottom = new wxPanel(netPanel);
-    dText = new wxStaticText(panel_net_bottom, -1, _("Server host name: "), wxPoint(10,5));
-    servername=new wxTextCtrl(panel_net_bottom, -1, _("127.0.0.1"), wxPoint(150, 5), wxSize(200, -1));
-    servername->SetToolTip(_("This field is automatically filled if you click on an hyperlink in the list.\nDo not change it."));
-
-    dText = new wxStaticText(panel_net_bottom, -1, _("Server port number: "), wxPoint(10,30));
-    serverport=new wxTextCtrl(panel_net_bottom, -1, _("12333"), wxPoint(150, 30), wxSize(100, -1));
-    serverport->SetToolTip(_("This field is automatically filled if you click on an hyperlink in the list.\nDo not change it."));
-//    dText = new wxStaticText(netPanel, -1, wxString("(default is 12333)"), wxPoint(260,103));
-
-    dText = new wxStaticText(panel_net_bottom, -1, _("Server password: "), wxPoint(10,55));
-    serverpassword=new wxTextCtrl(panel_net_bottom, -1, wxString(), wxPoint(150, 55), wxSize(100, -1));
-    serverpassword->SetToolTip(_("The server password, if required."));
-    sizer_net->Add(panel_net_bottom, 0, wxGROW);
-
-    btnUpdate = new wxButton(panel_net_bottom, button_net_test, _("Update"), wxPoint(360, 5), wxSize(110,65));
-
-    netPanel->SetSizer(sizer_net);
-
-#endif
 
     //advanced panel
     y = 10;
@@ -1426,9 +1088,6 @@ MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY
     char *devices = (char *)alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
     while(devices && *devices != 0)
     {
-        // missing header fr this:
-        //ALCdevice *device = alcOpenDevice(devices);
-        //wxLogStatus(wxString(device->szDeviceName));
         sound->AppendValueItem(wxString(conv(devices)));
         wxLogStatus(wxT(" *") + wxString(conv(devices)));
         devices += strlen(devices) + 1; //next device
@@ -1446,7 +1105,7 @@ MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY
     }
 
     dText = new wxStaticText(advancedPanel, -1, _("Sound Volume:"), wxPoint(10, y+3));
-    soundVolume=new wxSlider(advancedPanel, scroll_volume, 100, 0, 100, wxPoint(x_row1, y), wxSize(200, -1));
+    soundVolume=new wxSlider(advancedPanel, ID_SCROLL_VOLUME, 100, 0, 100, wxPoint(x_row1, y), wxSize(200, -1));
     soundVolume->SetToolTip(_("sets the master volume"));
     soundVolumeText = new wxStaticText(advancedPanel, -1, _("100 %"), wxPoint(x_row1 + 210, y+3));
     y+=35;
@@ -1455,7 +1114,7 @@ MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY
     // Lights
     dText = new wxStaticText(advancedPanel, -1, _("Light source effects:"), wxPoint(10, y+3));
     flaresMode=new wxValueChoice(advancedPanel, -1, wxPoint(x_row1, y), wxSize(280, -1), 0);
-//    flaresMode->AppendValueItem(wxT("None (fastest)"), _("None (fastest)")); //this creates a bug in the autopilot
+//	flaresMode->AppendValueItem(wxT("None (fastest)"), _("None (fastest)")); //this creates a bug in the autopilot // WTF?? ~ only_a_ptr, 02/2017
     flaresMode->AppendValueItem(wxT("No light sources"), _("No light sources"));
     flaresMode->AppendValueItem(wxT("Only current vehicle, main lights"), _("Only current vehicle, main lights"));
     flaresMode->AppendValueItem(wxT("All vehicles, main lights"), _("All vehicles, main lights"));
@@ -1465,7 +1124,7 @@ MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY
 
     // FPS-Limiter
     dText = new wxStaticText(advancedPanel, -1, _("FPS-Limiter:"), wxPoint(10, y+3));
-    fpsLimiter=new wxSlider(advancedPanel, scroll_fps_limiter, 0, 0, 200, wxPoint(x_row1, y), wxSize(200, -1));
+    fpsLimiter=new wxSlider(advancedPanel, ID_SCROLL_FPS_LIMITER, 0, 0, 200, wxPoint(x_row1, y), wxSize(200, -1));
     fpsLimiter->SetToolTip(_("sets the maximum frames per second"));
     fpsLimiterText = new wxStaticText(advancedPanel, -1, _("Unlimited"), wxPoint(x_row1 + 210, y+3));
     y+=35;
@@ -1473,10 +1132,10 @@ MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY
     // Cache
     dText = new wxStaticText(advancedPanel, -1, _("In case the mods cache becomes corrupted, \nuse these buttons to fix the cache."), wxPoint(10, y));
 
-    wxButton *btn = new wxButton(advancedPanel, button_regen_cache, _("Regen cache"), wxPoint(x_row2-52, y));
+    wxButton *btn = new wxButton(advancedPanel, ID_BUTTON_REGEN_CACHE, _("Regen cache"), wxPoint(x_row2-52, y));
     btn->SetToolTip(_("Use this to regenerate the cache outside of RoR. If this does not work, use the clear cache button."));
-    
-    btn = new wxButton(advancedPanel, button_clear_cache, _("Clear cache"), wxPoint(x_row2+43, y));
+
+    btn = new wxButton(advancedPanel, ID_BUTTON_CLEAR_CACHE, _("Clear cache"), wxPoint(x_row2+43, y));
     btn->SetToolTip(_("Use this to remove the whole cache and force the generation from ground up."));
     y+=45;
 
@@ -1488,20 +1147,7 @@ MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY
     posstor = new wxCheckBox(advancedPanel, -1, _("Enable Position Storage"), wxPoint(x_row1, y));
     posstor->SetToolTip(_("Can be used to quick save and load positions of trucks"));
     y+=15;
-    /*
-    autodl = new wxCheckBox(advancedPanel, -1, _("Enable Auto-Downloader"), wxPoint(x_row1, y));
-    autodl->SetToolTip(_("This enables the automatic downloading of missing mods when using Multiplayer"));
-    autodl->Disable();
-    y+=15;
-    hydrax=new wxCheckBox(advancedPanel, -1, _("Hydrax Water System"), wxPoint(x_row1, y));
-    hydrax->SetToolTip(_("Enables the new water rendering system. EXPERIMENTAL. Overrides any water settings."));
-    hydrax->Disable();
-    y+=15;
-    rtshader=new wxCheckBox(advancedPanel, -1, _("RT Shader System"), wxPoint(x_row1, y));
-    rtshader->SetToolTip(_("Enables the Runtime Shader generation System. EXPERIMENTAL"));
-    rtshader->Disable();
-    y+=15;
-    */
+
     dismap=new wxCheckBox(advancedPanel, -1, _("Disable Overview Map"), wxPoint(x_row1, y));
     dismap->SetToolTip(_("Disabled the map. This is for testing purposes only, you should not gain any FPS with that."));
     y+=15;
@@ -1517,25 +1163,6 @@ MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY
     selfcollisions=new wxCheckBox(advancedPanel, -1, _("Disable intra-vehicle collisions"), wxPoint(x_row1, y));
     selfcollisions->SetToolTip(_("Disables the collision detection within one truck (no self-collisions)."));
     y+=15;
-
-    // controls settings panel
-#if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
-#if 0
-    wxSizer *sizer_updates = new wxBoxSizer(wxVERTICAL);
-    helphtmw = new wxHtmlWindow(updatePanel, update_html, wxPoint(0, 0), wxSize(480, 380));
-    helphtmw->SetPage(_("... loading ... (maybe you should check your internet connection)"));
-    // tooltip is confusing there, better none!
-    //helphtmw->SetToolTip("here you can get help");
-    sizer_updates->Add(helphtmw, 1, wxGROW);
-
-    // update button replaced with html link
-    // update button only for windows users
-    //wxButton *btnu = new wxButton(updatePanel, update_ror, "Update now");
-    //sizer_updates->Add(btnu, 0, wxGROW);
-
-    updatePanel->SetSizer(sizer_updates);
-#endif //0
-#endif // WIN32
 
 #ifdef USE_OPENCL
     wxSizer *sizer_gpu = new wxBoxSizer(wxVERTICAL);
@@ -1559,8 +1186,8 @@ MyDialog::MyDialog(const wxString& title, MyApp *_app) : wxDialog(NULL, wxID_ANY
     GPUPanel->SetSizer(sizer_gpu);
 #endif // USE_OPENCL
 
-    //    controlstimer=new wxTimer(this, CONTROLS_TIMER_ID);
-    timer1=new wxTimer(this, timer_update_reset);
+    // controlstimer=new wxTimer(this, CONTROLS_TIMER_ID);
+    timer1=new wxTimer(this, ID_TIMER_UPDATE_RESET);
 
     // inititalize ogre only when we really need it due to long startup times
     ogreRoot = 0;
@@ -1610,7 +1237,8 @@ void MyDialog::addAboutEntry(wxString name, wxString desc, wxString url, int &x,
         dfont.SetPointSize(dfont.GetPointSize()+1);
         link->SetFont(dfont);
         s = link->GetSize();
-    } else
+    }
+    else
 #endif // version 2.8
     {
         wxStaticText *dText = new wxStaticText(aboutPanel, wxID_ANY, name, wxPoint(x+15, y));
@@ -1672,7 +1300,8 @@ bool MyDialog::loadOgrePlugins(Ogre::String pluginsfile)
         try
         {
             ogreRoot->loadPlugin(pluginFilename);
-        } catch(Ogre::Exception &e)
+        }
+        catch (Ogre::Exception &e)
         {
             wxLogStatus(wxT("failed to load plugin: ") + conv(pluginFilename) + wxT(": ") + conv(e.getFullDescription()));
         }
@@ -1685,15 +1314,9 @@ void MyDialog::loadOgre()
     if(ogreRoot) return;
     wxLogStatus(wxT("Creating Ogre root"));
     //we must do this once
-    wxFileName tcfn=wxFileName(app->UserPath, wxEmptyString);
-    tcfn.AppendDir(wxT("config"));
-    wxString confdirPrefix=tcfn.GetPath()+wxFileName::GetPathSeparator();
-
-    wxFileName tlfn=wxFileName(app->UserPath, wxEmptyString);
-    tlfn.AppendDir(wxT("logs"));
-    wxString logsdirPrefix=tlfn.GetPath()+wxFileName::GetPathSeparator();
-
-    wxString progdirPrefix=app->ProgramPath+wxFileName::GetPathSeparator();
+    wxString confdirPrefix = wxGetApp().GetConfigPath()  + wxFileName::GetPathSeparator();
+    wxString logsdirPrefix = wxGetApp().GetLogPath()     + wxFileName::GetPathSeparator();
+    wxString progdirPrefix = wxGetApp().GetProgramPath() + wxFileName::GetPathSeparator();
     const char *pluginsfile="plugins.cfg";
     // load plugins manually to catch errors
     ogreRoot = new Ogre::Root("",
@@ -1707,12 +1330,14 @@ void MyDialog::loadOgre()
     try
     {
         ogreRoot->restoreConfig();
-    } catch (Ogre::Exception& e)
+    }
+    catch (Ogre::Exception& e)
     {
         if(e.getSource() == "D3D9RenderSystem::setConfigOption")
         {
             // this is a normal error that happens when the suers switch from ogre 1.6 to 1.7
-        } else
+        }
+        else
         {
             wxString warning = conv(e.getFullDescription());
             wxString caption = _("error upon restoring Ogre Configuration");
@@ -1733,7 +1358,8 @@ void MyDialog::OnChoiceShadow(wxCommandEvent &e)
     if(enable)
     {
         shadowOptimizations->Enable();
-    } else
+    }
+    else
     {
         shadowOptimizations->Disable();
     }
@@ -1749,20 +1375,6 @@ void MyDialog::OnChoiceLanguage(wxCommandEvent& event)
     delete(w);
 }
 
-
-#if 0
-
-// translations for the render menu
-// do not remove, this is used even if its not compiled
-_("Yes");
-_("No");
-_("FSAA");
-_("Full Screen");
-_("Rendering Device");
-_("VSync");
-_("Video Mode");
-#endif //0
-
 void MyDialog::updateRendersystems(Ogre::RenderSystem *rs)
 {
     // beware: rs may be null if no config file is present (this is normal)
@@ -1773,6 +1385,7 @@ void MyDialog::updateRendersystems(Ogre::RenderSystem *rs)
     filterOptions["VSync Interval"]=true;
     filterOptions["sRGB Gamma Conversion"]=true;
     filterOptions["Colour Depth"]=true;
+    filterOptions["Allow DirectX9Ex"]=false;
 
     if(renderer->GetCount() == 0)
     {
@@ -1795,7 +1408,7 @@ void MyDialog::updateRendersystems(Ogre::RenderSystem *rs)
 
     int x = 10;
     int y = 55;
-    
+
     wxStaticLine *w = new wxStaticLine(rsPanel, -1, wxPoint(x, y+3), wxSize(440, 2));
     y += 15;
 
@@ -1829,7 +1442,8 @@ void MyDialog::updateRendersystems(Ogre::RenderSystem *rs)
             renderer_text[counter] = new wxStaticText(rsPanel, wxID_ANY, conv("."), wxPoint(x, y+3), wxSize(210, 25));
             renderer_choice[counter] = new wxValueChoice(rsPanel, wxID_ANY, wxPoint(x + 220, y), wxSize(220, -1), 0);
             renderer_name[counter] = std::string();
-        } else
+        }
+        else
         {
             //existing, remove all elements
             renderer_choice[counter]->Clear();
@@ -1859,9 +1473,6 @@ void MyDialog::updateRendersystems(Ogre::RenderSystem *rs)
         {
             if(*valIt == optIt->second.currentValue)
                 selection = *valIt;
-
-            // some debug:
-            //wxLogStatus(wxString::Format(wxT("option: \"%s\" . \"%s\""), conv(optIt->first.c_str()).c_str(), conv(valIt->c_str()).c_str() ));
 
             Ogre::String valStr = *valIt;
 
@@ -1955,7 +1566,7 @@ void MyDialog::updateRendersystems(Ogre::RenderSystem *rs)
 
                 if(strlen(type_str) > 0)
                     sprintf(tmp + strlen(tmp), ", %s", type_str);
-                
+
                 if(strlen(ratio_str) > 0)
                     sprintf(tmp + strlen(tmp), ", %s", ratio_str);
 
@@ -1988,14 +1599,6 @@ void MyDialog::updateRendersystems(Ogre::RenderSystem *rs)
 
         // layout stuff
         y += 25;
-        /*
-        if(y> 25 * 5)
-        {
-            // use next column
-            y = 25;
-            x += 230;
-        }
-        */
         counter++;
     }
     // hide non-used controls
@@ -2012,11 +1615,6 @@ void MyDialog::updateRendersystems(Ogre::RenderSystem *rs)
 void MyDialog::SetDefaults()
 {
     wxScrollEvent dummye;
-    //autodl->SetValue(false);
-    //hydrax->SetValue(false);
-    //rtshader->SetValue(false);
-    //update textboxes
-    //wxCheckBox *dust;
     OnScrollForceFeedback(dummye);
     advanced_logging->SetValue(false);
     arcadeControls->SetValue(true);
@@ -2070,15 +1668,6 @@ void MyDialog::SetDefaults()
     water->SetSelection(0);              // basic water
     waves->SetValue(false);              // no waves
 
-#ifdef NETWORK
-    network_enable->SetValue(false);
-    nickname->SetValue(_("Anonymous"));
-    servername->SetValue(_("127.0.0.1"));
-    serverport->SetValue(_("12333"));
-    serverpassword->SetValue(wxString());
-    usertoken->SetValue(wxString());
-#endif
-
 #ifdef USE_OPENAL
     creaksound->SetValue(true);
     sound->SetSelection(1); // default
@@ -2091,9 +1680,6 @@ void MyDialog::SetDefaults()
 
 void MyDialog::getSettingsControls()
 {
-    //settings["AutoDownload"] = (autodl->GetValue()) ? "Yes" : "No";
-    //settings["Hydrax"] = (hydrax->GetValue()) ? "Yes" : "No";
-    //settings["Use RTShader System"] = (rtshader->GetValue()) ? "Yes" : "No";
     settings["Advanced Logging"] = (advanced_logging->GetValue()) ? "Yes" : "No";
     settings["ArcadeControls"] = (arcadeControls->GetValue()) ? "Yes" : "No";
     settings["Beam Break Debug"] = (beam_break_debug->GetValue()) ? "Yes" : "No";
@@ -2147,15 +1733,6 @@ void MyDialog::getSettingsControls()
     settings["Waves"] = (waves->GetValue()) ? "Yes" : "No";
     settings["disableOverViewMap"] = (dismap->GetValue()) ? "Yes" : "No";
 
-#ifdef NETWORK
-    settings["Network enable"] = (network_enable->GetValue()) ? "Yes" : "No";
-    settings["Nickname"] = conv(nickname->GetValue().SubString(0,20));
-    settings["Server name"] = conv(servername->GetValue());
-    settings["Server password"] = conv(serverpassword->GetValue());
-    settings["Server port"] = conv(serverport->GetValue());
-    settings["User Token"] = conv(usertoken->GetValue());
-#endif
-
 #ifdef USE_OPENAL
     settings["AudioDevice"] = sound->getSelectedValueAsSTDString();
     settings["Creak Sound"] = (creaksound->GetValue()) ? "No" : "Yes";
@@ -2175,7 +1752,8 @@ void MyDialog::getSettingsControls()
                 settings["Language Short"] = conv((*it)->CanonicalName);
             }
         }
-    } else
+    }
+    else
     {
         settings["Language"] = std::string("English (U.S.)");
         settings["Language Short"] = std::string("en_US");
@@ -2222,12 +1800,7 @@ void MyDialog::updateSettingsControls()
     sound->setSelectedValue(settings["AudioDevice"]);
 #endif //USE_OPENAL
 
-    //st = settings["AutoDownload"]; if (st.length()>0) autodl->SetValue(st=="Yes");
-    //st = settings["Glow"]; if (st.length()>0) glow->SetValue(st=="Yes");
-    //st = settings["Hydrax"]; if (st.length()>0) hydrax->SetValue(st=="Yes");
     st = settings["Skidmarks"]; if (st.length()>0) skidmarks->SetValue(st=="Yes");
-    //st = settings["Sunburn"]; if (st.length()>0) sunburn->SetValue(st=="Yes");
-    //st = settings["Use RTShader System"]; if (st.length()>0) rtshader->SetValue(st=="Yes");
     st = settings["Advanced Logging"]; if (st.length()>0) advanced_logging->SetValue(st=="Yes");
     st = settings["ArcadeControls"]; if (st.length()>0) arcadeControls->SetValue(st=="Yes");
     st = settings["Beam Break Debug"]; if (st.length()>0) beam_break_debug->SetValue(st=="Yes");
@@ -2273,7 +1846,7 @@ void MyDialog::updateSettingsControls()
     // update textboxes
     wxScrollEvent dummye;
     OnScrollForceFeedback(dummye);
-    
+
     flaresMode->setSelectedValue(settings["Lights"]);
     vegetationMode->setSelectedValue(settings["Vegetation"]);
     screenShotFormat->setSelectedValue(settings["Screenshot Format"]);
@@ -2289,14 +1862,6 @@ void MyDialog::updateSettingsControls()
         }
     }
 
-#ifdef NETWORK
-    st = settings["Network enable"]; if (st.length()>0) network_enable->SetValue(st=="Yes");
-    st = settings["Nickname"]; if (st.length()>0) nickname->SetValue(conv(st));
-    st = settings["Server name"]; if (st.length()>0) servername->SetValue(conv(st));
-    st = settings["Server port"]; if (st.length()>0) serverport->SetValue(conv(st));
-    st = settings["Server password"]; if (st.length()>0) serverpassword->SetValue(conv(st));
-    st = settings["User Token"]; if (st.length()>0) usertoken->SetValue(conv(st));
-#endif
     // update slider text
     OnScrollSightRange(dummye);
     OnScrollVolume(dummye);
@@ -2306,17 +1871,18 @@ void MyDialog::updateSettingsControls()
 bool MyDialog::LoadConfig()
 {
     //RoR config
-    ImprovedConfigFile cfg;
+    Ogre::ConfigFile cfg;
     try
     {
         wxLogStatus(wxT("Loading RoR.cfg"));
 
-        wxString rorcfg=app->UserPath + wxFileName::GetPathSeparator() + wxT("config") + wxFileName::GetPathSeparator() + wxT("RoR.cfg");
+        wxString rorcfg = wxGetApp().GetConfigPath() + wxFileName::GetPathSeparator() + wxT("RoR.cfg");
         wxLogStatus(wxT("reading from Config file: ") + rorcfg);
 
         // Don't trim whitespace
         cfg.load((const char *)rorcfg.mb_str(wxConvUTF8), "=:\t", false);
-    } catch(...)
+    }
+    catch (...)
     {
         wxLogError(wxT("error loading RoR.cfg"));
         return false;
@@ -2327,9 +1893,9 @@ bool MyDialog::LoadConfig()
     Ogre::String svalue, sname;
     while (i.hasMoreElements())
     {
-        sname = i.peekNextKey();
+        sname = SanitizeUtf8String(i.peekNextKey());
         Ogre::StringUtil::trim(sname);
-        svalue = i.getNext();
+        svalue = SanitizeUtf8String(i.getNext());
         Ogre::StringUtil::trim(svalue);
         // filter out some things that shouldnt be in there (since we cannot use RoR normally anymore after those)
         if(sname == Ogre::String("regen-cache-only"))
@@ -2363,7 +1929,8 @@ void MyDialog::SaveConfig()
                 try
                 {
                     rs->setConfigOption(key, val);
-                } catch(...)
+                }
+                catch (...)
                 {
                     wxMessageDialog(this, _("Error setting Ogre Values"), _("Ogre config validation error, unknown render option detected: ") + conv(key), wxOK||wxICON_ERROR).ShowModal();
                 }
@@ -2372,7 +1939,8 @@ void MyDialog::SaveConfig()
             if (err.length() > 0)
             {
                 wxMessageDialog(this, conv(err), _("Ogre config validation error"),wxOK||wxICON_ERROR).ShowModal();
-            } else
+            }
+            else
             {
                 Ogre::Root::getSingleton().saveConfig();
             }
@@ -2391,7 +1959,7 @@ void MyDialog::SaveConfig()
 
     //save my stuff
     FILE *fd;
-    wxString rorcfg=app->UserPath + wxFileName::GetPathSeparator() + wxT("config") + wxFileName::GetPathSeparator() + wxT("RoR.cfg");
+    wxString rorcfg= wxGetApp().GetConfigPath() + wxFileName::GetPathSeparator() + wxT("RoR.cfg");
 
     wxLogStatus(wxT("saving to Config file: ") + rorcfg);
     fd=fopen((const char *)rorcfg.mb_str(wxConvUTF8), "w");
@@ -2431,12 +1999,13 @@ void MyDialog::OnChoiceRenderer(wxCommandEvent& ev)
         {
             ogreRoot->setRenderSystem(rs);
             updateRendersystems(rs);
-        } else
+        }
+        else
         {
             wxLogStatus(wxT("Unable to change to new rendersystem(1)"));
         }
     }
-    catch(...)
+    catch (...)
     {
         wxLogStatus(wxT("Unable to change to new rendersystem(2)"));
     }
@@ -2467,7 +2036,7 @@ void MyDialog::OnButPlay(wxCommandEvent& event)
         // error
         return;
     }
-    
+
     strcat(path, "\\RoR.exe");
     wxLogStatus(wxT("using RoR: ") + wxString(path));
 
@@ -2756,12 +2325,14 @@ void MyDialog::OnButRegenCache(wxCommandEvent& event)
     MultiByteToWideChar(CP_ACP, 0, path, buffSize, wpath, buffSize);
 
     if(!CreateProcess(NULL, wpath, NULL, NULL, false, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi))
-          return;
-    
+    {
+        return;
+    }
+
     // wait until child process exits
     WaitForSingleObject( pi.hProcess, INFINITE );
     CloseHandle( pi.hProcess );
-    CloseHandle( pi.hThread );    
+    CloseHandle( pi.hThread );
 #endif
 #if OGRE_PLATFORM == OGRE_PLATFORM_LINUX
     char tmp[4096] = "";
@@ -2782,7 +2353,7 @@ void MyDialog::OnButClearCache(wxCommandEvent& event)
     wxFileName cfn;
     cfn.AssignCwd();
 
-    wxString cachepath=app->UserPath+wxFileName::GetPathSeparator()+wxT("cache");
+    wxString cachepath = wxGetApp().GetCachePath();
     wxDir srcd(cachepath);
     wxString src;
     if (!srcd.GetFirst(&src))
@@ -2812,6 +2383,12 @@ void MyDialog::OnButClearCache(wxCommandEvent& event)
     wxMessageBox(_("Cache cleared"), wxT("RoR: Cache cleared"), wxICON_INFORMATION);
 }
 
+void MyDialog::OnButReloadControllerInfo(wxCommandEvent& event)
+{
+    controllerInfo->Clear();
+    controllerInfo->AppendText(LoadInputDevicesInfo(this->GetHandle()));
+}
+
 void MyDialog::OnScrollSightRange(wxScrollEvent &e)
 {
     wxString s;
@@ -2819,7 +2396,8 @@ void MyDialog::OnScrollSightRange(wxScrollEvent &e)
     if (v == sightRange->GetMax())
     {
         s = _("Unlimited");
-    } else
+    }
+    else
     {
         s.Printf(wxT("%i m"), v);
     }
@@ -2834,7 +2412,8 @@ void MyDialog::OnScrollVolume(wxScrollEvent &e)
     if (v == soundVolume->GetMin())
     {
         s = _("Muted");
-    } else
+    }
+    else
     {
         s.Printf(wxT("%i %%"), v);
     }
@@ -2869,71 +2448,12 @@ void MyDialog::OnScrollFPSLimiter(wxScrollEvent & event)
     if (v == fpsLimiter->GetMin())
     {
         s = _("Unlimited");
-    } else
+    }
+    else
     {
         s.Printf(wxT("%i fps"), v);
     }
     fpsLimiterText->SetLabel(s);
-}
-
-#if wxCHECK_VERSION(2, 8, 0)
-void MyDialog::OnClickedHtmlLinkMain(wxHtmlLinkEvent& event)
-{
-    wxHtmlLinkInfo linkinfo=event.GetLinkInfo();
-    wxString href=linkinfo.GetHref();
-    wxURI *uri=new wxURI(href);
-    if (uri->GetScheme()==conv("rorserver"))
-    {
-        network_enable->SetValue(true);
-        servername->SetValue(uri->GetServer());
-        serverport->SetValue(uri->GetPort());
-        //serverport->SetValue(uri->GetPassword());
-        //serverpassword->SetValue(uri->GetPath().AfterFirst('/'));
-        if(uri->GetPassword() != wxString())
-        {
-            serverpassword->Enable(true);
-        }else
-            serverpassword->Enable(false);
-    } else if (uri->GetScheme()==conv("rorinstaller"))
-    {
-        if(uri->GetServer() == wxT("update"))
-        {
-            updateRoR();
-        }
-    } else
-    {
-        networkhtmw->OnLinkClicked(linkinfo);
-    }
-//    wxMessageDialog *res=new wxMessageDialog(this, href, "Success", wxOK | wxICON_INFORMATION );
-//    res->ShowModal();
-}
-
-void MyDialog::OnClickedHtmlLinkUpdate(wxHtmlLinkEvent& event)
-{
-    wxHtmlLinkInfo linkinfo=event.GetLinkInfo();
-    wxString href=linkinfo.GetHref();
-    wxURI *uri=new wxURI(href);
-    if (uri->GetScheme()==conv("rorinstaller"))
-    {
-        if(uri->GetServer() == wxT("update"))
-        {
-            updateRoR();
-        }
-    } else
-    {
-        helphtmw->OnLinkClicked(linkinfo);
-    }
-}
-#endif // version 2.8
-
-void MyDialog::OnChangedNotebook2(wxNotebookEvent& event)
-{
-    // settings notebook page change
-    if(event.GetSelection() == 0)
-    {
-        // render settings, load ogre!
-        //loadOgre();
-    }
 }
 
 #ifdef _WIN32
@@ -2951,7 +2471,6 @@ std::string MyDialog::readVersionInfo()
 {
     // http://stackoverflow.com/questions/940707/how-do-i-programatically-get-the-version-of-a-dll-or-exe
 
-    //wxString rorpath = getInstallationPath() + wxT("RoR.exe");
     wxString rorpath = wxT("RoR.exe");
 
     char buffer[4096]="";
@@ -2968,7 +2487,6 @@ std::string MyDialog::readVersionInfo()
     dwSize = GetFileVersionInfoSize( pszFilePath, NULL );
     if ( dwSize == 0 )
     {
-        //wxMessageBox(wxString::Format("Error in GetFileVersionInfoSize: %d\n", GetLastError()),wxT("GetFileVersionInfoSize Error"),0);
         return "unknown";
     }
 
@@ -2976,15 +2494,11 @@ std::string MyDialog::readVersionInfo()
 
     if ( !GetFileVersionInfo( pszFilePath, 0, dwSize, pbVersionInfo ) )
     {
-        //printf( "Error in GetFileVersionInfo: %d\n", GetLastError() );
-        //delete[] pbVersionInfo;
         return "unknown";
     }
 
     if ( !VerQueryValue( pbVersionInfo, TEXT("\\"), (LPVOID*) &pFileInfo, &puLenFileInfo ) )
     {
-        //printf( "Error in VerQueryValue: %d\n", GetLastError() );
-        //delete[] pbVersionInfo;
         return "unknown";
     }
 
@@ -3001,27 +2515,6 @@ std::string MyDialog::readVersionInfo()
 }
 #endif // _WIN32
 
-void MyDialog::OnChangedNotebook1(wxNotebookEvent& event)
-{
-    wxString tabname = nbook->GetPageText(event.GetSelection());
-    if(tabname == _("Updates"))
-    {
-        // try to find our version
-#ifdef _WIN32
-        helphtmw->LoadPage(wxString(conv(NEWS_HTML_PAGE))+
-            wxString(conv("?netversion="))+wxString(conv(RORNET_VERSION))+
-            wxString(conv("&version="))+wxString(readVersionInfo())+
-            wxString(conv("&lang="))+conv(conv(language->CanonicalName))
-            );
-#else
-        helphtmw->LoadPage(wxString(conv(NEWS_HTML_PAGE))+
-            wxString(conv("?netversion="))+wxString(conv(RORNET_VERSION))+
-            wxString(conv("&lang="))+conv(conv(language->CanonicalName))
-            );
-#endif // _WIN32
-    }
-}
-
 void MyDialog::OnTimerReset(wxTimerEvent& event)
 {
     btnUpdate->Enable(true);
@@ -3030,85 +2523,4 @@ void MyDialog::OnTimerReset(wxTimerEvent& event)
 void MyDialog::OnButGetUserToken(wxCommandEvent& event)
 {
     wxLaunchDefaultBrowser(wxT("http://usertoken.rigsofrods.org"));
-}
-
-void MyDialog::OnButTestNet(wxCommandEvent& event)
-{
-#ifdef NETWORK
-    btnUpdate->Enable(false);
-    timer1->Start(10000);
-    std::string lshort = conv(language->CanonicalName).substr(0, 2);
-    networkhtmw->LoadPage(wxString(conv(REPO_HTML_SERVERLIST))+
-                          wxString(conv("?version="))+wxString(conv(RORNET_VERSION))+
-                          wxString(conv("&lang="))+conv(lshort));
-
-//    networkhtmw->LoadPage("http://rigsofrods.blogspot.com/");
-    /*
-    SWInetSocket mySocket;
-    SWBaseSocket::SWBaseError error;
-    long port;
-    serverport->GetValue().ToLong(&port);
-    mySocket.connect(port, servername->GetValue().c_str(), &error);
-    if (error!=SWBaseSocket::ok)
-    {
-        wxMessageDialog *err=new wxMessageDialog(this, wxString(error.get_error()), "Error", wxOK | wxICON_ERROR);
-        err->ShowModal();
-        return;
-    }
-    header_t head;
-    head.command=MSG_VERSION;
-    head.size=strlen(RORNET_VERSION);
-    mySocket.send((char*)&head, sizeof(header_t), &error);
-    if (error!=SWBaseSocket::ok)
-    {
-        wxMessageDialog *err=new wxMessageDialog(this, wxString(error.get_error()), "Error", wxOK | wxICON_ERROR);
-        err->ShowModal();
-        return;
-    }
-    mySocket.send(RORNET_VERSION, head.size, &error);
-    if (error!=SWBaseSocket::ok)
-    {
-        wxMessageDialog *err=new wxMessageDialog(this, wxString(error.get_error()), "Error", wxOK | wxICON_ERROR);
-        err->ShowModal();
-        return;
-    }
-    mySocket.recv((char*)&head, sizeof(header_t), &error);
-    if (error!=SWBaseSocket::ok)
-    {
-        wxMessageDialog *err=new wxMessageDialog(this, wxString(error.get_error()), "Error", wxOK | wxICON_ERROR);
-        err->ShowModal();
-        return;
-    }
-    char sversion[256];
-    if (head.command!=MSG_VERSION)
-    {
-        wxMessageDialog *err=new wxMessageDialog(this, wxString("Unexpected message"), "Error", wxOK | wxICON_ERROR);
-        err->ShowModal();
-        return;
-    }
-    if (head.size>255)
-    {
-        wxMessageDialog *err=new wxMessageDialog(this, wxString("Message too long"), "Error", wxOK | wxICON_ERROR);
-        err->ShowModal();
-        return;
-    }
-    int rlen=0;
-    while (rlen<head.size)
-    {
-        rlen+=mySocket.recv(sversion+rlen, head.size-rlen, &error);
-        if (error!=SWBaseSocket::ok)
-        {
-            wxMessageDialog *err=new wxMessageDialog(this, wxString("Unexpected message"), "Error", wxOK | wxICON_ERROR);
-            err->ShowModal();
-            return;
-        }
-    }
-    sversion[rlen]=0;
-    mySocket.disconnect(&error);
-    char message[512];
-    sprintf(message, "Game server found, version %s", sversion);
-    wxMessageDialog *res=new wxMessageDialog(this, wxString(message), "Success", wxOK | wxICON_INFORMATION );
-    res->ShowModal();
-    */
-#endif
 }

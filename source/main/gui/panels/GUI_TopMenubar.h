@@ -22,7 +22,6 @@
 /// @author Thomas Fischer (thomas{AT}thomasfischer{DOT}biz)
 /// @date   13th of August 2009
 
-#ifdef USE_MYGUI
 
 #pragma once
 
@@ -49,8 +48,8 @@ public:
     void SetVisible(bool value);
 
     int getMenuHeight()
-    { 
-        return m_menu_height; 
+    {
+        return m_menu_height;
     };
 
     void updatePositionUponMousePosition(int x, int y);
@@ -59,17 +58,17 @@ public:
 
     void ReflectMultiplayerState();
 
+    void SetSimController(RoRFrameListener* sim) { m_sim_controller = sim; }
+
 protected:
 
     void onMenuBtn(MyGUI::MenuCtrlPtr _sender, MyGUI::MenuItemPtr _item);
 
-    void addUserToMenu(user_info_t &user);
+    void addUserToMenu(RoRnet::UserInfo &user);
 
     void vehiclesListUpdate();
 
-    void MenubarShowSpawnerReportButtonClicked(MyGUI::Widget* sender);
-
-    Ogre::UTFString getUserString(user_info_t &user, int num_vehicles);
+    Ogre::UTFString getUserString(RoRnet::UserInfo &user, int num_vehicles);
 
     std::vector<MyGUI::PopupMenuPtr> m_popup_menus;
     MyGUI::PopupMenuPtr              m_vehicles_menu_widget;
@@ -77,12 +76,12 @@ protected:
     MyGUI::MenuItem*                 m_item_activate_all;
     MyGUI::MenuItem*                 m_item_never_sleep;
     MyGUI::MenuItem*                 m_item_sleep_all;
+    MyGUI::MenuItem*                 m_item_spawner_log;
     int                              m_menu_width;
     int                              m_menu_height;
     std::atomic<bool>                m_vehicle_list_needs_update;
+    RoRFrameListener*                m_sim_controller;
 };
 
 } // namespace GUI
 } // namespace RoR
-
-#endif // USE_MYGUI

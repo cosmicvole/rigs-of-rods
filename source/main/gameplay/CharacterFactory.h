@@ -25,16 +25,18 @@
 
 #include "Character.h"
 #include "Network.h"
-#include "Singleton.h"
 
 #include <memory>
+#include <vector>
 
-class CharacterFactory : public RoRSingleton<CharacterFactory>, public ZeroedMemoryAllocator
+namespace RoR {
+
+class CharacterFactory
 {
 public:
-
+    CharacterFactory(RoRFrameListener* sim): m_sim_controller(sim) {}
     Character* createLocal(int playerColour);
-
+    void DeleteAllRemoteCharacters();
     //cosmic vole added separate collection of the local AI characters November 21 2016
     Character *createAIInstance(int id, int aiColour);
     void removeAIInstance(int id);
@@ -46,10 +48,13 @@ public:
 
 private:
 
-    std::vector<std::unique_ptr<Character>> m_characters;
+    RoRFrameListener*                       m_sim_controller;
     //cosmic vole added separate collection of the local AI characters November 21 2016
     std::vector<std::unique_ptr<Character>> m_AIcharacters;
+    std::vector<std::unique_ptr<Character>> m_remote_characters;
 
     void createRemoteInstance(int sourceid, int streamid);
     void removeStreamSource(int sourceid);
 };
+
+} // namespace RoR

@@ -126,6 +126,7 @@ public:
     inline void SetWaypointIDs(int rearWaypointID, int frontWaypointID)  { waypointIDAtRear = rearWaypointID; waypointIDInFront = frontWaypointID; }
     inline int GetWaypointIDRear() { return waypointIDAtRear; }
     inline int GetWaypointIDFront() { return waypointIDInFront; }
+	inline void SetSimController(RoRFrameListener* sim) { m_sim_controller = sim; }
 private:
     Ogre::Vector3 frontLeft;
     Ogre::Vector3 frontRight;
@@ -138,6 +139,7 @@ private:
     CollisionAvoidance_GridQuad* pRearQuad;
     int waypointIDAtRear;
     int waypointIDInFront;
+	RoRFrameListener *m_sim_controller;
 };
 
 #endif //USE_ANGELSCRIPT

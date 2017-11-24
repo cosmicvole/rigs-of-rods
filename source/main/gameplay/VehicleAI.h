@@ -245,6 +245,9 @@ public:
     //cosmic vole September 4 2017
     inline void AllowRollCorrection(bool willAllow) { allowRollCorrection = willAllow; }
     
+	//cosmic vole November 23 2017
+	inline void SetSimController(RoRFrameListener* sim) { m_sim_controller = sim; }
+	
 private:
     /**
      *   Updates the AI waypoint.
@@ -344,7 +347,9 @@ private:
     float PID_I;
     float PID_D;
     Ogre::Vector3 lastWaypointNavigated; //Last waypoint that was actually navigated towards. At speed waypoints are skipped and this takes that into account.
-    friend class CollisionAvoidance_GridQuad; //Needed so that class can check lane following logic of the trucks. cosmic vole August 13 2017
+    RoRFrameListener *m_sim_controller; //Needed for new way to access the BeamFactory. cosmic vole November 23 2017
+	
+	friend class CollisionAvoidance_GridQuad; //Needed so that class can check lane following logic of the trucks. cosmic vole August 13 2017
 };
 
 //Helpers for collision avoidance calcs - cosmic vole March 7 2017

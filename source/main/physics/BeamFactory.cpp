@@ -36,12 +36,13 @@
 #include "GUI_TopMenubar.h"
 #include "InputEngine.h"
 #include "Language.h"
-#include "MainThread.h"
-#include "Mirrors.h"
+#include "MainMenu.h"
+
 #include "Network.h"
 #include "PointColDetector.h"
 #include "RigLoadingProfiler.h"
 #include "RigLoadingProfilerControl.h"
+#include "RoRFrameListener.h"
 #include "Settings.h"
 #include "SoundScriptManager.h"
 #include "ThreadPool.h"
@@ -57,11 +58,14 @@
 #include <sys/sysctl.h>
 #endif // __APPLE__ || __FREEBSD__
 
-#ifdef USE_MYGUI
 #include "DashBoardManager.h"
-#endif // USE_MYGUI
 
 #include <algorithm>
+#include <cstring>
+
+#if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
+  #include <intrin.h>
+#endif
 
 using namespace Ogre;
 
@@ -100,9 +104,9 @@ unsigned int getNumberOfCPUCores()
     // Get CPU vendor
     char vendor[12];
     cpuID(0, regs);
-    ((unsigned *)vendor)[0] = regs[1]; // EBX
-    ((unsigned *)vendor)[1] = regs[3]; // EDX
-    ((unsigned *)vendor)[2] = regs[2]; // ECX
+    memcpy((void *)vendor,     (void *)&regs[1], 4); // EBX
+    memcpy((void *)&vendor[4], (void *)&regs[3], 4); // EDX
+    memcpy((void *)&vendor[8], (void *)&regs[2], 4); // ECX
     std::string cpuVendor = std::string(vendor, 12);
 
     // Get CPU features
@@ -127,7 +131,7 @@ unsigned int getNumberOfCPUCores()
         cores = ((unsigned)(regs[2] & 0xff)) + 1; // ECX[7:0] + 1
     }
 
-    // Detect hyper-threads  
+    // Detect hyper-threads
     bool hyperThreads = cpuFeatures & (1 << 28) && cores < logical;
 
     LOG("BEAMFACTORY: " + TOSTRING(logical) + " logical CPU cores" + " found");
@@ -140,8 +144,10 @@ unsigned int getNumberOfCPUCores()
     return cores;
 }
 
-BeamFactory::BeamFactory() :
-    m_current_truck(-1)
+using namespace RoR;
+
+BeamFactory::BeamFactory(RoRFrameListener* sim_controller)
+    : m_current_truck(-1)
     , m_dt_remainder(0.0f)
     , m_forced_active(false)
     , m_free_truck(0)
@@ -149,10 +155,11 @@ BeamFactory::BeamFactory() :
     , m_physics_frames(0)
     , m_physics_steps(2000)
     , m_previous_truck(-1)
+    , m_simulated_truck(0)
     , m_simulation_speed(1.0f)
+    , m_sim_controller(sim_controller)
 {
-    for (int t = 0; t < MAX_TRUCKS; t++)
-        m_trucks[t] = 0;
+    memset(m_trucks, 0, MAX_TRUCKS * sizeof(void*));
 
     if (RoR::App::GetAppMultithread())
     {
@@ -194,8 +201,9 @@ BeamFactory::BeamFactory() :
 
 BeamFactory::~BeamFactory()
 {
+    this->SyncWithSimThread(); // Wait for sim task to finish
     delete gEnv->threadPool;
-    m_particle_manager.Shutdown();
+    m_particle_manager.DustManDiscard(gEnv->sceneManager); // TODO: de-globalize SceneManager
 }
 
 #define LOADRIG_PROFILER_CHECKPOINT(ENTRY_ID) rig_loading_profiler.Checkpoint(RoR::RigLoadingProfiler::ENTRY_ID);
@@ -204,11 +212,11 @@ Beam* BeamFactory::CreateLocalRigInstance(
     Ogre::Vector3 pos,
     Ogre::Quaternion rot,
     Ogre::String fname,
-    int cache_entry_number, // = -1, 
+    int cache_entry_number, // = -1,
     collision_box_t* spawnbox /* = nullptr */,
     bool ismachine /* = false */,
     const std::vector<Ogre::String>* truckconfig /* = nullptr */,
-    Skin* skin /* = nullptr */,
+    RoR::SkinDef* skin /* = nullptr */,
     bool freePosition, /* = false */
     bool preloaded_with_terrain /* = false */
 )
@@ -226,6 +234,7 @@ Beam* BeamFactory::CreateLocalRigInstance(
     }
 
     Beam* b = new Beam(
+        m_sim_controller,
         truck_num,
         pos,
         rot,
@@ -256,9 +265,7 @@ Beam* BeamFactory::CreateLocalRigInstance(
         b->toggleSlideNodeLock();
     }
 
-#ifdef USE_MYGUI
     RoR::App::GetGuiManager()->GetTopMenubar()->triggerUpdateVehicleList();
-#endif // USE_MYGUI
 
     // add own username to truck
     if (RoR::App::GetActiveMpState() == RoR::App::MP_STATE_CONNECTED)
@@ -278,18 +285,16 @@ Beam* BeamFactory::CreateLocalRigInstance(
 
 #undef LOADRIG_PROFILER_CHECKPOINT
 
-int BeamFactory::CreateRemoteInstance(stream_register_trucks_t* reg)
+int BeamFactory::CreateRemoteInstance(RoRnet::TruckStreamRegister* reg)
 {
     LOG(" new beam truck for " + TOSTRING(reg->origin_sourceid) + ":" + TOSTRING(reg->origin_streamid));
 
 #ifdef USE_SOCKETW
-    user_info_t info;
+    RoRnet::UserInfo info;
     RoR::Networking::GetUserInfo(reg->origin_sourceid, info);
 
     UTFString message = RoR::ChatSystem::GetColouredName(info.username, info.colournum) + RoR::Color::CommandColour + _L(" spawned a new vehicle: ") + RoR::Color::NormalColour + reg->name;
-#ifdef USE_MYGUI
     RoR::App::GetGuiManager()->pushMessageChatBox(message);
-#endif // USE_MYGUI
 #endif // USE_SOCKETW
 
     // check if we got this truck installed
@@ -322,6 +327,7 @@ int BeamFactory::CreateRemoteInstance(stream_register_trucks_t* reg)
     }
     RoR::RigLoadingProfiler p; // TODO: Placeholder. Use it
     Beam* b = new Beam(
+        m_sim_controller,
         truck_num,
         pos,
         Quaternion::ZERO,
@@ -346,9 +352,9 @@ int BeamFactory::CreateRemoteInstance(stream_register_trucks_t* reg)
     b->m_stream_id = reg->origin_streamid;
     b->updateNetworkInfo();
 
-#ifdef USE_MYGUI
+
     RoR::App::GetGuiManager()->GetTopMenubar()->triggerUpdateVehicleList();
-#endif // USE_MYGUI
+
 
     return 1;
 }
@@ -376,18 +382,18 @@ void BeamFactory::handleStreamData(std::vector<RoR::Networking::recv_packet_t> p
 {
     for (auto packet : packet_buffer)
     {
-        if (packet.header.command == MSG2_STREAM_REGISTER)
+        if (packet.header.command == RoRnet::MSG2_STREAM_REGISTER)
         {
-            stream_register_t* reg = (stream_register_t *)packet.buffer;
+            RoRnet::StreamRegister* reg = (RoRnet::StreamRegister *)packet.buffer;
             if (reg->type == 0)
             {
-                reg->status = this->CreateRemoteInstance((stream_register_trucks_t *)packet.buffer);
-                RoR::Networking::AddPacket(0, MSG2_STREAM_REGISTER_RESULT, sizeof(stream_register_t), (char *)reg);
+                reg->status = this->CreateRemoteInstance((RoRnet::TruckStreamRegister *)packet.buffer);
+                RoR::Networking::AddPacket(0, RoRnet::MSG2_STREAM_REGISTER_RESULT, sizeof(RoRnet::StreamRegister), (char *)reg);
             }
         }
-        else if (packet.header.command == MSG2_STREAM_REGISTER_RESULT)
+        else if (packet.header.command == RoRnet::MSG2_STREAM_REGISTER_RESULT)
         {
-            stream_register_t* reg = (stream_register_t *)packet.buffer;
+            RoRnet::StreamRegister* reg = (RoRnet::StreamRegister *)packet.buffer;
             for (int t = 0; t < m_free_truck; t++)
             {
                 if (!m_trucks[t])
@@ -408,7 +414,7 @@ void BeamFactory::handleStreamData(std::vector<RoR::Networking::recv_packet_t> p
                 }
             }
         }
-        else if (packet.header.command == MSG2_STREAM_UNREGISTER)
+        else if (packet.header.command == RoRnet::MSG2_STREAM_UNREGISTER)
         {
             Beam* b = this->getBeam(packet.header.source, packet.header.streamid);
             if (b && b->state == NETWORKED)
@@ -424,7 +430,7 @@ void BeamFactory::handleStreamData(std::vector<RoR::Networking::recv_packet_t> p
                     mismatches.erase(it);
             }
         }
-        else if (packet.header.command == MSG2_USER_LEAVE)
+        else if (packet.header.command == RoRnet::MSG2_USER_LEAVE)
         {
             this->RemoveStreamSource(packet.header.source);
         }
@@ -801,12 +807,26 @@ void BeamFactory::removeTruck(int truck)
     this->DeleteTruck(m_trucks[truck]);
 }
 
-void BeamFactory::removeAllTrucks()
+void BeamFactory::CleanUpAllTrucks() // Called after simulation finishes
 {
     for (int i = 0; i < m_free_truck; i++)
     {
-        removeTruck(i);
+        if (m_trucks[i] == nullptr)
+            continue; // This is how things currently work (but not for long...) ~ only_a_ptr, 01/2017
+
+        delete m_trucks[i];
+        m_trucks[i] = nullptr;
     }
+
+    // Reset to empty value. Do NOT call `setCurrentTruck(-1)` - performs updates which are invalid at this point
+    m_current_truck = -1;
+
+    // TEMPORARY: DO !NOT! attempt to reuse slots
+    // Yields bad behavior when player disconnects from game where other players had vehicles spawned
+    // Upon reconnect, vehicles with flexbodies (tested on Gavril MZR) show up badly deformed and twitching.
+    // Vehicles with cabs (tested on Agora L) show up without the cab.
+    // ~only_a_ptr, 01/2017
+    //m_free_truck = 0;
 }
 
 void BeamFactory::DeleteTruck(Beam* b)
@@ -819,7 +839,7 @@ void BeamFactory::DeleteTruck(Beam* b)
 #ifdef USE_SOCKETW
     if (b->networking && b->state != NETWORKED && b->state != INVALID)
     {
-        RoR::Networking::AddPacket(b->m_stream_id, MSG2_STREAM_UNREGISTER, 0, 0);
+        RoR::Networking::AddPacket(b->m_stream_id, RoRnet::MSG2_STREAM_UNREGISTER, 0, 0);
     }
 #endif // USE_SOCKETW
 
@@ -829,9 +849,9 @@ void BeamFactory::DeleteTruck(Beam* b)
     m_trucks[b->trucknum] = 0;
     delete b;
 
-#ifdef USE_MYGUI
+
     RoR::App::GetGuiManager()->GetTopMenubar()->triggerUpdateVehicleList();
-#endif // USE_MYGUI
+
 }
 
 void BeamFactory::removeCurrentTruck()
@@ -916,23 +936,21 @@ void BeamFactory::setCurrentTruck(int new_truck)
     m_previous_truck = m_current_truck;
     m_current_truck = new_truck;
 
+    if (m_previous_truck >= 0 && m_current_truck >= 0)
     {
-        if (m_previous_truck >= 0 && m_current_truck >= 0)
-        {
-            RoR::MainThread::ChangedCurrentVehicle(m_trucks[m_previous_truck], m_trucks[m_current_truck]);
-        }
-        else if (m_previous_truck >= 0)
-        {
-            RoR::MainThread::ChangedCurrentVehicle(m_trucks[m_previous_truck], nullptr);
-        }
-        else if (m_current_truck >= 0)
-        {
-            RoR::MainThread::ChangedCurrentVehicle(nullptr, m_trucks[m_current_truck]);
-        }
-        else
-        {
-            RoR::MainThread::ChangedCurrentVehicle(nullptr, nullptr);
-        }
+        m_sim_controller->ChangedCurrentVehicle(m_trucks[m_previous_truck], m_trucks[m_current_truck]);
+    }
+    else if (m_previous_truck >= 0)
+    {
+        m_sim_controller->ChangedCurrentVehicle(m_trucks[m_previous_truck], nullptr);
+    }
+    else if (m_current_truck >= 0)
+    {
+        m_sim_controller->ChangedCurrentVehicle(nullptr, m_trucks[m_current_truck]);
+    }
+    else
+    {
+        m_sim_controller->ChangedCurrentVehicle(nullptr, nullptr);
     }
 
     this->UpdateSleepingState(0.0f);
@@ -1008,8 +1026,6 @@ void BeamFactory::updateVisual(float dt)
             m_trucks[t]->updateFlares(dt, (t == m_current_truck));
         }
     }
-
-    RoR::Mirrors::Update(getCurrentTruck());
 }
 
 void BeamFactory::update(float dt)
@@ -1140,9 +1156,9 @@ void BeamFactory::update(float dt)
     {
         if (m_simulated_truck == m_current_truck)
         {
-#ifdef USE_MYGUI
+
             m_trucks[m_simulated_truck]->updateDashBoards(dt);
-#endif // USE_MYGUI
+
 #ifdef FEAT_TIMING
             if (m_trucks[m_simulated_truck]->statistics)     m_trucks[m_simulated_truck]->statistics->frameStep(dt);
             if (m_trucks[m_simulated_truck]->statistics_gfx) m_trucks[m_simulated_truck]->statistics_gfx->frameStep(dt);
@@ -1150,7 +1166,7 @@ void BeamFactory::update(float dt)
         }
         if (!m_trucks[m_simulated_truck]->replayStep())
         {
-            m_trucks[m_simulated_truck]->updateForceFeedback(m_physics_steps);
+            m_trucks[m_simulated_truck]->ForceFeedbackStep(m_physics_steps);
             if (m_sim_thread_pool)
             {
                 auto func = std::function<void()>([this]()
@@ -1169,7 +1185,7 @@ void BeamFactory::update(float dt)
 
 void BeamFactory::windowResized()
 {
-#ifdef USE_MYGUI
+
     for (int t = 0; t < m_free_truck; t++)
     {
         if (m_trucks[t])
@@ -1177,7 +1193,7 @@ void BeamFactory::windowResized()
             m_trucks[t]->dash->windowResized();
         }
     }
-#endif // USE_MYGUI
+
 }
 
 void BeamFactory::prepareShutdown()

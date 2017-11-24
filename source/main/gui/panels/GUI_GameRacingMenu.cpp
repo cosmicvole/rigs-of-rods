@@ -29,7 +29,7 @@
 #include "GUIManager.h"
 #include "GUI_MainSelector.h"
 #include "GUI_RaceSelector.h" //cosmic vole October 9 2017
-#include "MainThread.h"
+#include "MainMenu.h"
 
 #include <MyGUI.h>
 #include <utils/Language.h>

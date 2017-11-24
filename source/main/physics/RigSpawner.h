@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013+     Petr Ohlidal & contributors
+    Copyright 2014-2017 Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -31,27 +31,46 @@
 #include "RigDef_Parser.h"
 #include "BeamData.h"
 #include "FlexFactory.h"
+#include "FlexObj.h"
 
 #include <OgreString.h>
 
-/**
-* Processes rig-file-parser output into actual simulation data structures.
-*
-* Function writing convention:
-*
-* - Process*(Definition & def) 
-*       Transform elements of .truck file to rig structures.
-* - FindAndProcess*(Definition & def) 
-*       Find and process an element which should be unique in the current vehicle configuration.
-* - Add*(), Create*() or Build*() 
-*       Add partial structures to rig.
-* - Other functions are utilities.
-*
-* @author Petr Ohlidal
-*/
+/// Processes a RigDef::File data structure (result of parsing a "Truckfile" fileformat) into 'an Actor' - a simulated physical object.
+///
+/// HISTORY:
+///
+/// Before v0.4.5, truckfiles were parsed&spawned on-the-fly: RoR's simulation used data structures with arrays of pre-defined sizes
+/// (i.e. MAX_NODES, MAX_BEAMS, MAX_* ...) and the spawner (class `SerializedRig`) wrote directly into them while reading data from the truckfile. Gfx elements were also created immediately.
+/// As a result, the logic was chaotic: some features broke each other (most notably VideoCameras X MaterialFlares X SkinZips) and the sim. structs often contained parser context variables.
+/// Also, the whole system was extremely sensitive to order of definitions in truckfile - often [badly/not] documented, known only by forum/IRC users at the time.
+///
+/// Since v0.4.5, RoR has `RigDef::Parser` which reads truckfile and emits instance of `RigDef::File` - all data from truckfile in memory. `RigDef::File` doesn't preserve the order of definitions,
+/// instead it's designed to resolve all order-dependent references to order-independent, see `RigDef::SequentialImporter` (resources/rig_def_fileformat/RigDef_SequentialImporter.h) for more info.
+/// `RigSpawner` was created by carefully refactoring old `SerializedRig` described above, so a lot of the dirty logic remained. Elements were still written into constant-size arrays.
+///
+/// PRESENT (06/2017):
+///
+/// RoR is being refactored to get rid of the MAX_[BEAMS/NODES/***] limits. Static arrays in `rig_t` are replaced with pointers to dynamically allocated memory.
+/// Memory requirements are calculated upfront from `RigDef::File`.
+///
+/// FUTURE:
+///
+/// RigSpawner will work in 2 steps:
+///  1. Physics/simulation data are fully prepared. This should be very fast (we can pre-calculate and cache things if needed).
+///  2. Graphics/sounds are set up, reading the completed physics/sim data. Graphics are fully managed by `GfxActor`. Similar utility will be added for sound.
+///
+/// CONVENTIONS:
+///
+/// * Functions "Process*(Definition & def)"                 Transform elements of truckfile to rig structures.
+/// * Functions "FindAndProcess*(Definition & def)"          Find and process an element which should be unique in the current actor configuration.
+/// * Functions "Add*()", "Create*()" or "Build*()"          Add partial structures to the actor.
+/// * Functions Other functions are utilities.
+///
+/// @author Petr Ohlidal
 class RigSpawner
 {
-    friend class VideoCamera; /* Needs to add log messages */
+    friend class VideoCamera; // Needs to add log messages
+    friend class RoR::FlexFactory; // Needs to use `ComposeName()` and `SetupNewEntity()`
 
 public:
 
@@ -92,7 +111,9 @@ public:
 
     };
 
-    void Setup( 
+    RigSpawner(RoRFrameListener* sim): m_sim_controller(sim) {}
+
+    void Setup(
         Beam *rig,
         std::shared_ptr<RigDef::File> file,
         Ogre::SceneNode *parent,
@@ -126,7 +147,7 @@ public:
     * Finds and clones given material. Reports errors.
     * @return NULL Ogre::MaterialPtr on error.
     */
-    Ogre::MaterialPtr CloneMaterial(Ogre::String const & source_name, Ogre::String const & clone_name);
+    Ogre::MaterialPtr InstantiateManagedMaterial(Ogre::String const & source_name, Ogre::String const & clone_name);
 
     /**
     * Finds existing node by Node::Ref; throws an exception if the node doesn't exist.
@@ -147,7 +168,50 @@ public:
 
     static bool CheckSoundScriptLimit(Beam *vehicle, unsigned int count);
 
-protected:
+private:
+
+    struct CustomMaterial
+    {
+        enum class MirrorPropType
+        {
+            MPROP_NONE,
+            MPROP_LEFT,
+            MPROP_RIGHT,
+        };
+
+        CustomMaterial():
+            material_flare_def(nullptr),
+            video_camera_def(nullptr),
+            mirror_prop_type(MirrorPropType::MPROP_NONE),
+            mirror_prop_scenenode(nullptr)
+        {}
+
+        CustomMaterial(Ogre::MaterialPtr& mat):
+            material(mat),
+            material_flare_def(nullptr),
+            video_camera_def(nullptr),
+            mirror_prop_type(MirrorPropType::MPROP_NONE),
+            mirror_prop_scenenode(nullptr)
+        {}
+
+        Ogre::MaterialPtr              material;
+        RigDef::MaterialFlareBinding*  material_flare_def;
+        RigDef::VideoCamera*           video_camera_def;
+        MirrorPropType                 mirror_prop_type;
+        Ogre::SceneNode*               mirror_prop_scenenode;
+    };
+
+    struct ActorMemoryRequirements
+    {
+        ActorMemoryRequirements() { memset(this,0, sizeof(ActorMemoryRequirements)); }
+
+        size_t num_nodes;
+        size_t num_beams;
+        size_t num_shocks;
+        size_t num_rotators;
+        size_t num_wings;
+        // ... more to come ...
+    };
 
 /* -------------------------------------------------------------------------- */
 /* Processing functions.                                                      */
@@ -309,11 +373,6 @@ protected:
     void ProcessManagedMaterial(RigDef::ManagedMaterial & def);
 
     /**
-    * Section 'materialflarebindings'.
-    */
-    void ProcessMaterialFlareBinding(RigDef::MaterialFlareBinding & def);
-
-    /**
     * Section 'meshwheels'.
     */
     void ProcessMeshWheel(RigDef::MeshWheel & meshwheel_def);
@@ -436,11 +495,6 @@ protected:
     void ProcessTurboprop2(RigDef::Turboprop2 & def);
 
     /**
-    * Section 'videocamera'.
-    */
-    void ProcessVideoCamera(RigDef::VideoCamera & def);
-
-    /**
     * Section 'wheeldetachers' in all modules.
     */
     void ProcessWheelDetacher(RigDef::WheelDetacher & def);
@@ -525,39 +579,11 @@ protected:
 /* -------------------------------------------------------------------------- */
 
     /**
-    * Checks there is still space left in rig_t::nodes array.
-    * @param count Required number of free slots.
-    * @return True if there is space left.
-    */
-    bool CheckNodeLimit(unsigned int count);
-    
-    /**
-    * Checks there is still space left in rig_t::beams array.
-    * @param count Required number of free slots.
-    * @return True if there is space left.
-    */
-    bool CheckBeamLimit(unsigned int count);
-
-    /**
-    * Checks there is still space left in rig_t::shocks array.
-    * @param count Required number of free slots.
-    * @return True if there is space left.
-    */
-    bool CheckShockLimit(unsigned int count);
-
-    /**
     * Checks there is still space left in rig_t::hydro array.
     * @param count Required number of free slots.
     * @return True if there is space left.
     */
     bool CheckHydroLimit(unsigned int count);
-
-    /**
-    * Checks there is still space left in rig_t::rotators array.
-    * @param count Required number of free slots.
-    * @return True if there is space left.
-    */
-    bool CheckRotatorLimit(unsigned int count);
 
     /**
     * Checks there is still space left in rig_t::cparticles array.
@@ -628,13 +654,6 @@ protected:
     * @return True if there is space left.
     */
     static bool CheckSoundScriptLimit(rig_t *vehicle, unsigned int count);
-
-    /**
-    * Checks there is still space left in rig_t::soundsources array.
-    * @param count Required number of free slots.
-    * @return True if there is space left.
-    */
-    bool CheckWingLimit(unsigned int count);
 
     /**
     * Checks there is still space left in rig_t::airbrakes array.
@@ -844,8 +863,6 @@ protected:
     */
     int FindLowestContactingNodeInRig();
 
-    //void SetBeamPlasticCoefficient(beam_t & beam, std::shared_ptr<RigDef::BeamDefaults> beam_defaults);
-
     /**
     * Checks a section only appears in one module and reports a warning if not.
     */
@@ -883,10 +900,56 @@ protected:
         float rim_ratio = 1.f
     );
 
+    void CreateWheelSkidmarks(unsigned int wheel_index);
+
     /**
     * Adds visuals to 'wheels2' wheel.
     */
     void CreateWheelVisuals(unsigned int wheel_index, RigDef::Wheel2 & wheel_2_def, unsigned int node_base_index);
+
+    /**
+    * Performs full material setup for a new entity.
+    * RULE: Each actor must have it's own material instances (a lookup table is kept for OrigName->CustomName)
+    *
+    * Setup routine:
+    *
+    *   1. If "SimpleMaterials" (plain color surfaces denoting component type) are enabled in config file, 
+    *          material is generated (not saved to lookup table) and processing ends.
+    *   2. If the material name is 'mirror', it's a special prop - rear view mirror.
+    *          material is generated, added to lookup table under generated name (special case) and processing ends.
+    *   3. If the material is a 'videocamera' of any subtype, material is created, added to lookup table and processing ends.
+    *   4  'materialflarebindngs' are resolved -> binding is persisted in lookup table.
+    *   5  SkinZIP _material replacements_ are queried. If match is found, it's added to lookup table and processing ends.
+    *   6. ManagedMaterials are queried. If match is found, it's added to lookup table and processing ends.
+    *   7. Orig. material is cloned to create substitute.
+    *   8. SkinZIP _texture replacements_ are queried. If match is found, substitute material is updated.
+    *   9. Material is added to lookup table, processing ends.
+    */
+    void SetupNewEntity(Ogre::Entity* e, Ogre::ColourValue simple_color);
+
+    /**
+    * Factory of GfxActor; invoke after all gfx setup was done.
+    */
+    void FinalizeGfxSetup();
+
+    /**
+    * Helper for 'SetupNewEntity()' - see it's doc.
+    */
+    Ogre::MaterialPtr FindOrCreateCustomizedMaterial(std::string orig_name);
+
+    Ogre::MaterialPtr CreateSimpleMaterial(Ogre::ColourValue color);
+
+    RigDef::MaterialFlareBinding* FindFlareBindingForMaterial(std::string const & material_name); ///< Returns NULL if none found
+
+    RigDef::VideoCamera* FindVideoCameraByMaterial(std::string const & material_name); ///< Returns NULL if none found
+
+    void CreateVideoCamera(RigDef::VideoCamera* def);
+    void CreateMirrorPropVideoCam(Ogre::MaterialPtr custom_mat, CustomMaterial::MirrorPropType type, Ogre::SceneNode* prop_scenenode);
+
+    /**
+    * Creates name containing actor ID token, i.e. "Object_1@Actor_2"
+    */
+    std::string ComposeName(const char* base, int number);
 
     /**
     * Sets up wheel and builds nodes for sections 'wheels', 'meshwheels' and 'meshwheels2'.
@@ -995,13 +1058,17 @@ protected:
     */
     void InitializeRig();
 
+    void CalcMemoryRequirements(ActorMemoryRequirements& req, RigDef::File::Module* module_def);
+
     std::shared_ptr<RigDef::File> m_file; //!< The parsed input file.
     int m_cache_entry_number;
     Beam *m_rig; //!< The output rig.
     std::list<std::shared_ptr<RigDef::File::Module>> m_selected_modules;
     std::map<Ogre::String, unsigned int> m_named_nodes;
-    
+
     bool m_enable_background_loading;
+    bool m_apply_simple_materials;
+    Ogre::MaterialPtr m_simple_material_base;
 
     // Logging
     std::list<Message>    m_messages;
@@ -1014,6 +1081,18 @@ protected:
 
     Ogre::SceneNode *m_parent_scene_node;
     Ogre::Vector3 m_spawn_position;
+    std::vector<CabTexcoord> m_oldstyle_cab_texcoords;
+    std::vector<CabSubmesh>  m_oldstyle_cab_submeshes;
+    /// Maps original material names (shared) to their actor-specific substitutes.
+    /// There's 1 substitute per 1 material, regardless of user count.
+    std::map<std::string, CustomMaterial> m_material_substitutions;
+    std::map<std::string, Ogre::MaterialPtr> m_managed_materials;
+    Ogre::MaterialPtr m_placeholder_managedmat;
+    std::string m_cab_material_name; ///< Original name defined in truckfile/globals.
+    Ogre::MaterialPtr m_cab_trans_material;
+    CustomMaterial::MirrorPropType m_curr_mirror_prop_type;
+    Ogre::SceneNode* m_curr_mirror_prop_scenenode;
+    std::string m_custom_resource_group;
     float m_wing_area;
     int m_airplane_left_light;
     int m_airplane_right_light;
@@ -1025,4 +1104,5 @@ protected:
     int   m_first_wing_index;
 
     RoR::FlexFactory m_flex_factory;
+    RoRFrameListener* m_sim_controller;
 };

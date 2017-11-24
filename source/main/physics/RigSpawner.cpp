@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013+     Petr Ohlidal & contributors
+    Copyright 2013-2017 Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -24,12 +24,6 @@
     @brief  Vehicle spawning logic.
     @author Petr Ohlidal
     @date   12/2013
-*/
-
-/*
-    DISABLED:
-        Hashing
-        ScopeLog (What is it for?)
 */
 
 #include "RoRPrerequisites.h"
@@ -54,24 +48,26 @@
 #include "FlexMesh.h"
 #include "FlexMeshWheel.h"
 #include "FlexObj.h"
+#include "GfxActor.h"
 #include "GUI_GameConsole.h"
 #include "InputEngine.h"
-#include "MaterialFunctionMapper.h"
-#include "MaterialReplacer.h"
 #include "MeshObject.h"
+#include "OgreSubsystem.h"
 #include "PointColDetector.h"
 #include "RigLoadingProfilerControl.h"
+#include "RoRFrameListener.h"
 #include "ScrewProp.h"
 #include "Settings.h"
-#include "Skin.h"
+#include "Skidmark.h"
+#include "SkinManager.h"
 #include "SlideNode.h"
 #include "SoundScriptManager.h"
 #include "TerrainManager.h"
 #include "TorqueCurve.h"
 #include "TurboJet.h"
 #include "TurboProp.h"
-#include "VideoCamera.h"
 #include "GUIManager.h"
+#include "Utils.h"
 
 #include <OgreMaterialManager.h>
 #include <OgreSceneManager.h>
@@ -79,6 +75,7 @@
 #include <OgreParticleSystem.h>
 #include <OgreEntity.h>
 
+static const char* ACTOR_ID_TOKEN = "@Actor_"; // Appended to material name, followed by actor ID (aka 'trucknum')
 
 using namespace RoR;
 
@@ -138,20 +135,122 @@ void RigSpawner::Setup(
     m_messages_num_other = 0;
 }
 
+void RigSpawner::CalcMemoryRequirements(ActorMemoryRequirements& req, RigDef::File::Module* module_def)
+{
+    // 'nodes'
+    req.num_nodes += module_def->nodes.size();
+    for (auto& def: module_def->nodes)
+    {
+        if (BITMASK_IS_1(def.options, RigDef::Node::OPTION_h_HOOK_POINT))
+        {
+            req.num_beams += 1;
+        }
+    }
+
+    // 'beams'
+    req.num_beams += module_def->beams.size();
+
+    // 'ties'
+    req.num_beams += module_def->ties.size();
+
+    // 'ropes'
+    req.num_beams += module_def->ropes.size();
+
+    // 'hydros'
+    req.num_beams += module_def->hydros.size();
+
+    // 'triggers'
+    req.num_beams  += module_def->triggers.size();
+    req.num_shocks += module_def->triggers.size();
+
+    // 'animators'
+    req.num_beams += module_def->animators.size();
+
+    // 'cinecam'
+    req.num_nodes += module_def->cinecam.size();
+    req.num_beams += module_def->cinecam.size() * 8;
+
+    // 'shocks' and 'shocks2'
+    req.num_beams  += module_def->shocks.size();
+    req.num_shocks += module_def->shocks.size();
+    req.num_beams  += module_def->shocks_2.size();
+    req.num_shocks += module_def->shocks_2.size();
+
+    // 'commands' and 'commands2' (unified)
+    req.num_beams += module_def->commands_2.size();
+
+    // 'rotators'
+    req.num_rotators += module_def->rotators.size();
+    req.num_rotators += module_def->rotators_2.size();
+
+    // 'wings'
+    req.num_wings += module_def->wings.size();
+
+    // 'wheels'
+    for (RigDef::Wheel& wheel: module_def->wheels)
+    {
+        req.num_nodes += wheel.num_rays * 2; // BuildWheelObjectAndNodes()
+        req.num_beams += wheel.num_rays * ((wheel.rigidity_node.IsValidAnyState()) ? 9 : 8); // BuildWheelBeams()
+    }
+
+    // 'wheels2'
+    for (RigDef::Wheel2& wheel2: module_def->wheels_2)
+    {
+        req.num_nodes += wheel2.num_rays * 4;
+        // Rim beams:  num_rays*10 (*11 with valid rigidity_node)
+        // Tyre beams: num_rays*14
+        req.num_beams += wheel2.num_rays * ((wheel2.rigidity_node.IsValidAnyState()) ? 25 : 24);
+    }
+
+    // 'meshwheels' & 'meshwheels2' (unified)
+    for (RigDef::MeshWheel& meshwheel: module_def->mesh_wheels)
+    {
+        req.num_nodes += meshwheel.num_rays * 2; // BuildWheelObjectAndNodes()
+        req.num_beams += meshwheel.num_rays * ((meshwheel.rigidity_node.IsValidAnyState()) ? 9 : 8); // BuildWheelBeams()
+    }
+
+    // 'flexbodywheels'
+    for (RigDef::FlexBodyWheel& flexwheel: module_def->flex_body_wheels)
+    {
+        req.num_nodes += flexwheel.num_rays * 4;
+        // Rim beams:      num_rays*8
+        // Tyre beams:     num_rays*10 (num_rays*11 with valid rigidity_node)
+        // Support beams:  num_rays*2
+        req.num_beams += flexwheel.num_rays * ((flexwheel.rigidity_node.IsValidAnyState()) ? 21 : 20);
+    }
+}
+
 void RigSpawner::InitializeRig()
 {
     SPAWNER_PROFILE_SCOPED();
 
     m_rig->mCamera = nullptr;
+
+    ActorMemoryRequirements req;
+    for (auto module: m_selected_modules) // _Root_ module is included
+    {
+        this->CalcMemoryRequirements(req, module.get());
+    }
+
+    // Allocate memory as needed
+    m_rig->beams = new beam_t[req.num_beams];
+    m_rig->nodes = new node_t[req.num_nodes];
+	//cosmic vole - for partial repairs November 23 2017
+	m_rig->damaged_node_pos = new Ogre::Vector3[req.num_nodes];
+	m_rig->target_node_pos = new Ogre::Vector3[req.num_nodes];
+
+    if (req.num_shocks > 0)
+        m_rig->shocks = new shock_t[req.num_shocks];
+
+    if (req.num_rotators > 0)
+        m_rig->rotators = new rotator_t[req.num_rotators];
+
+    if (req.num_wings > 0)
+        m_rig->wings = new wing_t[req.num_wings];
+
     // clear rig parent structure
-    memset(m_rig->nodes, 0, sizeof(node_t) * MAX_NODES);
-    m_rig->free_node = 0;
-    memset(m_rig->beams, 0, sizeof(beam_t) * MAX_BEAMS);
-    m_rig->free_beam = 0;
     memset(m_rig->contacters, 0, sizeof(contacter_t) * MAX_CONTACTERS);
     m_rig->free_contacter = 0;
-    memset(m_rig->rigidifiers, 0, sizeof(rigidifier_t) * MAX_RIGIDIFIERS);
-    m_rig->free_rigidifier = 0;
     memset(m_rig->wheels, 0, sizeof(wheel_t) * MAX_WHEELS);
     m_rig->free_wheel = 0;
     memset(m_rig->vwheels, 0, sizeof(vwheel_t) * MAX_WHEELS);
@@ -159,8 +258,6 @@ void RigSpawner::InitializeRig()
     m_rig->ropables.clear();
     m_rig->ties.clear();
     m_rig->hooks.clear();
-    memset(m_rig->wings, 0, sizeof(wing_t) * MAX_WINGS);
-    m_rig->free_wing = 0;
 
     // commands contain complex data structures, do not memset them ...
     for (int i=0;i<MAX_COMMANDS+1;i++)
@@ -171,15 +268,8 @@ void RigSpawner::InitializeRig()
         m_rig->commandkey[i].description="";
     }
 
-    memset(m_rig->rotators, 0, sizeof(rotator_t) * MAX_ROTATORS);
-    m_rig->free_rotator = 0;
-    m_rig->flares.clear();
-    m_rig->free_flare = 0;
     memset(m_rig->props, 0, sizeof(prop_t) * MAX_PROPS);
     m_rig->free_prop = 0;
-    memset(m_rig->shocks, 0, sizeof(shock_t) * MAX_SHOCKS);
-    m_rig->free_shock = 0;
-    m_rig->free_active_shock = 0;
     m_rig->exhausts.clear();
     memset(m_rig->cparticles, 0, sizeof(cparticle_t) * MAX_CPARTICLES);
     m_rig->free_cparticle = 0;
@@ -193,16 +283,9 @@ void RigSpawner::InitializeRig()
     m_rig->free_aeroengine = 0;
     memset(m_rig->cabs, 0, sizeof(int) * (MAX_CABS*3));
     m_rig->free_cab = 0;
-    memset(m_rig->subisback, 0, sizeof(int) * MAX_SUBMESHES);
     memset(m_rig->hydro, 0, sizeof(int) * MAX_HYDROS);
     m_rig->free_hydro = 0;
-    for (int i=0;i<MAX_TEXCOORDS;i++) m_rig->texcoords[i] = Ogre::Vector3::ZERO;
-    m_rig->free_texcoord=0;
-    memset(m_rig->subtexcoords, 0, sizeof(int) * MAX_SUBMESHES);
-    m_rig->free_sub = 0;
-    memset(m_rig->subcabs, 0, sizeof(int) * MAX_SUBMESHES);
     memset(m_rig->collcabs, 0, sizeof(int) * MAX_CABS);
-    memset(m_rig->collcabstype, 0, sizeof(int) * MAX_CABS);
     memset(m_rig->inter_collcabrate, 0, sizeof(collcab_rate_t) * MAX_CABS);
     m_rig->free_collcab = 0;
     memset(m_rig->intra_collcabrate, 0, sizeof(collcab_rate_t) * MAX_CABS);
@@ -214,22 +297,18 @@ void RigSpawner::InitializeRig()
     memset(m_rig->skidtrails, 0, sizeof(Skidmark *) * (MAX_WHEELS*2));
     memset(m_rig->flexbodies, 0, sizeof(FlexBody *) * MAX_FLEXBODIES);
     m_rig->free_flexbody = 0;
-    m_rig->vidcams.clear();
     m_rig->description.clear();
     m_rig->free_axle = 0;
     m_rig->free_camerarail = 0;
     m_rig->free_screwprop = 0;
 
-    memset(m_rig->guid, 0, 128);
-    
     m_rig->realtruckname = "";
-    m_rig->loading_finished=false;
     m_rig->forwardcommands=false;
 
     m_rig->wheel_contact_requested = false;
     m_rig->rescuer = false;
     m_rig->disable_default_sounds=false;
-    m_rig->slopeBrake=false;
+    m_rig->has_slope_brake=false;
     m_rig->categoryid=-1;
     m_rig->truckversion=-1;
     m_rig->externalcameramode=0;
@@ -237,20 +316,10 @@ void RigSpawner::InitializeRig()
     m_rig->authors.clear();
     m_rig->slideNodesConnectInstantly=false;
 
-    m_rig->default_beam_diameter=DEFAULT_BEAM_DIAMETER;
-    strcpy(m_rig->default_beam_material, "tracks/beam");
-    m_rig->default_plastic_coef=0;
-    m_rig->default_node_friction=NODE_FRICTION_COEF_DEFAULT;
-    m_rig->default_node_volume=NODE_VOLUME_COEF_DEFAULT;
-    m_rig->default_node_surface=NODE_SURFACE_COEF_DEFAULT;
-    m_rig->default_node_loadweight=NODE_LOADWEIGHT_DEFAULT;
-
     m_rig->odometerTotal = 0;
     m_rig->odometerUser  = 0;
     m_rig->dashBoardLayouts.clear();
 
-    memset(m_rig->default_node_options, 0, 49);
-    memset(m_rig->texname, 0, 1023);
     memset(m_rig->helpmat, 0, 255);
     
     m_rig->collrange=DEFAULT_COLLISION_RANGE;
@@ -273,7 +342,6 @@ void RigSpawner::InitializeRig()
     m_rig->propwheelcount=0;
     m_rig->free_commands=0;
     m_rig->fileformatversion=0;
-    m_rig->sectionconfigs.clear();
 
     m_rig->origin=Ogre::Vector3::ZERO;
     m_rig->mSlideNodes.clear();
@@ -283,8 +351,6 @@ void RigSpawner::InitializeRig()
     m_rig->hashelp=0;
     m_rig->cinecameranodepos[0]=-1;
     m_rig->freecinecamera=0;
-    m_rig->cablight = nullptr;
-    m_rig->cablightNode = nullptr;
     m_rig->deletion_sceneNodes.clear();
     m_rig->deletion_Objects.clear();
     m_rig->netCustomLightArray[0] = UINT_MAX;
@@ -292,7 +358,6 @@ void RigSpawner::InitializeRig()
     m_rig->netCustomLightArray[2] = UINT_MAX;
     m_rig->netCustomLightArray[3] = UINT_MAX;
     m_rig->netCustomLightArray_counter = 0;
-    m_rig->materialFunctionMapper = nullptr;
 
     m_rig->ispolice=false;
     m_rig->state=SLEEPING;
@@ -311,8 +376,6 @@ void RigSpawner::InitializeRig()
     m_rig->proped_wheels=0;
     m_rig->braked_wheels=0;
 
-    m_rig->speedomat = "";
-    m_rig->tachomat = "";
     m_rig->speedoMax=140;
     m_rig->useMaxRPMforGUI=false;
     m_rig->minimass=50.0;
@@ -321,7 +384,6 @@ void RigSpawner::InitializeRig()
     m_rig->advanced_node_drag=0;
     m_rig->advanced_total_drag=0;
     m_rig->freecamera=0;
-    m_rig->hasEmissivePass=0;
     m_rig->cabMesh = nullptr;
     m_rig->cabNode = nullptr;
     m_rig->cameranodepos[0]=-1;
@@ -331,12 +393,9 @@ void RigSpawner::InitializeRig()
 
     m_rig->subMeshGroundModelName = "";
 
-    m_rig->materialReplacer = new MaterialReplacer();
-
-    m_rig->beamHash = "";
-
 #ifdef USE_ANGELSCRIPT
     m_rig->vehicle_ai = new VehicleAI(m_rig);
+	m_rig->vehicle_ai->SetSimController(m_sim_controller);
 #endif // USE_ANGELSCRIPT
 
     /* Init code from Beam::Beam() */
@@ -354,8 +413,6 @@ void RigSpawner::InitializeRig()
     m_rig->antilockbrake = 0;
 
     m_rig->cabMesh = nullptr;
-    m_rig->cablight = nullptr;
-    m_rig->cablightNode = nullptr;
 
     m_rig->cc_mode = false;
     m_rig->cc_can_brake = false;
@@ -389,20 +446,15 @@ void RigSpawner::InitializeRig()
 
     m_rig->tractioncontrol = 0;
 
-#ifdef USE_MYGUI
+
     m_rig->dash = new DashBoardManager();
-#endif // USE_MYGUI
+
 
 #ifdef FEAT_TIMING
     // this enables beam engine timing statistics
     statistics = BES.getClient(tnum, BES_CORE);
     statistics_gfx = BES.getClient(tnum, BES_GFX);
 #endif
-
-    for (int i=0; i<MAX_SUBMESHES; i++)
-    {
-        m_rig->subisback[i] = 0;
-    }
 
     m_rig->simpleSkeletonNode = gEnv->sceneManager->getRootSceneNode()->createChildSceneNode();
     m_rig->deletion_sceneNodes.emplace_back(m_rig->simpleSkeletonNode);
@@ -425,7 +477,7 @@ void RigSpawner::InitializeRig()
     m_rig->submesh_ground_model = gEnv->collisions->defaultgm;
     m_rig->cparticle_enabled = App::GetGfxParticlesMode() == 1;
 
-    DustManager& dustman = BeamFactory::getSingleton().GetParticleManager();
+    DustManager& dustman = m_sim_controller->GetBeamFactory()->GetParticleManager();
     m_rig->dustp   = dustman.getDustPool("dust");
     m_rig->dripp   = dustman.getDustPool("drip");
     m_rig->sparksp = dustman.getDustPool("sparks");
@@ -433,7 +485,6 @@ void RigSpawner::InitializeRig()
     m_rig->splashp = dustman.getDustPool("splash");
     m_rig->ripplep = dustman.getDustPool("ripple");
 
-    m_rig->materialFunctionMapper = new MaterialFunctionMapper();
     m_rig->cmdInertia   = new CmdKeyInertia();
     m_rig->hydroInertia = new CmdKeyInertia();
     m_rig->rotaInertia  = new CmdKeyInertia();
@@ -443,18 +494,36 @@ void RigSpawner::InitializeRig()
     
     m_rig->m_definition = m_file;
 
+    m_rig->m_definition = m_file;
+
     m_flex_factory = RoR::FlexFactory(
-        m_rig->materialFunctionMapper, 
-        m_rig->materialReplacer, 
-        m_rig->usedSkin, 
-        m_rig->nodes,
+        this,
         BSETTING("Flexbody_UseCache", false),
         m_cache_entry_number
         );
 
     m_flex_factory.CheckAndLoadFlexbodyCache();
 
-    
+    std::stringstream grp_name;
+    grp_name << m_rig->truckname << ACTOR_ID_TOKEN << m_rig->trucknum;
+    Ogre::ResourceGroupManager::getSingleton().createResourceGroup(grp_name.str());
+    m_custom_resource_group = grp_name.str();
+
+    m_placeholder_managedmat = RoR::OgreSubsystem::GetMaterialByName("rigsofrods/managedmaterial-placeholder"); // Built-in
+
+    m_apply_simple_materials = BSETTING("SimpleMaterials", false);
+    if (m_apply_simple_materials)
+    {
+        m_simple_material_base = RoR::OgreSubsystem::GetMaterialByName("tracks/simple"); // Built-in material
+        if (m_simple_material_base.isNull())
+        {
+            this->AddMessage(Message::TYPE_INTERNAL_ERROR, "Failed to load built-in material 'tracks/simple'; disabling 'SimpleMaterials'");
+            m_apply_simple_materials = false;
+        }
+    }
+
+    m_curr_mirror_prop_type = CustomMaterial::MirrorPropType::MPROP_NONE;
+    m_curr_mirror_prop_scenenode = nullptr;
 }
 
 void RigSpawner::FinalizeRig()
@@ -532,22 +601,14 @@ void RigSpawner::FinalizeRig()
         //inform wing segments
         float span=GetNode(m_rig->wings[m_first_wing_index].fa->nfrd).RelPosition.distance(GetNode(m_rig->wings[m_rig->free_wing-1].fa->nfld).RelPosition);
         
-        //parser_warning(c, "Full Wing "+TOSTRING(wingstart)+"-"+TOSTRING(free_wing-1)+" SPAN="+TOSTRING(span)+" AREA="+TOSTRING(wingarea), PARSER_INFO);
         m_rig->wings[m_first_wing_index].fa->enableInducedDrag(span,m_wing_area, false);
         m_rig->wings[m_rig->free_wing-1].fa->enableInducedDrag(span,m_wing_area, true);
         //wash calculator
         WashCalculator();
     }
     //add the cab visual
-    if (m_rig->free_texcoord>0 && m_rig->free_cab>0)
+    if (!m_oldstyle_cab_texcoords.empty() && m_rig->free_cab>0)
     {
-        //closure
-        m_rig->subtexcoords[m_rig->free_sub]=m_rig->free_texcoord;
-        m_rig->subcabs[m_rig->free_sub]=m_rig->free_cab;
-        char wname[256];
-        sprintf(wname, "cab-%s",m_rig->truckname);
-        char wnamei[256];
-        sprintf(wnamei, "cabobj-%s",m_rig->truckname);
         //the cab materials are as follow:
         //texname: base texture with emissive(2 pass) or without emissive if none available(1 pass), alpha cutting
         //texname-trans: transparency texture (1 pass)
@@ -558,40 +619,20 @@ void RigSpawner::FinalizeRig()
         //0: normal texture
         //1: transparent (windows)
         //2: emissive
-        /*strcpy(texname, "testtex");
-        char transmatname[256];
-        sprintf(transmatname, "%s-trans", texname);
-        char backmatname[256];
-        sprintf(backmatname, "%s-back", texname);
-        hasEmissivePass=1;*/
 
-        Ogre::MaterialPtr mat=Ogre::MaterialManager::getSingleton().getByName(m_rig->texname);
+        Ogre::MaterialPtr mat = RoR::OgreSubsystem::GetMaterialByName(m_cab_material_name);
         if (mat.isNull())
         {
-            
-#ifdef USE_MYGUI
-            RoR::Console *console = RoR::App::GetConsole();
-            if (console) console->putMessage(
-                Console::CONSOLE_MSGTYPE_INFO, 
-                Console::CONSOLE_SYSTEM_ERROR, 
-                "unable to load vehicle (Material '"+Ogre::String(m_rig->texname)+"' missing!): " + m_rig->realtruckname, 
-                "error.png", 
-                30000, 
-                true
-            );
-            RoR::App::GetGuiManager()->PushNotification("Notice:", "unable to load vehicle (Material '" + Ogre::String(m_rig->texname) + "' missing!): " + m_rig->realtruckname);
-#endif // USE_MYGUI
-
-            Ogre::String msg = "Material '"+Ogre::String(m_rig->texname)+"' missing!";
+            Ogre::String msg = "Material '"+m_cab_material_name+"' missing!";
             AddMessage(Message::TYPE_ERROR, msg);
             return;
         }
 
         //-trans
         char transmatname[256];
-        sprintf(transmatname, "%s-trans", m_rig->texname);
+        sprintf(transmatname, "%s-trans", m_cab_material_name.c_str());
         Ogre::MaterialPtr transmat=mat->clone(transmatname);
-        if (mat->getTechnique(0)->getNumPasses()>1)
+        if (mat->getTechnique(0)->getNumPasses()>1) // If there's the "emissive pass", remove it from the 'transmat'
         {
             transmat->getTechnique(0)->removePass(1);
         }
@@ -602,12 +643,13 @@ void RigSpawner::FinalizeRig()
             transmat->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setTextureFiltering(Ogre::TFO_NONE);
         }
         transmat->compile();
+        m_cab_trans_material = transmat;
 
         //-back
         char backmatname[256];
-        sprintf(backmatname, "%s-back", m_rig->texname);
+        sprintf(backmatname, "%s-back", m_cab_material_name.c_str());
         Ogre::MaterialPtr backmat=mat->clone(backmatname);
-        if (mat->getTechnique(0)->getNumPasses()>1)
+        if (mat->getTechnique(0)->getNumPasses()>1)// If there's the "emissive pass", remove it from the 'transmat'
         {
             backmat->getTechnique(0)->removePass(1);
         }
@@ -625,105 +667,49 @@ void RigSpawner::FinalizeRig()
         {
             backmat->setReceiveShadows(false);
         }
-        //just in case
-        //backmat->getTechnique(0)->getPass(0)->setSceneBlending(SBT_TRANSPARENT_ALPHA);
-        //backmat->getTechnique(0)->getPass(0)->setAlphaRejectSettings(CMPF_GREATER, 128);
         backmat->compile();
 
-        //-noem and -noem-trans
-        if (mat->getTechnique(0)->getNumPasses()>1)
-        {
-            m_rig->hasEmissivePass=1;
-            char clomatname[256];
-            sprintf(clomatname, "%s-noem", m_rig->texname);
-            Ogre::MaterialPtr clomat=mat->clone(clomatname);
-            clomat->getTechnique(0)->removePass(1);
-            clomat->compile();
-        }
-
-        //base texture is not modified
-        //	mat->compile();
-
-
-        //parser_warning(c, "creating mesh", PARSER_INFO);
-        m_rig->cabMesh =new FlexObj(
-            m_rig->nodes, 
-            m_rig->free_texcoord, 
-            m_rig->texcoords, 
-            m_rig->free_cab, 
-            m_rig->cabs, 
-            m_rig->free_sub, 
-            m_rig->subtexcoords, 
-            m_rig->subcabs, 
-            m_rig->texname, 
-            wname, 
-            m_rig->subisback, 
-            backmatname, 
-            transmatname
+        char cab_material_name_cstr[1000] = {};
+        strncpy(cab_material_name_cstr, m_cab_material_name.c_str(), 999);
+        std::string mesh_name = this->ComposeName("VehicleCabMesh", 0);
+        m_rig->cabMesh =new FlexObj( // Names in FlexObj ctor
+            m_rig->nodes,            // node_t* nds
+            m_oldstyle_cab_texcoords,// std::vector<CabNodeTexcoords>& texcoords
+            m_rig->free_cab,         // int     numtriangles
+            m_rig->cabs,             // int*    triangles
+            m_oldstyle_cab_submeshes,// std::vector<CabSubmesh>& submeshes
+            cab_material_name_cstr,          // char*   texname
+            mesh_name.c_str(),
+            backmatname,             // char*   backtexname
+            transmatname             // char*   transtexname
         );
-        //parser_warning(c, "creating entity", PARSER_INFO);
 
-        
-        //parser_warning(c, "creating cabnode", PARSER_INFO);
         m_rig->cabNode = gEnv->sceneManager->getRootSceneNode()->createChildSceneNode();
         Ogre::Entity *ec = nullptr;
         try
         {
-            //parser_warning(c, "loading cab", PARSER_INFO);
-            ec = gEnv->sceneManager->createEntity(wnamei, wname);
-            //		ec->setRenderQueueGroup(RENDER_QUEUE_6);
-            //parser_warning(c, "attaching cab", PARSER_INFO);
+            ec = gEnv->sceneManager->createEntity(this->ComposeName("VehicleCabEntity", 0), mesh_name);
+            this->SetupNewEntity(ec, Ogre::ColourValue(0.5, 1, 0.5));
             if (ec)
             {
-                m_rig->deletion_Entities.emplace_back(ec);
                 m_rig->cabNode->attachObject(ec);
             }
-        } catch(...)
-        {
-            //parser_warning(c, "error loading mesh: "+String(wname));
-            Ogre::String msg = "error loading mesh: "+Ogre::String(wname);
-            AddMessage(Message::TYPE_ERROR, msg);
         }
-        MaterialFunctionMapper::replaceSimpleMeshMaterials(ec, Ogre::ColourValue(0.5, 1, 0.5));
-        if (m_rig->materialFunctionMapper != nullptr)
+        catch (...)
         {
-            m_rig->materialFunctionMapper->replaceMeshMaterials(ec);
+            this->AddMessage(Message::TYPE_ERROR, "error loading mesh: "+mesh_name);
         }
-        if (m_rig->materialReplacer != nullptr) 
-        {
-            m_rig->materialReplacer->replaceMeshMaterials(ec);
-        }
-        if (m_rig->usedSkin != nullptr) 
-        {
-            m_rig->usedSkin->replaceMeshMaterials(ec);
-        }
-        
+        m_rig->cabEntity = ec;
     };
-    //parser_warning(c, "cab ok", PARSER_INFO);
-    //	mWindow->setDebugText("Beam number:"+ TOSTRING(free_beam));
-/*
-    if (c.mode == BTS_DESCRIPTION)
-        parser_warning(c, "description section not closed with end_description", PARSER_ERROR);
-
-    if (c.mode == BTS_COMMENT)
-        parser_warning(c, "comment section not closed with end_comment", PARSER_ERROR);
-
-    if (c.mode == BTS_SECTION)
-        parser_warning(c, "section section not closed with end_section", PARSER_ERROR);
-*/
-    // check for some things
-    if (strnlen(m_rig->guid, 128) == 0)
-    {
-        //parser_warning(c, "vehicle uses no GUID, skinning will be impossible", PARSER_OBSOLETE);
-        AddMessage(Message::TYPE_WARNING, "vehicle uses no GUID, skinning will be impossible");
-    }
 
     m_rig->lowestnode = FindLowestNodeInRig();
     m_rig->lowestcontactingnode = FindLowestContactingNodeInRig();
 
-    UpdateCollcabContacterNodes();
+    this->UpdateCollcabContacterNodes();
 
     m_flex_factory.SaveFlexbodiesToCache();
+
+    this->FinalizeGfxSetup(); // Creates the GfxActor
 }
 
 /* -------------------------------------------------------------------------- */
@@ -783,40 +769,50 @@ void RigSpawner::ProcessTurbojet(RigDef::Turbojet & def)
     SPAWNER_PROFILE_SCOPED();
 
     int front,back,ref;
-    front = GetNodeIndexOrThrow(def.front_node);//parse_node_number(c, args[0]);
-    back  = GetNodeIndexOrThrow(def.back_node);//parse_node_number(c, args[1]);
-    ref   = GetNodeIndexOrThrow(def.side_node);//parse_node_number(c, args[2]);
+    front = GetNodeIndexOrThrow(def.front_node);
+    back  = GetNodeIndexOrThrow(def.back_node);
+    ref   = GetNodeIndexOrThrow(def.side_node);
     
-    char propname[256];
-    sprintf(propname, "turbojet-%s-%i", m_rig->truckname, m_rig->free_aeroengine);
     Turbojet *tj=new Turbojet(
-        propname, 
         m_rig->free_aeroengine, 
         m_rig->trucknum, 
         m_rig->nodes, 
         front, 
         back, 
         ref, 
-        def.dry_thrust, //drthrust, 
-        def.is_reversable != 0, //rev!=0, 
-        def.wet_thrust > 0, //abthrust>0, 
-        def.wet_thrust, //abthrust, 
-        def.front_diameter,
-        def.back_diameter, //bdiam, 
-        def.nozzle_length, //len, 
-        m_rig->disable_smoke, 
-        m_rig->heathaze, 
-        m_rig->materialFunctionMapper, 
-        m_rig->usedSkin, 
-        m_rig->materialReplacer);
-
+        def.dry_thrust,
+        def.is_reversable != 0,
+        def.wet_thrust,
+        def.front_diameter, 
+        m_rig->heathaze);
+    
+    // Visuals
+    std::string nozzle_name = this->ComposeName("TurbojetNozzle", m_rig->free_aeroengine);
+    Ogre::Entity* nozzle_ent = gEnv->sceneManager->createEntity(nozzle_name, "nozzle.mesh");
+    this->SetupNewEntity(nozzle_ent, Ogre::ColourValue(1, 0.5, 0.5));
+    Ogre::Entity* afterburn_ent = nullptr;
+    if (def.wet_thrust > 0.f)
+    {
+        std::string flame_name = this->ComposeName("AfterburnerFlame", m_rig->free_aeroengine);
+        afterburn_ent = gEnv->sceneManager->createEntity(flame_name, "abflame.mesh");
+        this->SetupNewEntity(afterburn_ent, Ogre::ColourValue(1, 1, 0));
+    }
+    std::string propname = this->ComposeName("Turbojet", m_rig->free_aeroengine);
+    tj->SetupVisuals(propname, nozzle_ent, def.back_diameter, def.nozzle_length, afterburn_ent, m_rig->disable_smoke);
+    
     m_rig->aeroengines[m_rig->free_aeroengine]=tj;
     m_rig->driveable=AIRPLANE;
     if (m_rig->autopilot == nullptr && m_rig->state != NETWORKED)
         m_rig->autopilot=new Autopilot(m_rig->trucknum);
-    //if (audio) audio->setupAeroengines(TURBOJETS);
-    
+
     m_rig->free_aeroengine++;
+}
+
+std::string RigSpawner::ComposeName(const char* type, int number)
+{
+    char buf[500];
+    snprintf(buf, 500, "%s_%d%s%d", type, number, ACTOR_ID_TOKEN, m_rig->trucknum);
+    return buf;
 }
 
 void RigSpawner::ProcessScrewprop(RigDef::Screwprop & def)
@@ -833,6 +829,7 @@ void RigSpawner::ProcessScrewprop(RigDef::Screwprop & def)
     int top_node_idx = GetNodeIndexOrThrow(def.top_node);
 
     m_rig->screwprops[m_rig->free_screwprop] = new Screwprop(
+        &m_sim_controller->GetBeamFactory()->GetParticleManager(),
         m_rig->nodes,
         ref_node_idx,
         back_node_idx,
@@ -1013,15 +1010,14 @@ void RigSpawner::ProcessAirbrake(RigDef::Airbrake & def)
         m_rig->truckname,
         m_rig->free_airbrake, 
         GetNodePointerOrThrow(def.reference_node), 
-        GetNodePointerOrThrow(def.x_axis_node),//&nodes[nx], 
-        GetNodePointerOrThrow(def.y_axis_node),//&nodes[ny], 
-        GetNodePointerOrThrow(def.aditional_node),//&nodes[na], 
-        def.offset,//Vector3(ox,oy,oz), 
-        def.width,//wd, 
-        def.height,//len, 
-        def.max_inclination_angle,//maxang, 
-        m_rig->texname, 
-        //tx1,tx2,tx3,tx4,liftcoef);
+        GetNodePointerOrThrow(def.x_axis_node),
+        GetNodePointerOrThrow(def.y_axis_node),
+        GetNodePointerOrThrow(def.aditional_node),
+        def.offset,
+        def.width, 
+        def.height,
+        def.max_inclination_angle,
+        m_cab_material_name,
         def.texcoord_x1,
         def.texcoord_y1,
         def.texcoord_x2,
@@ -1035,21 +1031,11 @@ void RigSpawner::ProcessWing(RigDef::Wing & def)
 {
     SPAWNER_PROFILE_SCOPED();
 
-    // Perform checks
-    if (! this->CheckWingLimit(1)) { return; }
-
     if ((m_first_wing_index != -1) && (m_rig->wings[m_rig->free_wing - 1].fa == nullptr))
     {
         this->AddMessage(Message::TYPE_ERROR, "Unable to process wing, previous wing has no Airfoil");
         return;
     }
-
-    // Try loading the mesh (may fail)
-    Ogre::Entity* entity = nullptr;
-    char wing_name[200];
-    char wing_obj_name[200];
-    sprintf(wing_name,     "wing-%s-%d",    m_rig->truckname, m_rig->free_wing);
-    sprintf(wing_obj_name, "wingobj-%s-%d", m_rig->truckname, m_rig->free_wing);
 
     // Create airfoil
     int node_indices[8];
@@ -1058,6 +1044,7 @@ void RigSpawner::ProcessWing(RigDef::Wing & def)
         node_indices[i] = this->GetNodeIndexOrThrow(def.nodes[i]);
     }
 
+    const std::string wing_name = this->ComposeName("Wing", m_rig->free_wing);
     auto flex_airfoil = new FlexAirfoil(
         wing_name,
         m_rig->nodes,
@@ -1069,7 +1056,7 @@ void RigSpawner::ProcessWing(RigDef::Wing & def)
         node_indices[5],
         node_indices[6],
         node_indices[7],
-        m_rig->texname,
+        m_cab_material_name,
         Ogre::Vector2(def.tex_coords[0], def.tex_coords[1]),
         Ogre::Vector2(def.tex_coords[2], def.tex_coords[3]),
         Ogre::Vector2(def.tex_coords[4], def.tex_coords[5]),
@@ -1084,10 +1071,13 @@ void RigSpawner::ProcessWing(RigDef::Wing & def)
         m_rig->state != NETWORKED
     );
 
+    Ogre::Entity* entity = nullptr;
     try
     {
-        entity = gEnv->sceneManager->createEntity(wing_obj_name, wing_name);
+        const std::string wing_instance_name = this->ComposeName("WingEntity", m_rig->free_wing);
+        entity = gEnv->sceneManager->createEntity(wing_instance_name, wing_name);
         m_rig->deletion_Entities.emplace_back(entity);
+        this->SetupNewEntity(entity, Ogre::ColourValue(0.5, 1, 0));
     }
     catch (...)
     {
@@ -1310,21 +1300,6 @@ void RigSpawner::ProcessWing(RigDef::Wing & def)
         }
     }
 
-    // Adjust material
-    MaterialFunctionMapper::replaceSimpleMeshMaterials(entity, Ogre::ColourValue(0.5, 1, 0));
-    if (m_rig->materialFunctionMapper) 
-    {
-        m_rig->materialFunctionMapper->replaceMeshMaterials(entity);
-    }
-    if (m_rig->materialReplacer) 
-    {
-        m_rig->materialReplacer->replaceMeshMaterials(entity);
-    }
-    if (m_rig->usedSkin) 
-    {
-        m_rig->usedSkin->replaceMeshMaterials(entity);
-    }
-
     // Add new wing to rig
     m_rig->wings[m_rig->free_wing].fa = flex_airfoil;
     m_rig->wings[m_rig->free_wing].cnode = gEnv->sceneManager->getRootSceneNode()->createChildSceneNode();
@@ -1425,27 +1400,12 @@ void RigSpawner::ProcessExtCamera(RigDef::ExtCamera & def)
     }
 }
 
-void RigSpawner::ProcessVideoCamera(RigDef::VideoCamera & def)
-{
-    SPAWNER_PROFILE_SCOPED();
-
-    VideoCamera *v = VideoCamera::Setup(this, def);
-    if (v != nullptr)
-    {
-        m_rig->vidcams.push_back(v);
-    }
-    else
-    {
-        AddMessage(Message::TYPE_ERROR, "Failed to create video camera");
-    }
-}
-
 void RigSpawner::ProcessGuiSettings(RigDef::GuiSettings & def)
 {
     SPAWNER_PROFILE_SCOPED();
 
-    m_rig->tachomat = def.tacho_material;
-    m_rig->speedomat = def.speedo_material;
+    // Currently unused (was relevant to overlay-based HUD): def.tacho_material; def.speedo_material;
+
     if (! def.help_material.empty())
     {
         strncpy(m_rig->helpmat, def.help_material.c_str(), sizeof(m_rig->helpmat) - 1);
@@ -1516,13 +1476,12 @@ void RigSpawner::ProcessExhaust(RigDef::Exhaust & def)
         material_name = def.material_name;
     }
 
-    if (m_rig->usedSkin)
+    if (m_rig->usedSkin != nullptr)
     {
-        Ogre::String newMat = m_rig->usedSkin->getReplacementForMaterial(material_name);
-        if (!newMat.empty())
+        auto search = m_rig->usedSkin->replace_materials.find(material_name);
+        if (search != m_rig->usedSkin->replace_materials.end())
         {
-            //strncpy(material, newMat.c_str(), 50);
-            material_name = newMat;
+            material_name = search->second;
         }
     }
 
@@ -1570,12 +1529,6 @@ void RigSpawner::ProcessSubmesh(RigDef::Submesh & def)
         return;
     }
 
-    m_rig->subtexcoords[m_rig->free_sub]=m_rig->free_texcoord;
-    m_rig->subcabs[m_rig->free_sub]=m_rig->free_cab;
-    m_rig->free_sub++;
-    //initialize the next
-    m_rig->subisback[m_rig->free_sub]=0;
-
     /* TEXCOORDS */
 
     std::vector<RigDef::Texcoord>::iterator texcoord_itor = def.texcoords.begin();
@@ -1586,8 +1539,11 @@ void RigSpawner::ProcessSubmesh(RigDef::Submesh & def)
             break;
         }
 
-        m_rig->texcoords[m_rig->free_texcoord] = Ogre::Vector3(GetNodeIndexOrThrow(texcoord_itor->node), texcoord_itor->u, texcoord_itor->v);//(id, x, y);
-        m_rig->free_texcoord++;
+        CabTexcoord texcoord;
+        texcoord.node_id    = GetNodeIndexOrThrow(texcoord_itor->node);
+        texcoord.texcoord_u = texcoord_itor->u;
+        texcoord.texcoord_v = texcoord_itor->v;
+        m_oldstyle_cab_texcoords.push_back(texcoord);
     }
 
     /* CAB */
@@ -1608,66 +1564,47 @@ void RigSpawner::ProcessSubmesh(RigDef::Submesh & def)
             return;
         }
 
+        bool mk_buoyance = false;
+
         m_rig->cabs[m_rig->free_cab*3]=GetNodeIndexOrThrow(cab_itor->nodes[0]); //id1;
         m_rig->cabs[m_rig->free_cab*3+1]=GetNodeIndexOrThrow(cab_itor->nodes[1]);//id2;
         m_rig->cabs[m_rig->free_cab*3+2]=GetNodeIndexOrThrow(cab_itor->nodes[2]);//id3;
 
-        //if (type=='c') 
         if (BITMASK_IS_1(cab_itor->options, RigDef::Cab::OPTION_c_CONTACT))
         {
             m_rig->collcabs[m_rig->free_collcab]=m_rig->free_cab; 
-            m_rig->collcabstype[m_rig->free_collcab]=0; 
             m_rig->free_collcab++;
         }
-        //if (type=='p') 
         if (BITMASK_IS_1(cab_itor->options, RigDef::Cab::OPTION_p_10xTOUGHER))
         {
             m_rig->collcabs[m_rig->free_collcab]=m_rig->free_cab; 
-            m_rig->collcabstype[m_rig->free_collcab]=1; 
             m_rig->free_collcab++;
         }
-        //if (type=='u') 
         if (BITMASK_IS_1(cab_itor->options, RigDef::Cab::OPTION_u_INVULNERABLE))
         {
             m_rig->collcabs[m_rig->free_collcab]=m_rig->free_cab; 
-            m_rig->collcabstype[m_rig->free_collcab]=2; 
             m_rig->free_collcab++;
         }
-        //if (type=='b')
         if (BITMASK_IS_1(cab_itor->options, RigDef::Cab::OPTION_b_BUOYANT))
         {
             m_rig->buoycabs[m_rig->free_buoycab]=m_rig->free_cab; 
-            m_rig->collcabstype[m_rig->free_collcab]=0; 
             m_rig->buoycabtypes[m_rig->free_buoycab]=Buoyance::BUOY_NORMAL; 
             m_rig->free_buoycab++;   
-            if (m_rig->buoyance == nullptr)
-            {
-                m_rig->buoyance=new Buoyance();
-            }
+            mk_buoyance = true;
         }
-        //if (type=='r')
         if (BITMASK_IS_1(cab_itor->options, RigDef::Cab::OPTION_r_BUOYANT_ONLY_DRAG))
         {
             m_rig->buoycabs[m_rig->free_buoycab]=m_rig->free_cab; 
-            m_rig->collcabstype[m_rig->free_collcab]=0; 
             m_rig->buoycabtypes[m_rig->free_buoycab]=Buoyance::BUOY_DRAGONLY; 
             m_rig->free_buoycab++; 
-            if (m_rig->buoyance == nullptr)
-            {
-                m_rig->buoyance=new Buoyance();
-            }
+            mk_buoyance = true;
         }
-        //if (type=='s') 
         if (BITMASK_IS_1(cab_itor->options, RigDef::Cab::OPTION_s_BUOYANT_NO_DRAG))
         {
             m_rig->buoycabs[m_rig->free_buoycab]=m_rig->free_cab; 
-            m_rig->collcabstype[m_rig->free_collcab]=0; 
             m_rig->buoycabtypes[m_rig->free_buoycab]=Buoyance::BUOY_DRAGLESS; 
             m_rig->free_buoycab++; 
-            if (m_rig->buoyance == nullptr)
-            {
-                m_rig->buoyance=new Buoyance();
-            }
+            mk_buoyance = true;
         }
 
         int collcabs_type = -1;
@@ -1704,27 +1641,32 @@ void RigSpawner::ProcessSubmesh(RigDef::Submesh & def)
             }
 
             m_rig->collcabs[m_rig->free_collcab]=m_rig->free_cab;
-            m_rig->collcabstype[m_rig->free_collcab]=collcabs_type;
             m_rig->free_collcab++;
             m_rig->buoycabs[m_rig->free_buoycab]=m_rig->free_cab; 
             m_rig->buoycabtypes[m_rig->free_buoycab]=Buoyance::BUOY_NORMAL; 
             m_rig->free_buoycab++; 
-            if (m_rig->buoyance == nullptr)
-            {
-                m_rig->buoyance=new Buoyance();
-            }
+            mk_buoyance = true;
+        }
+
+        if (mk_buoyance && (m_rig->buoyance == nullptr))
+        {
+            auto& dustman = m_sim_controller->GetBeamFactory()->GetParticleManager();
+            m_rig->buoyance=new Buoyance(dustman.getDustPool("splash"), dustman.getDustPool("ripple"));
         }
         m_rig->free_cab++;
     }
+
+    //close the current mesh
+    CabSubmesh submesh;
+    submesh.texcoords_pos = m_oldstyle_cab_texcoords.size();
+    submesh.cabs_pos = static_cast<unsigned int>(m_rig->free_cab);
+    submesh.backmesh_type = CabSubmesh::BACKMESH_NONE;
+    m_oldstyle_cab_submeshes.push_back(submesh);
 
     /* BACKMESH */
 
     if (def.backmesh)
     {
-
-        //close the current mesh
-        m_rig->subtexcoords[m_rig->free_sub]=m_rig->free_texcoord;
-        m_rig->subcabs[m_rig->free_sub]=m_rig->free_cab;
 
         // Check limit
         if (! CheckCabLimit(1))
@@ -1732,50 +1674,40 @@ void RigSpawner::ProcessSubmesh(RigDef::Submesh & def)
             return;
         }
 
-        //make it normal
-        m_rig->subisback[m_rig->free_sub]=0;
-        m_rig->free_sub++;
-
-        //add an extra front mesh
-        int i;
-        int start = (m_rig->free_sub==1) ? 0 : m_rig->subtexcoords[m_rig->free_sub-2];
+        // === add an extra front mesh ===
         //texcoords
-        for (i=start; i<m_rig->subtexcoords[m_rig->free_sub-1]; i++)
+        int uv_start = (m_oldstyle_cab_submeshes.size()==1) ? 0 : (m_oldstyle_cab_submeshes.rbegin()+1)->texcoords_pos;
+        for (size_t i=uv_start; i<m_oldstyle_cab_submeshes.back().texcoords_pos; i++)
         {
-            m_rig->texcoords[m_rig->free_texcoord] = m_rig->texcoords[i];;
-            m_rig->free_texcoord++;
+            m_oldstyle_cab_texcoords.push_back(m_oldstyle_cab_texcoords[i]);
         }
         //cab
-        start =  (m_rig->free_sub==1) ? 0 : m_rig->subcabs[m_rig->free_sub-2];
-
-        for (i=start; i<m_rig->subcabs[m_rig->free_sub-1]; i++)
+        int cab_start =  (m_oldstyle_cab_submeshes.size()==1) ? 0 : (m_oldstyle_cab_submeshes.rbegin()+1)->cabs_pos;
+        for (size_t i=cab_start; i<m_oldstyle_cab_submeshes.back().cabs_pos; i++)
         {
             m_rig->cabs[m_rig->free_cab*3]=m_rig->cabs[i*3];
             m_rig->cabs[m_rig->free_cab*3+1]=m_rig->cabs[i*3+1];
             m_rig->cabs[m_rig->free_cab*3+2]=m_rig->cabs[i*3+2];
             m_rig->free_cab++;
         }
-        //finish it, this is a window
-        m_rig->subisback[m_rig->free_sub]=2;
-        //close the current mesh
-        m_rig->subtexcoords[m_rig->free_sub]=m_rig->free_texcoord;
-        m_rig->subcabs[m_rig->free_sub]=m_rig->free_cab;
-        //make is transparent
-        m_rig->free_sub++;
+        // Finalize
+        CabSubmesh submesh;
+        submesh.backmesh_type = CabSubmesh::BACKMESH_TRANSPARENT;
+        submesh.texcoords_pos = m_oldstyle_cab_texcoords.size();
+        submesh.cabs_pos      = static_cast<unsigned int>(m_rig->free_cab);
+        m_oldstyle_cab_submeshes.push_back(submesh);
 
-
-        //add an extra back mesh
+        // === add an extra back mesh ===
         //texcoords
-        start = (m_rig->free_sub==1) ? 0 : m_rig->subtexcoords[m_rig->free_sub-2];
-        for (i=start; i<m_rig->subtexcoords[m_rig->free_sub-1]; i++)
+        uv_start = (m_oldstyle_cab_submeshes.size()==1) ? 0 : (m_oldstyle_cab_submeshes.rbegin()+1)->texcoords_pos;
+        for (size_t i=uv_start; i<m_oldstyle_cab_submeshes.back().texcoords_pos; i++)
         {
-            m_rig->texcoords[m_rig->free_texcoord]=m_rig->texcoords[i];;
-            m_rig->free_texcoord++;
+            m_oldstyle_cab_texcoords.push_back(m_oldstyle_cab_texcoords[i]);
         }
 
         //cab
-        start = (m_rig->free_sub==1) ? 0 : m_rig->subcabs[m_rig->free_sub-2];
-        for (i=start; i<m_rig->subcabs[m_rig->free_sub-1]; i++)
+        cab_start =  (m_oldstyle_cab_submeshes.size()==1) ? 0 : (m_oldstyle_cab_submeshes.rbegin()+1)->cabs_pos;
+        for (size_t i=cab_start; i<m_oldstyle_cab_submeshes.back().cabs_pos; i++)
         {
             m_rig->cabs[m_rig->free_cab*3]=m_rig->cabs[i*3+1];
             m_rig->cabs[m_rig->free_cab*3+1]=m_rig->cabs[i*3];
@@ -1783,7 +1715,12 @@ void RigSpawner::ProcessSubmesh(RigDef::Submesh & def)
             m_rig->free_cab++;
         }
     
-        m_rig->subisback[m_rig->free_sub]=1;
+        //close the current mesh
+        CabSubmesh submesh2;
+        submesh2.texcoords_pos = m_oldstyle_cab_texcoords.size();
+        submesh2.cabs_pos = static_cast<unsigned int>(m_rig->free_cab);
+        submesh2.backmesh_type = CabSubmesh::BACKMESH_OPAQUE;
+        m_oldstyle_cab_submeshes.push_back(submesh2);
     }
 }
 
@@ -1791,27 +1728,17 @@ void RigSpawner::ProcessFlexbody(std::shared_ptr<RigDef::Flexbody> def)
 {
     SPAWNER_PROFILE_SCOPED();
 
-    if (! CheckFlexbodyLimit(1))
+    if (!this->CheckFlexbodyLimit(1))
     {
         return;
     }
 
-    char unique_name[200];
-    sprintf(unique_name, "Flexbody-%s-%d", m_rig->truckname, m_rig->free_flexbody);
-
-    Ogre::Quaternion rot=Ogre::Quaternion(Ogre::Degree(def->rotation.z), Ogre::Vector3::UNIT_Z);
-    rot=rot*Ogre::Quaternion(Ogre::Degree(def->rotation.y), Ogre::Vector3::UNIT_Y);
-    rot=rot*Ogre::Quaternion(Ogre::Degree(def->rotation.x), Ogre::Vector3::UNIT_X);
-
-    /* Collect nodes */
+    // Collect nodes
     std::vector<unsigned int> node_indices;
-    node_indices.reserve(def->node_list.size());
     bool nodes_found = true;
-    auto node_itor = def->node_list.begin();
-    auto node_end  = def->node_list.end();
-    for (; node_itor != node_end; ++node_itor)
+    for (auto& node_def: def->node_list)
     {
-        auto result = this->GetNodeIndex(*node_itor);
+        auto result = this->GetNodeIndex(node_def);
         if (!result.second)
         {
             nodes_found = false;
@@ -1822,38 +1749,44 @@ void RigSpawner::ProcessFlexbody(std::shared_ptr<RigDef::Flexbody> def)
 
     if (! nodes_found)
     {
-        std::stringstream msg;
-        msg << "Failed to collect nodes from node-ranges, skipping flexbody '" << def->mesh_name << "'";
-        AddMessage(Message::TYPE_ERROR, msg.str());
+        this->AddMessage(Message::TYPE_ERROR, "Failed to collect nodes from node-ranges, skipping flexbody: " + def->mesh_name);
         return;
     }
 
-    int reference_node = FindNodeIndex(def->reference_node);
-    int x_axis_node = FindNodeIndex(def->x_axis_node);
-    int y_axis_node = FindNodeIndex(def->y_axis_node);
+    const int reference_node = this->FindNodeIndex(def->reference_node);
+    const int x_axis_node    = this->FindNodeIndex(def->x_axis_node);
+    const int y_axis_node    = this->FindNodeIndex(def->y_axis_node);
     if (reference_node == -1 || x_axis_node == -1 || y_axis_node == -1)
     {
-        AddMessage(Message::TYPE_ERROR, "Failed to find required nodes, skipping flexbody '" + def->mesh_name + "'");
+        this->AddMessage(Message::TYPE_ERROR, "Failed to find required nodes, skipping flexbody '" + def->mesh_name + "'");
+        return;
     }
 
-    auto * flexbody = m_flex_factory.CreateFlexBody(
-        m_rig->free_node, 
-        def->mesh_name.c_str(),
-        unique_name,
-        reference_node,
-        x_axis_node,
-        y_axis_node,
-        def->offset, 
-        rot,
-        node_indices
-        );
-    int camera_mode = (def->camera_settings.mode == RigDef::CameraSettings::MODE_CINECAM) 
-        ? (int)def->camera_settings.cinecam_index 
-        : (int)def->camera_settings.mode;
-    flexbody->setCameraMode(camera_mode);
+    Ogre::Quaternion rot=Ogre::Quaternion(Ogre::Degree(def->rotation.z), Ogre::Vector3::UNIT_Z);
+    rot=rot*Ogre::Quaternion(Ogre::Degree(def->rotation.y), Ogre::Vector3::UNIT_Y);
+    rot=rot*Ogre::Quaternion(Ogre::Degree(def->rotation.x), Ogre::Vector3::UNIT_X);
 
-    m_rig->flexbodies[m_rig->free_flexbody] = flexbody;
-    m_rig->free_flexbody++;
+    try
+    {
+        auto* flexbody = m_flex_factory.CreateFlexBody(
+            def.get(), reference_node, x_axis_node, y_axis_node, rot, node_indices);
+
+        if (flexbody == nullptr)
+            return; // Error already logged
+
+        if (def->camera_settings.mode == RigDef::CameraSettings::MODE_CINECAM)
+            flexbody->setCameraMode(static_cast<int>(def->camera_settings.cinecam_index));
+        else
+            flexbody->setCameraMode(static_cast<int>(def->camera_settings.mode));
+
+        m_rig->flexbodies[m_rig->free_flexbody] = flexbody;
+        m_rig->free_flexbody++;        
+    }
+    catch (Ogre::Exception& e)
+    {
+        this->AddMessage(Message::TYPE_ERROR, 
+            "Failed to create flexbody '" + def->mesh_name + "', reason:" + e.getFullDescription());
+    }
 }
 
 void RigSpawner::ProcessProp(RigDef::Prop & def)
@@ -1866,8 +1799,8 @@ void RigSpawner::ProcessProp(RigDef::Prop & def)
     }
 
     prop_t & prop = m_rig->props[m_rig->free_prop];
-    m_rig->free_prop++;
-    memset(&prop, 0, sizeof(prop_t)); /* Initialize prop memory to avoid invalid pointers. */
+    int prop_index = m_rig->free_prop;
+    memset(&prop, 0, sizeof(prop_t));
 
     prop.noderef         = GetNodeIndexOrThrow(def.reference_node);
     prop.nodex           = FindNodeIndex(def.x_axis_node);
@@ -1900,12 +1833,14 @@ void RigSpawner::ProcessProp(RigDef::Prop & def)
     if (def.special == RigDef::Prop::SPECIAL_MIRROR_LEFT)
     {
         prop.mirror = 1;
+        m_curr_mirror_prop_type = CustomMaterial::MirrorPropType::MPROP_LEFT;
     }
 
     /* Rear view mirror (right) */
     if (def.special == RigDef::Prop::SPECIAL_MIRROR_RIGHT)
     {
         prop.mirror = -1;
+        m_curr_mirror_prop_type = CustomMaterial::MirrorPropType::MPROP_RIGHT;
     }
 
     /* Custom steering wheel */
@@ -1927,23 +1862,21 @@ void RigSpawner::ProcessProp(RigDef::Prop & def)
         prop.wheelrotdegree = def.special_prop_dashboard.rotation_angle;
         prop.wheel = gEnv->sceneManager->getRootSceneNode()->createChildSceneNode();
         prop.wheelpos = steering_wheel_offset;
+        const std::string instance_name = this->ComposeName("SteeringWheelPropEntity", prop_index);
         prop.wheelmo = new MeshObject(
             def.special_prop_dashboard.mesh_name,
-            "",
+            instance_name,
             prop.wheel,
-            m_rig->usedSkin,
             m_enable_background_loading
             );
-        prop.wheelmo->setSimpleMaterialColour(Ogre::ColourValue(0, 0.5, 0.5));
-        prop.wheelmo->setMaterialFunctionMapper(m_rig->materialFunctionMapper, m_rig->materialReplacer);
+        this->SetupNewEntity(prop.wheelmo->getEntity(), Ogre::ColourValue(0, 0.5, 0.5));
     }
 
     /* CREATE THE PROP */
 
     prop.scene_node = gEnv->sceneManager->getRootSceneNode()->createChildSceneNode();
-    prop.mo = new MeshObject(def.mesh_name, "", prop.scene_node, m_rig->usedSkin, m_enable_background_loading);
-    prop.mo->setSimpleMaterialColour(Ogre::ColourValue(1, 1, 0));
-    prop.mo->setMaterialFunctionMapper(m_rig->materialFunctionMapper, m_rig->materialReplacer);
+    const std::string instance_name = this->ComposeName("PropEntity", prop_index);
+    prop.mo = new MeshObject(def.mesh_name, instance_name, prop.scene_node, m_enable_background_loading);
     prop.mo->setCastShadows(true); // Orig code {{ prop.mo->setCastShadows(shadowmode != 0); }}, shadowmode has default value 1 and changes with undocumented directive 'set_shadows'
     prop.beacontype = 'n'; // Orig: hardcoded in BTS_PROPS
 
@@ -2095,7 +2028,17 @@ void RigSpawner::ProcessProp(RigDef::Prop & def)
                 prop.beacon_flare_billboard_scene_node[k]->setVisible(false);
             }
         }
-    }	
+
+        if (m_curr_mirror_prop_type != CustomMaterial::MirrorPropType::MPROP_NONE)
+        {
+            m_curr_mirror_prop_scenenode = prop.mo->GetSceneNode();
+        }
+        this->SetupNewEntity(prop.mo->getEntity(), Ogre::ColourValue(1.f, 1.f, 0.f));
+    }
+
+    ++m_rig->free_prop;
+    m_curr_mirror_prop_scenenode = nullptr;
+    m_curr_mirror_prop_type = CustomMaterial::MirrorPropType::MPROP_NONE;
 
     /* PROCESS ANIMATIONS */
 
@@ -2357,29 +2300,6 @@ void RigSpawner::ProcessProp(RigDef::Prop & def)
     }
 }
 
-void RigSpawner::ProcessMaterialFlareBinding(RigDef::MaterialFlareBinding & def)
-{
-    SPAWNER_PROFILE_SCOPED();
-
-    std::stringstream mat_clone_name;
-    mat_clone_name << def.material_name << "_mfb_" << m_rig->truckname;
-    Ogre::MaterialPtr material = CloneMaterial(def.material_name, mat_clone_name.str());
-    if (material.isNull())
-    {
-        return;
-    }
-    
-    if (m_rig->materialFunctionMapper != nullptr)
-    {
-        MaterialFunctionMapper::materialmapping_t mapping;
-        mapping.originalmaterial = def.material_name;
-        mapping.material = mat_clone_name.str();
-        mapping.type = 0; // Orig: hardcoded in BTS_MATERIALFLAREBINDINGS
-
-        m_rig->materialFunctionMapper->addMaterial(def.flare_number, mapping);
-    }
-}
-
 void RigSpawner::ProcessFlare2(RigDef::Flare2 & def)
 {
     SPAWNER_PROFILE_SCOPED();
@@ -2429,7 +2349,7 @@ void RigSpawner::ProcessFlare2(RigDef::Flare2 & def)
     /* Visuals */
     flare.snode = gEnv->sceneManager->getRootSceneNode()->createChildSceneNode();
     std::stringstream flare_name;
-    flare_name << "flare-" << m_rig->truckname << "-" << m_rig->free_flare;
+    flare_name << "flare-" << m_rig->truckname << "-" << m_rig->flares.size();
     flare.bbs = gEnv->sceneManager->createBillboardSet(flare_name.str(), 1);
     bool using_default_material = true;
     if (flare.bbs == nullptr)
@@ -2527,7 +2447,7 @@ void RigSpawner::ProcessFlare2(RigDef::Flare2 & def)
 
             if (m_rig->netCustomLightArray_counter < 4)
             {
-                m_rig->netCustomLightArray[m_rig->netCustomLightArray_counter] = m_rig->free_flare;
+                m_rig->netCustomLightArray[m_rig->netCustomLightArray_counter] = m_rig->flares.size();
                 m_rig->netCustomLightArray_counter++;
             }
         }
@@ -2541,14 +2461,13 @@ void RigSpawner::ProcessFlare2(RigDef::Flare2 & def)
         flare.light->setCastShadows(false);
     }
     m_rig->flares.push_back(flare);
-    m_rig->free_flare++;
 }
 
-Ogre::MaterialPtr RigSpawner::CloneMaterial(Ogre::String const & source_name, Ogre::String const & clone_name)
+Ogre::MaterialPtr RigSpawner::InstantiateManagedMaterial(Ogre::String const & source_name, Ogre::String const & clone_name)
 {
     SPAWNER_PROFILE_SCOPED();
 
-    Ogre::MaterialPtr src_mat = static_cast<Ogre::MaterialPtr>(Ogre::MaterialManager::getSingleton().getByName(source_name));
+    Ogre::MaterialPtr src_mat = RoR::OgreSubsystem::GetMaterialByName(source_name);
     if (src_mat.isNull())
     {
         std::stringstream msg;
@@ -2556,26 +2475,33 @@ Ogre::MaterialPtr RigSpawner::CloneMaterial(Ogre::String const & source_name, Og
         AddMessage(Message::TYPE_ERROR, msg.str());
         return Ogre::MaterialPtr();
     }
-    return src_mat->clone(clone_name);
+
+    return src_mat->clone(clone_name, true, m_custom_resource_group);
 }
 
 void RigSpawner::ProcessManagedMaterial(RigDef::ManagedMaterial & def)
 {
     SPAWNER_PROFILE_SCOPED();
 
-    Ogre::MaterialPtr test = static_cast<Ogre::MaterialPtr>(Ogre::MaterialManager::getSingleton().getByName(def.name));
-    if (!test.isNull())
+    if (m_managed_materials.find(def.name) != m_managed_materials.end())
     {
-        std::stringstream msg;
-        msg << "Managed material '" << def.name << "' already exists (probably because the vehicle was already spawned before)";
-        AddMessage(Message::TYPE_WARNING, msg.str());
+        this->AddMessage(Message::TYPE_ERROR, "Duplicate managed material name: '" + def.name + "'. Ignoring definition...");
         return;
     }
 
+    // Create global placeholder
+    // This is necessary to load meshes with original material names (= unchanged managed mat names)
+    // - if not found, OGRE substitutes them with 'BaseWhite' which breaks subsequent processing.
+    if (RoR::OgreSubsystem::GetMaterialByName(def.name).isNull())
+    {
+        m_placeholder_managedmat->clone(def.name);
+    }
+
+    std::string custom_name = def.name + ACTOR_ID_TOKEN + TOSTRING(m_rig->trucknum);
     Ogre::MaterialPtr material;
     if (def.type == RigDef::ManagedMaterial::TYPE_FLEXMESH_STANDARD || def.type == RigDef::ManagedMaterial::TYPE_FLEXMESH_TRANSPARENT)
     {
-        Ogre::String mat_name_base
+        std::string mat_name_base
             = (def.type == RigDef::ManagedMaterial::TYPE_FLEXMESH_STANDARD)
             ? "managed/flexmesh_standard"
             : "managed/flexmesh_transparent";
@@ -2585,7 +2511,7 @@ void RigSpawner::ProcessManagedMaterial(RigDef::ManagedMaterial & def)
             if (def.HasSpecularMap())
             {
                 /* FLEXMESH, damage, specular */
-                material = CloneMaterial(mat_name_base + "/speculardamage", def.name);
+                material = this->InstantiateManagedMaterial(mat_name_base + "/speculardamage", custom_name);
                 if (material.isNull())
                 {
                     return;
@@ -2597,7 +2523,7 @@ void RigSpawner::ProcessManagedMaterial(RigDef::ManagedMaterial & def)
             else
             {
                 /* FLEXMESH, damage, no_specular */
-                material = CloneMaterial(mat_name_base + "/damageonly", def.name);
+                material = this->InstantiateManagedMaterial(mat_name_base + "/damageonly", custom_name);
                 if (material.isNull())
                 {
                     return;
@@ -2611,7 +2537,7 @@ void RigSpawner::ProcessManagedMaterial(RigDef::ManagedMaterial & def)
             if (def.HasSpecularMap())
             {
                 /* FLEXMESH, no_damage, specular */
-                material = CloneMaterial(mat_name_base + "/specularonly", def.name);
+                material = this->InstantiateManagedMaterial(mat_name_base + "/specularonly", custom_name);
                 if (material.isNull())
                 {
                     return;
@@ -2622,7 +2548,7 @@ void RigSpawner::ProcessManagedMaterial(RigDef::ManagedMaterial & def)
             else
             {
                 /* FLEXMESH, no_damage, no_specular */
-                material = CloneMaterial(mat_name_base + "/simple", def.name);
+                material = this->InstantiateManagedMaterial(mat_name_base + "/simple", custom_name);
                 if (material.isNull())
                 {
                     return;
@@ -2641,7 +2567,7 @@ void RigSpawner::ProcessManagedMaterial(RigDef::ManagedMaterial & def)
         if (def.HasSpecularMap())
         {
             /* MESH, specular */
-            material = CloneMaterial(mat_name_base + "/specular", def.name);
+            material = this->InstantiateManagedMaterial(mat_name_base + "/specular", custom_name);
             if (material.isNull())
             {
                 return;
@@ -2652,7 +2578,7 @@ void RigSpawner::ProcessManagedMaterial(RigDef::ManagedMaterial & def)
         else
         {
             /* MESH, no_specular */
-            material = CloneMaterial(mat_name_base + "/simple", def.name);
+            material = this->InstantiateManagedMaterial(mat_name_base + "/simple", custom_name);
             if (material.isNull())
             {
                 return;
@@ -2677,6 +2603,7 @@ void RigSpawner::ProcessManagedMaterial(RigDef::ManagedMaterial & def)
     /* Finalize */
 
     material->compile();
+    m_managed_materials.insert(std::make_pair(def.name, material));
 }
 
 void RigSpawner::ProcessCollisionBox(RigDef::CollisionBox & def)
@@ -2887,11 +2814,6 @@ void RigSpawner::ProcessTie(RigDef::Tie & def)
 {
     SPAWNER_PROFILE_SCOPED();
 
-    if (! CheckBeamLimit(1))
-    {
-        return;
-    }
-
     node_t & node_1 = GetNodeOrThrow(def.root_node);
     node_t & node_2 = GetNode( (node_1.pos == 0) ? 1 : 0 );
 
@@ -2928,11 +2850,6 @@ void RigSpawner::ProcessTie(RigDef::Tie & def)
 void RigSpawner::ProcessRope(RigDef::Rope & def)
 {
     SPAWNER_PROFILE_SCOPED();
-
-    if (! CheckBeamLimit(1))
-    {
-        return;
-    }
 
     node_t & root_node = GetNodeOrThrow(def.root_node);
     node_t & end_node = GetNodeOrThrow(def.end_node);
@@ -3264,11 +3181,6 @@ void RigSpawner::ProcessTrigger(RigDef::Trigger & def)
 {
     SPAWNER_PROFILE_SCOPED();
 
-    if (! CheckBeamLimit(1) || ! CheckShockLimit(1))
-    {
-        return;
-    }
-
     shock_t & shock = this->GetFreeShock();
 
     // Disable trigger on startup? (default enabled)
@@ -3444,14 +3356,7 @@ void RigSpawner::ProcessRotator(RigDef::Rotator & def)
 {
     SPAWNER_PROFILE_SCOPED();
 
-    if (! CheckRotatorLimit(1))
-    {
-        return;
-    }
-
-    unsigned int rotator_index = m_rig->free_rotator;
-    m_rig->free_rotator++;
-    rotator_t & rotator = m_rig->rotators[rotator_index];
+    rotator_t & rotator = m_rig->rotators[m_rig->free_rotator];
 
     rotator.angle = 0;
     rotator.rate = def.rate;
@@ -3467,15 +3372,16 @@ void RigSpawner::ProcessRotator(RigDef::Rotator & def)
         rotator.nodes2[i] = GetNodeIndexOrThrow(def.rotating_plate_nodes[i]);
     }
 
-    /* Rotate left key */
-    m_rig->commandkey[def.spin_left_key].rotators.push_back(- (static_cast<int>(rotator_index) + 1));
+    // Rotate left key
+    m_rig->commandkey[def.spin_left_key].rotators.push_back(- (m_rig->free_rotator + 1));
     m_rig->commandkey[def.spin_left_key].description = "Rotate_Left/Right";
 
-    /* Rotate right key */
-    m_rig->commandkey[def.spin_right_key].rotators.push_back(rotator_index + 1);
+    // Rotate right key
+    m_rig->commandkey[def.spin_right_key].rotators.push_back(m_rig->free_rotator + 1);
 
     _ProcessKeyInertia(m_rig->rotaInertia, def.inertia, *def.inertia_defaults, def.spin_left_key, def.spin_right_key);
 
+    m_rig->free_rotator++;
     m_rig->hascommands = 1;
 }
 
@@ -3483,21 +3389,14 @@ void RigSpawner::ProcessRotator2(RigDef::Rotator2 & def)
 {
     SPAWNER_PROFILE_SCOPED();
 
-    if (! CheckRotatorLimit(1))
-    {
-        return;
-    }
-
-    unsigned int rotator_index = m_rig->free_rotator;
-    m_rig->free_rotator++;
-    rotator_t & rotator = m_rig->rotators[rotator_index];
+    rotator_t & rotator = m_rig->rotators[m_rig->free_rotator];
 
     rotator.angle = 0;
     rotator.rate = def.rate;
     rotator.axis1 = GetNodeIndexOrThrow(def.axis_nodes[0]);
     rotator.axis2     = GetNodeIndexOrThrow(def.axis_nodes[1]);
-    rotator.force     = def.rotating_force; /* Default value is set in constructor */
-    rotator.tolerance = def.tolerance; /* Default value is set in constructor */
+    rotator.force     = def.rotating_force; // Default value is set in constructor
+    rotator.tolerance = def.tolerance; // Default value is set in constructor
     rotator.rotatorEngineCoupling = def.engine_coupling;
     rotator.rotatorNeedsEngine = def.needs_engine;
     for (unsigned int i = 0; i < 4; i++)
@@ -3506,8 +3405,8 @@ void RigSpawner::ProcessRotator2(RigDef::Rotator2 & def)
         rotator.nodes2[i] = GetNodeIndexOrThrow(def.rotating_plate_nodes[i]);
     }
 
-    /* Rotate left key */
-    m_rig->commandkey[def.spin_left_key].rotators.push_back(- (static_cast<int>(rotator_index) + 1));
+    // Rotate left key
+    m_rig->commandkey[def.spin_left_key].rotators.push_back(- (m_rig->free_rotator + 1));
     if (! def.description.empty())
     {
         m_rig->commandkey[def.spin_left_key].description = def.description;
@@ -3517,11 +3416,12 @@ void RigSpawner::ProcessRotator2(RigDef::Rotator2 & def)
         m_rig->commandkey[def.spin_left_key].description = "Rotate_Left/Right";
     }
 
-    /* Rotate right key */
-    m_rig->commandkey[def.spin_right_key].rotators.push_back(rotator_index + 1);
+    // Rotate right key
+    m_rig->commandkey[def.spin_right_key].rotators.push_back(m_rig->free_rotator + 1);
 
     _ProcessKeyInertia(m_rig->rotaInertia, def.inertia, *def.inertia_defaults, def.spin_left_key, def.spin_right_key);
 
+    m_rig->free_rotator++;
     m_rig->hascommands = 1;
 }
 
@@ -3591,11 +3491,6 @@ void RigSpawner::ProcessCommand(RigDef::Command2 & def)
 {
     SPAWNER_PROFILE_SCOPED();
 
-    if (! CheckBeamLimit(1))
-    {
-        return;
-    }
-
     int beam_index = m_rig->free_beam;
     int node_1_index = FindNodeIndex(def.nodes[0]);
     int node_2_index = FindNodeIndex(def.nodes[1]);
@@ -3664,7 +3559,7 @@ void RigSpawner::ProcessAnimator(RigDef::Animator & def)
 {
     SPAWNER_PROFILE_SCOPED();
 
-    if (! CheckBeamLimit(1) || ! CheckHydroLimit(1))
+    if (! CheckHydroLimit(1)) // TODO: remove the limit! See `RigSpawner::CalcMemoryRequirements()` ~ only_a_ptr, 06/2017
     {
         return;
     }
@@ -3864,7 +3759,7 @@ void RigSpawner::ProcessHydro(RigDef::Hydro & def)
 {
     SPAWNER_PROFILE_SCOPED();
 
-    if (! CheckHydroLimit(1) || ! CheckBeamLimit(1))
+    if (! CheckHydroLimit(1)) // TODO: remove the limit! See `RigSpawner::CalcMemoryRequirements()` ~ only_a_ptr, 06/2017
     {
         return;
     }
@@ -3964,11 +3859,6 @@ void RigSpawner::ProcessShock2(RigDef::Shock2 & def)
 {
     SPAWNER_PROFILE_SCOPED();
 
-    if (! CheckShockLimit(1) || ! CheckBeamLimit(1))
-    {
-        return;
-    }
-
     node_t & node_1 = GetNode(def.nodes[0]);
     node_t & node_2 = GetNode(def.nodes[1]);
     float short_bound = def.short_bound;
@@ -4056,11 +3946,6 @@ void RigSpawner::ProcessShock(RigDef::Shock & def)
 {
     SPAWNER_PROFILE_SCOPED();
 
-    if (! CheckShockLimit(1) || ! CheckBeamLimit(1))
-    {
-        return;
-    }
-
     node_t & node_1 = GetNode(def.nodes[0]);
     node_t & node_2 = GetNode(def.nodes[1]);
     float short_bound = def.short_bound;
@@ -4077,13 +3962,13 @@ void RigSpawner::ProcessShock(RigDef::Shock & def)
     {
         BITMASK_SET_0(shock_flags, SHOCK_FLAG_NORMAL); /* Not normal anymore */
         BITMASK_SET_1(shock_flags, SHOCK_FLAG_LACTIVE);
-        m_rig->free_active_shock++; /* This has no array associated with it. its just to determine if there are active shocks! */
+        m_rig->has_active_shocks = true;
     }
     if (BITMASK_IS_1(def.options, RigDef::Shock::OPTION_R_ACTIVE_RIGHT))
     {
         BITMASK_SET_0(shock_flags, SHOCK_FLAG_NORMAL); /* Not normal anymore */
         BITMASK_SET_1(shock_flags, SHOCK_FLAG_RACTIVE);
-        m_rig->free_active_shock++; /* This has no array associated with it. its just to determine if there are active shocks! */
+        m_rig->has_active_shocks = true;
     }
     if (BITMASK_IS_1(def.options, RigDef::Shock::OPTION_m_METRIC))
     {
@@ -4142,17 +4027,15 @@ void RigSpawner::FetchAxisNodes(
         node_t *swap = axis_node_1;
         axis_node_1 = axis_node_2;
         axis_node_2 = swap;
-    }	
+    }
 }
 
 void RigSpawner::ProcessFlexBodyWheel(RigDef::FlexBodyWheel & def)
-{	
+{
     SPAWNER_PROFILE_SCOPED();
 
-    /* Check capacities */
-    CheckNodeLimit(def.num_rays * 4);
-    CheckBeamLimit(def.num_rays * (def.rigidity_node.IsValidAnyState()) ? 26 : 25);
-    CheckFlexbodyLimit(1);
+    // Check capacities
+    CheckFlexbodyLimit(1); // TODO: remove the limit! See `RigSpawner::CalcMemoryRequirements()` ~ only_a_ptr, 06/2017
 
     unsigned int base_node_index = m_rig->free_node;
     wheel_t & wheel = m_rig->wheels[m_rig->free_wheel];
@@ -4161,7 +4044,7 @@ void RigSpawner::ProcessFlexBodyWheel(RigDef::FlexBodyWheel & def)
     node_t *axis_node_2 = nullptr;
     FetchAxisNodes(axis_node_1, axis_node_2, def.nodes[0], def.nodes[1]);
 
-    /* Rigidity node */
+    // Rigidity node
     node_t *rigidity_node = nullptr;
     node_t *axis_node_closest_to_rigidity_node = nullptr;
     if (def.rigidity_node.IsValidAnyState())
@@ -4172,20 +4055,20 @@ void RigSpawner::ProcessFlexBodyWheel(RigDef::FlexBodyWheel & def)
         axis_node_closest_to_rigidity_node = ((distance_1 < distance_2)) ? axis_node_1 : axis_node_2;
     }
 
-    /* Node&beam generation */
+    // Node&beam generation
     Ogre::Vector3 axis_vector = axis_node_2->RelPosition - axis_node_1->RelPosition;
     wheel.width = axis_vector.length(); /* wheel_def.width is ignored. */
     axis_vector.normalise();
     Ogre::Vector3 rim_ray_vector = axis_vector.perpendicular() * def.rim_radius;
     Ogre::Quaternion rim_ray_rotator = Ogre::Quaternion(Ogre::Degree(-360.f / (def.num_rays * 2)), axis_vector);
 
-    /* Rim nodes */
-    /* NOTE: node.iswheel is not used for rim nodes */
+    // Rim nodes
+    // NOTE: node.iswheel is not used for rim nodes
     for (unsigned int i = 0; i < def.num_rays; i++)
     {
         float node_mass = def.mass / (4.f * def.num_rays);
 
-        /* Outer ring */
+        // Outer ring
         Ogre::Vector3 ray_point = axis_node_1->RelPosition + rim_ray_vector;
         rim_ray_vector = rim_ray_rotator * rim_ray_vector;
 
@@ -4198,7 +4081,7 @@ void RigSpawner::ProcessFlexBodyWheel(RigDef::FlexBodyWheel & def)
         outer_node.friction_coef = def.node_defaults->friction;
         AdjustNodeBuoyancy(outer_node, def.node_defaults);
 
-        /* Inner ring */
+        // Inner ring
         ray_point = axis_node_2->RelPosition + rim_ray_vector;
         rim_ray_vector = rim_ray_rotator * rim_ray_vector;
 
@@ -4211,7 +4094,7 @@ void RigSpawner::ProcessFlexBodyWheel(RigDef::FlexBodyWheel & def)
         inner_node.friction_coef = def.node_defaults->friction;
         AdjustNodeBuoyancy(inner_node, def.node_defaults);
 
-        /* Wheel object */
+        // Wheel object
         wheel.nodes[i * 2]       = & outer_node;
         wheel.nodes[(i * 2) + 1] = & inner_node;
     }
@@ -4220,7 +4103,7 @@ void RigSpawner::ProcessFlexBodyWheel(RigDef::FlexBodyWheel & def)
     Ogre::Quaternion& tyre_ray_rotator = rim_ray_rotator;
     tyre_ray_vector = tyre_ray_rotator * tyre_ray_vector;
 
-    /* Tyre nodes */
+    // Tyre nodes
     for (unsigned int i = 0; i < def.num_rays; i++)
     {
         /* Outer ring */
@@ -4243,7 +4126,7 @@ void RigSpawner::ProcessFlexBodyWheel(RigDef::FlexBodyWheel & def)
         outer_contacter.nodeid        = outer_node.pos; /* Node index */
         m_rig->free_contacter++;
 
-        /* Inner ring */
+        // Inner ring
         ray_point = axis_node_2->RelPosition + tyre_ray_vector;
         tyre_ray_vector = tyre_ray_rotator * tyre_ray_vector;
 
@@ -4259,15 +4142,15 @@ void RigSpawner::ProcessFlexBodyWheel(RigDef::FlexBodyWheel & def)
         AdjustNodeBuoyancy(inner_node, def.node_defaults);
 
         contacter_t & inner_contacter = m_rig->contacters[m_rig->free_contacter];
-        inner_contacter.nodeid        = inner_node.pos; /* Node index */
+        inner_contacter.nodeid        = inner_node.pos; // Node index
         m_rig->free_contacter++;
 
-        /* Wheel object */
+        // Wheel object
         wheel.nodes[i * 2] = & outer_node;
         wheel.nodes[(i * 2) + 1] = & inner_node;
     }
 
-    /* Beams */
+    // Beams
     float rim_spring = def.rim_springiness;
     float rim_damp = def.rim_damping;
     float tyre_spring = def.tyre_springiness;
@@ -4277,9 +4160,9 @@ void RigSpawner::ProcessFlexBodyWheel(RigDef::FlexBodyWheel & def)
 
     for (unsigned int i = 0; i < def.num_rays; i++)
     {
-        /* --- Rim ---  */
+        // --- Rim --- 
 
-        /* Rim axis to rim ring */
+        // Rim axis to rim ring
         unsigned int rim_outer_node_index = base_node_index + (i * 2);
         node_t *rim_outer_node = & m_rig->nodes[rim_outer_node_index];
         node_t *rim_inner_node = & m_rig->nodes[rim_outer_node_index + 1];
@@ -4289,7 +4172,7 @@ void RigSpawner::ProcessFlexBodyWheel(RigDef::FlexBodyWheel & def)
         AddWheelBeam(axis_node_2, rim_outer_node, rim_spring, rim_damp, def.beam_defaults);
         AddWheelBeam(axis_node_1, rim_inner_node, rim_spring, rim_damp, def.beam_defaults);
 
-        /* Reinforcement rim ring */
+        // Reinforcement rim ring
         unsigned int rim_next_outer_node_index = base_node_index + (((i + 1) % def.num_rays) * 2);
         node_t *rim_next_outer_node = & m_rig->nodes[rim_next_outer_node_index];
         node_t *rim_next_inner_node = & m_rig->nodes[rim_next_outer_node_index + 1];
@@ -4300,8 +4183,8 @@ void RigSpawner::ProcessFlexBodyWheel(RigDef::FlexBodyWheel & def)
         AddWheelBeam(rim_inner_node, rim_next_outer_node, rim_spring, rim_damp, def.beam_defaults);
     }
 
-    /* Tyre beams */
-    /* Quick&dirty port from original SerializedRig::addWheel3() */
+    // Tyre beams
+    // Quick&dirty port from original SerializedRig::addWheel3()
     for (unsigned int i = 0; i < def.num_rays; i++)
     {
         int rim_node_index    = base_node_index + i*2;
@@ -4318,12 +4201,12 @@ void RigSpawner::ProcessFlexBodyWheel(RigDef::FlexBodyWheel & def)
         AddWheelBeam(next_rim_node, & m_rig->nodes[tyre_node_index],     tyre_spring/2.f, tyre_damp, def.beam_defaults);
         AddWheelBeam(next_rim_node, & m_rig->nodes[tyre_node_index + 1], tyre_spring/2.f, tyre_damp, def.beam_defaults);
 
-        {	
+        {
             int index = (i == 0) ? tyre_node_index + (def.num_rays * 2) - 1 : tyre_node_index - 1;
             node_t * tyre_node = & m_rig->nodes[index];
             AddWheelBeam(next_rim_node, tyre_node, tyre_spring/2.f, tyre_damp, def.beam_defaults);
         }
-        
+
         //reinforcement (tire tread)
         {
             // Very messy port :(
@@ -4338,7 +4221,6 @@ void RigSpawner::ProcessFlexBodyWheel(RigDef::FlexBodyWheel & def)
 
             if (rigidity_node != nullptr)
             {
-                
                 if (axis_node_closest_to_rigidity_node == axis_node_1)
                 {
                     axis_node_closest_to_rigidity_node = & m_rig->nodes[base_node_index+i*2+rays*2];
@@ -4352,15 +4234,14 @@ void RigSpawner::ProcessFlexBodyWheel(RigDef::FlexBodyWheel & def)
         }
     }
 
-    /* 
-        Calculate the point where the support beams get stiff and prevent the tire tread nodes 
-        bounce into the rim rimradius / tire radius and add 5%, this is a shortbound calc in % ! 
-    */
+    //    Calculate the point where the support beams get stiff and prevent the tire tread nodes
+    //    bounce into the rim rimradius / tire radius and add 5%, this is a shortbound calc in % !
+
     float support_beams_short_bound = 1.0f - ((def.rim_radius / def.tyre_radius) * 0.95f);
 
     for (unsigned int i=0; i<def.num_rays; i++)
     {
-        //tiretread anti collapse reinforcements, using precalced support beams
+        // tiretread anti collapse reinforcements, using precalced support beams
         unsigned int tirenode = base_node_index + i*2 + def.num_rays*2;
         unsigned int beam_index;
 
@@ -4375,7 +4256,7 @@ void RigSpawner::ProcessFlexBodyWheel(RigDef::FlexBodyWheel & def)
         GetBeam(beam_index).bounded = SHOCK1;
     }
 
-    /* Wheel object */
+    // Wheel object
     wheel.braked = def.braking;
     wheel.propulsed = def.propulsion;
     wheel.nbnodes = 2 * def.num_rays;
@@ -4386,7 +4267,7 @@ void RigSpawner::ProcessFlexBodyWheel(RigDef::FlexBodyWheel & def)
 
     if (def.propulsion != RigDef::Wheels::PROPULSION_NONE)
     {
-        /* for inter-differential locking */
+        // for inter-differential locking
         m_rig->proped_wheels++;
         m_rig->proppairs[m_rig->proped_wheels] = m_rig->free_wheel;
         m_rig->propwheelcount++;
@@ -4396,15 +4277,19 @@ void RigSpawner::ProcessFlexBodyWheel(RigDef::FlexBodyWheel & def)
         m_rig->braked_wheels++;
     }
 
-    /* Find near attach */
+    // Find near attach
     Ogre::Real length_1 = (axis_node_1->RelPosition - wheel.arm->RelPosition).length();
     Ogre::Real length_2 = (axis_node_2->RelPosition - wheel.arm->RelPosition).length();
     wheel.near_attach = (length_1 < length_2) ? axis_node_1 : axis_node_2;
 
-    /* Create visuals */
+    // Commit the wheel
+    int wheel_index = m_rig->free_wheel;
+    ++m_rig->free_wheel;
+
+    // Create visuals
     BuildMeshWheelVisuals(
-        m_rig->free_wheel, 
-        base_node_index, 
+        wheel_index,
+        base_node_index,
         axis_node_1->pos,
         axis_node_2->pos,
         def.num_rays,
@@ -4414,9 +4299,7 @@ void RigSpawner::ProcessFlexBodyWheel(RigDef::FlexBodyWheel & def)
         def.side != RigDef::MeshWheel::SIDE_RIGHT
         );
 
-    /* Create flexbody */
-    char flexbody_name[256];
-    sprintf(flexbody_name, "flexbody-%s-%i", m_rig->truckname, m_rig->free_flexbody);
+    const std::string flexwheel_name = this->ComposeName("FlexBodyWheel", m_rig->free_flexbody);
 
     int num_nodes = def.num_rays * 4;
     std::vector<unsigned int> node_indices;
@@ -4426,22 +4309,34 @@ void RigSpawner::ProcessFlexBodyWheel(RigDef::FlexBodyWheel & def)
         node_indices.push_back( base_node_index + i );
     }
 
-    m_rig->flexbodies[m_rig->free_flexbody] = m_flex_factory.CreateFlexBody(
-        m_rig->free_node,
-        def.tyre_mesh_name.c_str(),
-        flexbody_name,
-        axis_node_1->pos,
-        axis_node_2->pos,
-        static_cast<int>(base_node_index),
-        Ogre::Vector3(0.5,0,0),
-        Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y),
-        node_indices
-        );
+    RigDef::Flexbody flexbody_def;
+    flexbody_def.mesh_name = def.tyre_mesh_name;
+    flexbody_def.offset = Ogre::Vector3(0.5,0,0);
 
-    m_rig->free_flexbody++;
+    try
+    {
+        auto* flexbody = m_flex_factory.CreateFlexBody(
+            &flexbody_def,
+            axis_node_1->pos,
+            axis_node_2->pos,
+            static_cast<int>(base_node_index),
+            Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y),
+            node_indices
+            );
 
-    /* Advance */
-    m_rig->free_wheel++;
+        if (flexbody == nullptr)
+            return; // Error already logged
+
+        this->CreateWheelSkidmarks(static_cast<unsigned>(wheel_index));
+
+        m_rig->flexbodies[m_rig->free_flexbody] = flexbody;
+        m_rig->free_flexbody++;
+    }
+    catch (Ogre::Exception& e)
+    {
+        this->AddMessage(Message::TYPE_ERROR, 
+            "Failed to create flexbodywheel '" + def.tyre_mesh_name + "', reason:" + e.getFullDescription());
+    }
 }
 
 void RigSpawner::ProcessMeshWheel(RigDef::MeshWheel & meshwheel_def)
@@ -4507,6 +4402,8 @@ void RigSpawner::ProcessMeshWheel(RigDef::MeshWheel & meshwheel_def)
         meshwheel_def.rim_radius,
         meshwheel_def.side != RigDef::MeshWheel::SIDE_RIGHT
         );
+
+    CreateWheelSkidmarks(wheel_index);
 }
 
 void RigSpawner::ProcessMeshWheel2(RigDef::MeshWheel & def)
@@ -4581,6 +4478,8 @@ void RigSpawner::ProcessMeshWheel2(RigDef::MeshWheel & def)
         def.rim_radius,
         def.side != RigDef::MeshWheel::SIDE_RIGHT
         );
+
+    CreateWheelSkidmarks(wheel_index);
 }
 
 void RigSpawner::BuildMeshWheelVisuals(
@@ -4597,57 +4496,29 @@ void RigSpawner::BuildMeshWheelVisuals(
 {
     SPAWNER_PROFILE_SCOPED();
 
-    std::stringstream wheel_name;
-    wheel_name << "wheel-" << m_rig->truckname << "-" << wheel_index;
-    std::stringstream entity_name;
-    entity_name << "wheelobj-" << m_rig->truckname << "-" << wheel_index;
-
-    m_rig->vwheels[wheel_index].fm = new FlexMeshWheel(
-        wheel_name.str(),
-        m_rig->nodes,
-        axis_node_1_index,
-        axis_node_2_index,
-        base_node_index,
-        num_rays,
-        mesh_name,
-        material_name,
-        rim_radius,
-        rim_reverse,
-        m_rig->materialFunctionMapper,
-        m_rig->usedSkin,
-        m_rig->materialReplacer
-    );
-    m_rig->vwheels[wheel_index].meshwheel = true;
-
     try
     {
-        m_rig->vwheels[wheel_index].cnode = gEnv->sceneManager->getRootSceneNode()->createChildSceneNode();
-        Ogre::Entity *ec = gEnv->sceneManager->createEntity(entity_name.str(), wheel_name.str());
-        if (ec)
-        {
-            m_rig->deletion_Entities.emplace_back(ec);
-            m_rig->vwheels[wheel_index].cnode->attachObject(ec);
-        }
-        
-        MaterialFunctionMapper::replaceSimpleMeshMaterials(ec, Ogre::ColourValue(0, 0.5, 0.5));
-        if (m_rig->materialFunctionMapper != nullptr)
-        {
-            m_rig->materialFunctionMapper->replaceMeshMaterials(ec);
-        }
-        if (m_rig->materialReplacer != nullptr) 
-        {	
-            m_rig->materialReplacer->replaceMeshMaterials(ec);
-        }
-        if (m_rig->usedSkin != nullptr)
-        {
-            m_rig->usedSkin->replaceMeshMaterials(ec);
-        }		
-    } 
-    catch(...)
+        FlexMeshWheel* flexmesh_wheel = m_flex_factory.CreateFlexMeshWheel(
+            wheel_index, 
+            axis_node_1_index,
+            axis_node_2_index,
+            base_node_index,
+            num_rays,
+            rim_radius,
+            rim_reverse,
+            mesh_name,
+            material_name);
+        Ogre::SceneNode* scene_node = gEnv->sceneManager->getRootSceneNode()->createChildSceneNode();
+        scene_node->attachObject(flexmesh_wheel->GetTireEntity());
+
+        m_rig->deletion_Entities.emplace_back(flexmesh_wheel->GetTireEntity());
+        m_rig->vwheels[wheel_index].fm = flexmesh_wheel;
+        m_rig->vwheels[wheel_index].cnode = scene_node;
+    }
+    catch (Ogre::Exception& e)
     {
-        std::stringstream msg;
-        msg << "Error loading mesh: " << mesh_name;
-        AddMessage(Message::TYPE_ERROR, msg.str());
+        this->AddMessage(Message::TYPE_ERROR, "Failed to create meshwheel visuals, message: " + e.getFullDescription());
+        return;
     }
 }
 
@@ -4668,10 +4539,6 @@ unsigned int RigSpawner::BuildWheelObjectAndNodes(
 )
 {
     SPAWNER_PROFILE_SCOPED();
-
-    /* Check capacity */
-    CheckNodeLimit(reserve_nodes);
-    CheckBeamLimit(reserve_beams);
 
     wheel_t & wheel = m_rig->wheels[m_rig->free_wheel];
 
@@ -4991,7 +4858,16 @@ unsigned int RigSpawner::AddWheel(RigDef::Wheel & wheel_def)
 
     CreateWheelVisuals(wheel_index, wheel_def, base_node_index);
 
+    CreateWheelSkidmarks(wheel_index);
+
     return wheel_index;
+}
+
+void RigSpawner::CreateWheelSkidmarks(unsigned int wheel_index)
+{
+    // Always create, even if disabled by config
+    m_rig->skidtrails[wheel_index] = new RoR::Skidmark(
+        m_sim_controller->GetSkidmarkConf(), m_sim_controller, &m_rig->wheels[wheel_index], m_rig->beamsRoot, 300, 20);
 }
 
 #if 0 // refactored into pieces
@@ -5127,10 +5003,6 @@ unsigned int RigSpawner::AddWheel(RigDef::Wheel & wheel_def)
 unsigned int RigSpawner::AddWheel2(RigDef::Wheel2 & wheel_2_def)
 {
     SPAWNER_PROFILE_SCOPED();
-
-    /* Check capacity */
-    CheckNodeLimit(wheel_2_def.num_rays * 4);
-    CheckBeamLimit(wheel_2_def.num_rays * (wheel_2_def.rigidity_node.IsValidAnyState()) ? 26 : 25);
 
     unsigned int base_node_index = m_rig->free_node;
     wheel_t & wheel = m_rig->wheels[m_rig->free_wheel];
@@ -5350,6 +5222,8 @@ unsigned int RigSpawner::AddWheel2(RigDef::Wheel2 & wheel_2_def)
     Ogre::Real length_2 = (axis_node_2->RelPosition - wheel.arm->RelPosition).length();
     wheel.near_attach = (length_1 < length_2) ? axis_node_1 : axis_node_2;
 
+    CreateWheelSkidmarks(static_cast<unsigned>(m_rig->free_wheel));
+
     /* Advance */
     unsigned int wheel_index = m_rig->free_wheel;
     m_rig->free_wheel++;
@@ -5400,50 +5274,33 @@ void RigSpawner::CreateWheelVisuals(
     wheel_t & wheel = m_rig->wheels[wheel_index];
     vwheel_t & visual_wheel = m_rig->vwheels[wheel_index];
 
-    std::stringstream wheel_mesh_name;
-    wheel_mesh_name << "wheel-" << m_rig->truckname << "-" << wheel_index;
-    std::stringstream wheel_name_i;
-    wheel_name_i << "wheelobj-" << m_rig->truckname << "-" << wheel_index;
-
-    visual_wheel.meshwheel = false;
-    visual_wheel.fm = new FlexMesh(
-        wheel_mesh_name.str(),
-        m_rig->nodes,
-        wheel.refnode0->pos,
-        wheel.refnode1->pos,
-        node_base_index,
-        num_rays,
-        rim_material_name,
-        band_material_name,
-        separate_rim,
-        rim_ratio
-    );
-
     try
     {
-        Ogre::Entity *ec = gEnv->sceneManager->createEntity(wheel_name_i.str(), wheel_mesh_name.str());
-        MaterialFunctionMapper::replaceSimpleMeshMaterials(ec, Ogre::ColourValue(0, 0.5, 0.5));
-        if (m_rig->materialFunctionMapper != nullptr)
-        {
-            m_rig->materialFunctionMapper->replaceMeshMaterials(ec);
-        }
-        if (m_rig->materialReplacer != nullptr)
-        {
-            m_rig->materialReplacer->replaceMeshMaterials(ec);
-        }
-        if (m_rig->usedSkin != nullptr)
-        {
-            m_rig->usedSkin->replaceMeshMaterials(ec);
-        }
+        const std::string wheel_mesh_name = this->ComposeName("WheelMesh", wheel_index);
+        visual_wheel.meshwheel = false;
+        visual_wheel.fm = new FlexMesh(
+            wheel_mesh_name,
+            m_rig->nodes,
+            wheel.refnode0->pos,
+            wheel.refnode1->pos,
+            node_base_index,
+            num_rays,
+            rim_material_name,
+            band_material_name,
+            separate_rim,
+            rim_ratio
+        );
+
+        const std::string instance_name = this->ComposeName("WheelEntity", wheel_index);
+        Ogre::Entity *ec = gEnv->sceneManager->createEntity(instance_name, wheel_mesh_name);
+        this->SetupNewEntity(ec, Ogre::ColourValue(0, 0.5, 0.5));
         visual_wheel.cnode = gEnv->sceneManager->getRootSceneNode()->createChildSceneNode();
         m_rig->deletion_Entities.emplace_back(ec);
         visual_wheel.cnode->attachObject(ec);
     }
-    catch (...)
+    catch (Ogre::Exception& e)
     {
-        std::stringstream msg;
-        msg << "Failed to load mesh '" << wheel_mesh_name.str() << "'";
-        AddMessage(Message::TYPE_ERROR, msg.str());
+        AddMessage(Message::TYPE_ERROR, "Failed to create wheel visuals: " +  e.getFullDescription());
     }
 }
 
@@ -5586,7 +5443,7 @@ void RigSpawner::ProcessSlopeBrake(RigDef::SlopeBrake & def)
     m_rig->slopeBrakeRelAngle = release_angle + attach_angle;
 
     // Flag
-    m_rig->slopeBrake = true;
+    m_rig->has_slope_brake = true;
 };
 
 void RigSpawner::ProcessTractionControl(RigDef::TractionControl & def)
@@ -5758,7 +5615,7 @@ void RigSpawner::ProcessEngine(RigDef::Engine & def)
         def.torque,
         gears_compat,
         def.global_gear_ratio,
-        m_rig->trucknum
+        m_rig
     );
 
     m_rig->engine->setAutoMode(App::GetSimGearboxMode());
@@ -5800,7 +5657,7 @@ void RigSpawner::ProcessFileInfo()
     if (m_file->file_info != nullptr)
     {
         // Do it the 0.3x way ... no error check!
-        strncpy(m_rig->uniquetruckid, m_file->file_info->unique_id.c_str(), 254);
+        // NOTE: UniqueID was removed for being useless
         m_rig->categoryid = m_file->file_info->category_id;
         m_rig->truckversion = m_file->file_info->file_version;
     }
@@ -6254,13 +6111,7 @@ std::pair<unsigned int, bool> RigSpawner::AddNode(RigDef::Node::Id & id)
         this->AddMessage(Message::TYPE_ERROR, msg.str());
         return std::make_pair(0, false);
     }
-    if ((m_rig->free_node + 1) > MAX_NODES)
-    {
-        std::stringstream msg;
-        msg << "Node limit (" << MAX_NODES << ") exceeded with node: " << id.ToString();
-        this->AddMessage(Message::TYPE_ERROR, msg.str());
-        return std::make_pair(0, false);
-    }
+
     if (id.IsTypeNamed())
     {
         unsigned int new_index = static_cast<unsigned int>(m_rig->free_node);
@@ -6406,11 +6257,10 @@ void RigSpawner::ProcessNode(RigDef::Node & def)
     node.contactless       = BITMASK_IS_1(options, RigDef::Node::OPTION_c_NO_GROUND_CONTACT);
     node.disable_particles = BITMASK_IS_1(options, RigDef::Node::OPTION_p_NO_PARTICLES);
     node.disable_sparks    = BITMASK_IS_1(options, RigDef::Node::OPTION_f_NO_SPARKS);
-        
+    node.no_mouse_grab     = BITMASK_IS_1(options, RigDef::Node::OPTION_m_NO_MOUSE_GRAB);
+
     m_rig->smokeRef        = BITMASK_IS_1(options, RigDef::Node::OPTION_y_EXHAUST_DIRECTION) ? node.pos : 0;
     m_rig->smokeId         = BITMASK_IS_1(options, RigDef::Node::OPTION_x_EXHAUST_POINT) ? node.pos : 0;
-
-    m_rig->node_mouse_grab_disabled[node.pos] = BITMASK_IS_1(options, RigDef::Node::OPTION_m_NO_MOUSE_GRAB);
 
     // Update "fusedrag" autocalc y & z span
     if (def.position.z < m_fuse_z_min) { m_fuse_z_min = def.position.z; }
@@ -6455,16 +6305,12 @@ void RigSpawner::AddExhaust(
         material_name = "tracks/Smoke";
     }
 
-    if (m_rig->usedSkin != nullptr && m_rig->usedSkin->hasReplacementForMaterial(material_name))
+    if (m_rig->usedSkin != nullptr)
     {
-        Ogre::String new_material = m_rig->usedSkin->getReplacementForMaterial(material_name);
-        if (! new_material.empty())
+        auto search = m_rig->usedSkin->replace_materials.find(material_name);
+        if (search != m_rig->usedSkin->replace_materials.end())
         {
-            material_name = new_material;
-        }
-        else
-        {
-            AddMessage(Message::TYPE_INTERNAL_ERROR, "AddExhaust(): Material replacer returned empty string.");
+            material_name = search->second;
         }
     }
     
@@ -6493,16 +6339,15 @@ bool RigSpawner::AddModule(Ogre::String const & module_name)
 {
     SPAWNER_PROFILE_SCOPED();
 
-    std::map< Ogre::String, std::shared_ptr<RigDef::File::Module> >::iterator result 
-        = m_file->modules.find(module_name);
+    auto result = m_file->user_modules.find(module_name);
 
-    if (result != m_file->modules.end())
+    if (result != m_file->user_modules.end())
     {
         m_selected_modules.push_back(result->second);
         LOG(" == RigSpawner: Module added to configuration: " + module_name);
         return true;
     }
-    AddMessage(Message::TYPE_WARNING, "Selected module not found: " + module_name);
+    this->AddMessage(Message::TYPE_WARNING, "Selected module not found: " + module_name);
     return false;
 }
 
@@ -6510,12 +6355,7 @@ void RigSpawner::ProcessCinecam(RigDef::Cinecam & def)
 {
     SPAWNER_PROFILE_SCOPED();
 
-    if (! CheckNodeLimit(1) && ! CheckBeamLimit(8))
-    {
-        return;
-    }
-            
-    /* Node */
+    // Node
     Ogre::Vector3 node_pos = m_spawn_position + def.position;
     node_t & camera_node = GetAndInitFreeNode(node_pos);
     camera_node.contactless = true; // Orig: hardcoded in BTS_CINECAM
@@ -6525,11 +6365,12 @@ void RigSpawner::ProcessCinecam(RigDef::Cinecam & def)
     AdjustNodeBuoyancy(camera_node, def.node_defaults);
     camera_node.volume_coef   = def.node_defaults->volume;
     camera_node.surface_coef  = def.node_defaults->surface;
+    // NOTE: Not applying the 'node_mass' value here for backwards compatibility - this node must go through initial `Beam::calc_masses2()` pass with default weight.
 
     m_rig->cinecameranodepos[m_rig->freecinecamera] = camera_node.pos;
     m_rig->freecinecamera++;
 
-    /* Beams */
+    // Beams
     for (unsigned int i = 0; i < 8; i++)
     {
         int beam_index = m_rig->free_beam;
@@ -6539,25 +6380,6 @@ void RigSpawner::ProcessCinecam(RigDef::Cinecam & def)
         beam.k = def.spring;
         beam.d = def.damping;
         CreateBeamVisuals(beam, beam_index, def.beam_defaults);
-    }
-
-    /* Cabin light */
-    if ((App::GetGfxFlaresMode() >= App::GFX_FLARES_CURR_VEHICLE_HEAD_ONLY) && m_rig->cablight == nullptr)
-    {
-        std::stringstream light_name;
-        light_name << "cabinlight-" << m_rig->truckname;
-        m_rig->cablight = gEnv->sceneManager->createLight(light_name.str());
-        m_rig->cablight->setType(Ogre::Light::LT_POINT);
-        m_rig->cablight->setDiffuseColour( Ogre::ColourValue(0.4, 0.4, 0.3));
-        m_rig->cablight->setSpecularColour( Ogre::ColourValue(0.4, 0.4, 0.3));
-        m_rig->cablight->setAttenuation(20, 1, 0, 0);
-        m_rig->cablight->setCastShadows(false);
-        m_rig->cablight->setVisible(true);
-
-        m_rig->cablightNode = gEnv->sceneManager->getRootSceneNode()->createChildSceneNode();
-        m_rig->cablightNode->attachObject(m_rig->cablight);
-        m_rig->cablightNode->setVisible(false);
-        m_rig->deletion_sceneNodes.emplace_back(m_rig->cablightNode);
     }
 };
 
@@ -6595,100 +6417,28 @@ void RigSpawner::ProcessGlobals(RigDef::Globals & def)
     m_rig->truckmass = def.dry_mass;
     m_rig->loadmass = def.cargo_mass;
 
+    // NOTE: Don't do any material pre-processing here; it'll be done on actual entities (via `SetupNewEntity()`).
     if (! def.material_name.empty())
     {
-        Ogre::String material_name = def.material_name;
-
-        /* Check for skin */
-        if (m_rig->usedSkin != nullptr && m_rig->usedSkin->hasReplacementForMaterial(def.material_name))
+        Ogre::MaterialPtr mat = RoR::OgreSubsystem::GetMaterialByName(def.material_name); // Check if exists (compatibility)
+        if (!mat.isNull())
         {
-            Ogre::String skin_mat_name = m_rig->usedSkin->getReplacementForMaterial(def.material_name);
-            if (! skin_mat_name.empty())
-            {
-                material_name = skin_mat_name;
-            }
+            m_cab_material_name = def.material_name;
         }
-
-        /* Clone the material */
-        Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().getByName(material_name);
-        if (mat.isNull())
+        else
         {
             std::stringstream msg;
-            msg << "Material '" << material_name << "' defined in section 'globals' not found. Trying material 'tracks/transred'";
-            AddMessage(Message::TYPE_ERROR, msg.str());
+            msg << "Material '" << def.material_name << "' defined in section 'globals' not found. Trying material 'tracks/transred'";
+            this->AddMessage(Message::TYPE_ERROR, msg.str());
 
-            mat = Ogre::MaterialManager::getSingleton().getByName("tracks/transred");
-            if (mat.isNull())
-            {
-                throw Exception("Vehicle material (or a built-in replacement) was not found.");
-            }
+            m_cab_material_name = "tracks/transred";
         }
-        std::stringstream mat_clone_name;
-        mat_clone_name << material_name << "-" << m_rig->truckname;
-        mat->clone(mat_clone_name.str());
-        strncpy(m_rig->texname, mat_clone_name.str().c_str(), sizeof(m_rig->texname));
     }
 }
 
 /* -------------------------------------------------------------------------- */
 /* Limits.
 /* -------------------------------------------------------------------------- */
-
-bool RigSpawner::CheckNodeLimit(unsigned int count)
-{
-    SPAWNER_PROFILE_SCOPED();
-
-    if ((m_rig->free_node + count) > MAX_NODES)
-    {
-        std::stringstream msg;
-        msg << "Node limit (" << MAX_NODES << ") exceeded";
-        AddMessage(Message::TYPE_ERROR, msg.str());
-        return false;
-    }
-    return true;
-}
-
-bool RigSpawner::CheckBeamLimit(unsigned int count)
-{
-    SPAWNER_PROFILE_SCOPED();
-
-    if ((m_rig->free_beam + count) > MAX_BEAMS)
-    {
-        std::stringstream msg;
-        msg << "Beam limit (" << MAX_BEAMS << ") exceeded";
-        AddMessage(Message::TYPE_ERROR, msg.str());
-        return false;
-    }
-    return true;
-}
-
-bool RigSpawner::CheckShockLimit(unsigned int count)
-{
-    SPAWNER_PROFILE_SCOPED();
-
-    if ((m_rig->free_shock + count) > MAX_SHOCKS)
-    {
-        std::stringstream msg;
-        msg << "Shock limit (" << MAX_SHOCKS << ") exceeded";
-        AddMessage(Message::TYPE_ERROR, msg.str());
-        return false;
-    }
-    return true;
-}
-
-bool RigSpawner::CheckRotatorLimit(unsigned int count)
-{
-    SPAWNER_PROFILE_SCOPED();
-
-    if ((m_rig->free_rotator + count) > MAX_ROTATORS)
-    {
-        std::stringstream msg;
-        msg << "Rotator limit (" << MAX_ROTATORS << ") exceeded";
-        AddMessage(Message::TYPE_ERROR, msg.str());
-        return false;
-    }
-    return true;
-}
 
 bool RigSpawner::CheckHydroLimit(unsigned int count)
 {
@@ -6764,7 +6514,7 @@ bool RigSpawner::CheckSubmeshLimit(unsigned int count)
 {
     SPAWNER_PROFILE_SCOPED();
 
-    if ((m_rig->free_sub + count) > MAX_SUBMESHES)
+    if ((m_oldstyle_cab_submeshes.size() + count) > MAX_SUBMESHES)
     {
         std::stringstream msg;
         msg << "Submesh limit (" << MAX_SUBMESHES << ") exceeded";
@@ -6777,8 +6527,8 @@ bool RigSpawner::CheckSubmeshLimit(unsigned int count)
 bool RigSpawner::CheckTexcoordLimit(unsigned int count)
 {
     SPAWNER_PROFILE_SCOPED();
-
-    if ((m_rig->free_texcoord + count) > MAX_TEXCOORDS)
+    
+    if ((m_oldstyle_cab_texcoords.size() + count) > MAX_TEXCOORDS)
     {
         std::stringstream msg;
         msg << "Texcoord limit (" << MAX_TEXCOORDS << ") exceeded";
@@ -6827,20 +6577,6 @@ bool RigSpawner::CheckCabLimit(unsigned int count)
     {
         std::stringstream msg;
         msg << "Cab limit (" << MAX_CABS << ") exceeded";
-        AddMessage(Message::TYPE_ERROR, msg.str());
-        return false;
-    }
-    return true;
-}
-
-bool RigSpawner::CheckWingLimit(unsigned int count)
-{
-    SPAWNER_PROFILE_SCOPED();
-
-    if ((m_rig->free_wing + count) > MAX_WINGS)
-    {
-        std::stringstream msg;
-        msg << "Wing limit (" << MAX_WINGS << ") exceeded";
         AddMessage(Message::TYPE_ERROR, msg.str());
         return false;
     }
@@ -6924,7 +6660,6 @@ node_t & RigSpawner::GetFreeNode()
 {
     SPAWNER_PROFILE_SCOPED();
 
-    CheckNodeLimit(1);
     node_t & node = m_rig->nodes[m_rig->free_node];
     node.pos = m_rig->free_node;
     m_rig->free_node++;
@@ -6935,7 +6670,6 @@ beam_t & RigSpawner::GetFreeBeam()
 {
     SPAWNER_PROFILE_SCOPED();
 
-    CheckBeamLimit(1);
     beam_t & beam = m_rig->beams[m_rig->free_beam];
     m_rig->free_beam++;
     return beam;
@@ -7234,4 +6968,548 @@ std::string RigSpawner::ProcessMessagesToString()
         report << "\t" << itor->text << std::endl;
     }
     return report.str();
+}
+
+RigDef::MaterialFlareBinding* RigSpawner::FindFlareBindingForMaterial(std::string const & material_name)
+{
+    for (auto& module: m_selected_modules)
+    {
+        for (auto& def: module->material_flare_bindings)
+        {
+            if (def.material_name == material_name)
+            {
+                return &def;
+            }
+        }
+    }
+    return nullptr;
+}
+
+RigDef::VideoCamera* RigSpawner::FindVideoCameraByMaterial(std::string const & material_name)
+{
+    for (auto& module: m_selected_modules)
+    {
+        for (auto& def: module->videocameras)
+        {
+            if (def.material_name == material_name)
+            {
+                return &def;
+            }
+        }
+    }
+
+    return nullptr;
+}
+
+Ogre::MaterialPtr RigSpawner::FindOrCreateCustomizedMaterial(std::string mat_lookup_name)
+{
+    try
+    {
+        // Check for existing substitute
+        auto lookup_res = m_material_substitutions.find(mat_lookup_name);
+        if (lookup_res != m_material_substitutions.end())
+        {
+            return lookup_res->second.material;
+        }
+
+        CustomMaterial lookup_entry;
+
+        // Query old-style mirrors (=special props, hardcoded material name 'mirror')
+        if (mat_lookup_name == "mirror")
+        {
+            lookup_entry.mirror_prop_type = m_curr_mirror_prop_type;
+            lookup_entry.mirror_prop_scenenode = m_curr_mirror_prop_scenenode;
+            lookup_entry.material_flare_def = nullptr;
+            static int mirror_counter = 0;
+            const std::string new_mat_name = this->ComposeName("RenderMaterial", mirror_counter);
+            ++mirror_counter;
+            lookup_entry.material = RoR::OgreSubsystem::GetMaterialByName("mirror")->clone(new_mat_name, true, m_custom_resource_group);
+            // Special case - register under generated name. This is because all mirrors use the same material 'mirror'
+            m_material_substitutions.insert(std::make_pair(new_mat_name, lookup_entry));
+            return lookup_entry.material; // Done!
+        }
+
+        // Query 'videocameras'
+        RigDef::VideoCamera* videocam_def = this->FindVideoCameraByMaterial(mat_lookup_name);
+        if (videocam_def != nullptr)
+        {
+            Ogre::MaterialPtr video_mat_shared = RoR::OgreSubsystem::GetMaterialByName(mat_lookup_name);
+            if (!video_mat_shared.isNull())
+            {
+                lookup_entry.video_camera_def = videocam_def;
+                const std::string video_mat_name = this->ComposeName(videocam_def->material_name.c_str(), 0);
+                lookup_entry.material = video_mat_shared->clone(video_mat_name, true, m_custom_resource_group);
+                m_material_substitutions.insert(std::make_pair(mat_lookup_name, lookup_entry));
+                return lookup_entry.material; // Done!
+            }
+            else
+            {
+                std::stringstream msg;
+                msg << "VideoCamera material '" << mat_lookup_name << "' not found! Ignoring videocamera.";
+                this->AddMessage(Message::TYPE_WARNING, msg.str());
+            }
+        }
+
+        // Resolve 'materialflarebindings'.
+        RigDef::MaterialFlareBinding* mat_flare_def = this->FindFlareBindingForMaterial(mat_lookup_name);
+        if (mat_flare_def != nullptr)
+        {
+            lookup_entry.material_flare_def = mat_flare_def;
+        }
+
+        // Query SkinZip materials
+        if (m_rig->usedSkin != nullptr)
+        {
+            auto skin_res = m_rig->usedSkin->replace_materials.find(mat_lookup_name);
+            if (skin_res != m_rig->usedSkin->replace_materials.end())
+            {
+                Ogre::MaterialPtr skin_mat = RoR::OgreSubsystem::GetMaterialByName(skin_res->second);
+                if (!skin_mat.isNull())
+                {
+                    std::stringstream name_buf;
+                    name_buf << videocam_def->material_name << ACTOR_ID_TOKEN << m_rig->trucknum;
+                    lookup_entry.material = skin_mat->clone(name_buf.str(), true, m_custom_resource_group);
+                    m_material_substitutions.insert(std::make_pair(mat_lookup_name, lookup_entry));
+                    return lookup_entry.material;
+                }
+                else
+                {
+                    std::stringstream buf;
+                    buf << "Material '" << skin_res->second << "' from skin '" << m_rig->usedSkin->name << "' not found! Ignoring it...";
+                    this->AddMessage(Message::TYPE_ERROR, buf.str());
+                }
+            }
+        }
+
+        // Acquire substitute - either use managedmaterial or generate new by cloning.
+        auto mmat_res = m_managed_materials.find(mat_lookup_name);
+        if (mmat_res != m_managed_materials.end())
+        {
+            // Use managedmaterial as substitute
+            lookup_entry.material = mmat_res->second;
+        }
+        else
+        {
+            // Generate new substitute
+            Ogre::MaterialPtr orig_mat = RoR::OgreSubsystem::GetMaterialByName(mat_lookup_name);
+            if (orig_mat.isNull())
+            {
+                std::stringstream buf;
+                buf << "Material doesn't exist:" << mat_lookup_name;
+                this->AddMessage(Message::TYPE_ERROR, buf.str());
+                return Ogre::MaterialPtr(); // NULL
+            }
+
+            std::stringstream name_buf;
+            name_buf << orig_mat->getName() << ACTOR_ID_TOKEN << m_rig->trucknum;
+            lookup_entry.material = orig_mat->clone(name_buf.str(), true, m_custom_resource_group);
+        }
+
+        // Finally, query SkinZip textures
+        if (m_rig->usedSkin != nullptr)
+        {
+            RoR::SkinManager::ReplaceMaterialTextures(m_rig->usedSkin, lookup_entry.material->getName());
+        }
+
+        m_material_substitutions.insert(std::make_pair(mat_lookup_name, lookup_entry)); // Register the substitute
+        return lookup_entry.material;
+    }
+    catch (Ogre::Exception& e)
+    {
+        std::stringstream msg;
+        msg << "Exception while customizing material \"" << mat_lookup_name << "\", message: " << e.getFullDescription();
+        this->AddMessage(Message::TYPE_ERROR, msg.str());
+    }
+    return Ogre::MaterialPtr(); // NULL
+}
+
+Ogre::MaterialPtr RigSpawner::CreateSimpleMaterial(Ogre::ColourValue color)
+{
+    assert(!m_simple_material_base.isNull());
+
+    static size_t simple_mat_counter = 0;
+    char name_buf[300];
+    snprintf(name_buf, 300, "SimpleMaterial-%u%s%d", simple_mat_counter, ACTOR_ID_TOKEN, m_rig->trucknum);
+    Ogre::MaterialPtr newmat = m_simple_material_base->clone(name_buf);
+    ++simple_mat_counter;
+    newmat->getTechnique(0)->getPass(0)->setAmbient(color);
+
+    return newmat;
+}
+
+void RigSpawner::SetupNewEntity(Ogre::Entity* ent, Ogre::ColourValue simple_color)
+{
+    // Use simple materials if applicable
+    if (m_apply_simple_materials)
+    {
+        Ogre::MaterialPtr mat = this->CreateSimpleMaterial(simple_color);
+
+        const unsigned short num_sub_entities = ent->getNumSubEntities();
+        for (unsigned short i = 0; i < num_sub_entities; i++)
+        {
+            Ogre::SubEntity* subent = ent->getSubEntity(i);
+            subent->setMaterial(mat);
+        }
+
+        return; // Done!
+    }
+
+    // Create unique sub-entity (=instance of submesh) materials
+    unsigned short subent_max = ent->getNumSubEntities();
+    for (unsigned short i = 0; i < subent_max; ++i)
+    {
+        Ogre::SubEntity* subent = ent->getSubEntity(i);
+
+        if (!subent->getMaterial().isNull())
+        {
+            Ogre::MaterialPtr own_mat = this->FindOrCreateCustomizedMaterial(subent->getMaterialName());
+            if (!own_mat.isNull())
+            {
+                subent->setMaterial(own_mat);
+            }
+        }
+    }
+}
+
+void RigSpawner::FinalizeGfxSetup()
+{
+    // Check and warn if there are unclaimed managed materials
+    // TODO &*&*
+
+    // Create the actor
+    m_rig->m_gfx_actor = std::unique_ptr<RoR::GfxActor>(new RoR::GfxActor(m_rig, m_custom_resource_group));
+
+    // Process special materials
+    for (auto& entry: m_material_substitutions)
+    {
+        if (entry.second.material_flare_def != nullptr) // 'materialflarebindings'
+        {
+            m_rig->m_gfx_actor->AddMaterialFlare(
+                entry.second.material_flare_def->flare_number, entry.second.material);
+        }
+        else if (entry.second.mirror_prop_type != CustomMaterial::MirrorPropType::MPROP_NONE) // special 'prop' - rear view mirror
+        {
+            this->CreateMirrorPropVideoCam(
+                entry.second.material, entry.second.mirror_prop_type, entry.second.mirror_prop_scenenode);
+        }
+        else if (entry.second.video_camera_def != nullptr) // 'videocameras'
+        {
+            this->SetCurrentKeyword(RigDef::File::KEYWORD_VIDEOCAMERA); // Logging
+            this->CreateVideoCamera(entry.second.video_camera_def);
+            this->SetCurrentKeyword(RigDef::File::KEYWORD_INVALID); // Logging
+        }
+    }
+
+    if (!App::GetGfxEnableVideocams())
+    {
+        m_rig->m_gfx_actor->SetVideoCamState(GfxActor::VideoCamState::VCSTATE_DISABLED);
+    }
+
+    // Process "emissive cab" materials
+    if (m_rig->cabEntity != nullptr)
+    {
+        auto search_itor = m_material_substitutions.find(m_cab_material_name);
+        m_rig->m_gfx_actor->RegisterCabMaterial(search_itor->second.material, m_cab_trans_material);
+        m_rig->m_gfx_actor->SetCabLightsActive(false); // Reset emissive lights to "off" state
+    }
+}
+
+Ogre::ManualObject* CreateVideocameraDebugMesh()
+{
+    // Create material
+    static size_t counter = 0;
+    Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().create(
+        "VideoCamDebugMat-" + TOSTRING(counter), Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+    ++counter;
+    mat->getTechnique(0)->getPass(0)->createTextureUnitState();
+    mat->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setTextureFiltering(Ogre::TFO_ANISOTROPIC);
+    mat->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setTextureAnisotropy(3);
+    mat->setLightingEnabled(false);
+    mat->setReceiveShadows(false);
+    // Create mesh
+    Ogre::ManualObject* mo = gEnv->sceneManager->createManualObject(); // TODO: Eliminate gEnv
+    mo->begin(mat->getName(), Ogre::RenderOperation::OT_LINE_LIST);
+    Ogre::ColourValue pos_mark_col(1.f, 0.82f, 0.26f);
+    Ogre::ColourValue dir_mark_col(0.f, 1.f, 1.f); // TODO: This comes out green in simulation - why? ~ only_a_ptr, 05/2017
+    const float pos_mark_len = 0.8f;
+    const float dir_mark_len = 4.f;
+    // X
+    mo->position(pos_mark_len,0,0);
+    mo->colour(pos_mark_col);
+    mo->position(-pos_mark_len,0,0);
+    mo->colour(pos_mark_col);
+    // Y
+    mo->position(0,pos_mark_len,0);
+    mo->colour(pos_mark_col);
+    mo->position(0,-pos_mark_len,0);
+    mo->colour(pos_mark_col);
+    // +Z
+    mo->position(0,0,pos_mark_len);
+    mo->colour(pos_mark_col);
+    mo->position(0,0,0);
+    mo->colour(pos_mark_col);
+    // -Z = the direction
+    mo->position(0,0,-dir_mark_len);
+    mo->colour(dir_mark_col);
+    mo->position(0,0,0);
+    mo->colour(dir_mark_col);
+    mo->end(); // Don't forget this!
+
+    return mo;
+}
+
+void RigSpawner::CreateVideoCamera(RigDef::VideoCamera* def)
+{
+    try
+    {
+        GfxActor::VideoCamera vcam;
+
+        vcam.vcam_material = this->FindOrCreateCustomizedMaterial(def->material_name);
+        if (vcam.vcam_material.isNull())
+        {
+            this->AddMessage(Message::TYPE_ERROR, "Failed to create VideoCamera with material: " + def->material_name);
+            return;
+        }
+
+        switch (def->camera_role)
+        {
+        case -1: vcam.vcam_type = GfxActor::VideoCamType::VCTYPE_VIDEOCAM;       break;
+        case  0: vcam.vcam_type = GfxActor::VideoCamType::VCTYPE_TRACKING_VIDEOCAM; break;
+        case  1: vcam.vcam_type = GfxActor::VideoCamType::VCTYPE_MIRROR;         break;
+        default:
+            this->AddMessage(Message::TYPE_ERROR, "VideoCamera (mat: " + def->material_name + ") has invalid 'role': " + TOSTRING(def->camera_role));
+            return;
+        }
+
+        vcam.vcam_node_center = &this->GetNodeOrThrow(def->reference_node);
+        vcam.vcam_node_dir_y  = &this->GetNodeOrThrow(def->bottom_node);
+        vcam.vcam_node_dir_z  = &this->GetNodeOrThrow(def->left_node);
+        vcam.vcam_pos_offset  = def->offset;
+
+        //rotate camera picture 180 degrees, skip for mirrors
+        float rotation_z = (def->camera_role != 1) ? def->rotation.z + 180 : def->rotation.z;
+        vcam.vcam_rotation
+            = Ogre::Quaternion(Ogre::Degree(rotation_z), Ogre::Vector3::UNIT_Z)
+            * Ogre::Quaternion(Ogre::Degree(def->rotation.y), Ogre::Vector3::UNIT_Y)
+            * Ogre::Quaternion(Ogre::Degree(def->rotation.x), Ogre::Vector3::UNIT_X);
+
+        // set alternative camposition (optional)
+        vcam.vcam_node_alt_pos = &this->GetNodeOrThrow(
+            def->alt_reference_node.IsValidAnyState() ? def->alt_reference_node : def->reference_node);
+
+        // set alternative lookat position (optional)
+        vcam.vcam_node_lookat = nullptr;
+        if (def->alt_orientation_node.IsValidAnyState())
+        {
+            // This is a tracker camera
+            vcam.vcam_type = GfxActor::VideoCamType::VCTYPE_TRACKING_VIDEOCAM;
+            vcam.vcam_node_lookat = &this->GetNodeOrThrow(def->alt_orientation_node);
+        }
+
+        // TODO: Eliminate gEnv
+        vcam.vcam_ogre_camera = gEnv->sceneManager->createCamera(vcam.vcam_material->getName() + "_camera");
+
+        bool useExternalMirrorWindow = BSETTING("UseVideocameraWindows", false);
+        bool fullscreenRW = BSETTING("VideoCameraFullscreen", false);
+
+        // check if this vidcamera is also affected
+        static int counter = 0;
+        if (useExternalMirrorWindow && fullscreenRW)
+        {
+            int monitor = ISETTING("VideoCameraMonitor_" + TOSTRING(counter), 0);
+            if (monitor < 0)
+                useExternalMirrorWindow = false;
+            // < 0 = fallback to texture
+        }
+
+        if (!useExternalMirrorWindow)
+        {
+            vcam.vcam_render_tex = Ogre::TextureManager::getSingleton().createManual(
+                vcam.vcam_material->getName() + "_texture",
+                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                Ogre::TEX_TYPE_2D,
+                def->texture_width,
+                def->texture_height,
+                0, // no mip maps
+                Ogre::PF_R8G8B8,
+                Ogre::TU_RENDERTARGET);
+            vcam.vcam_render_target = vcam.vcam_render_tex->getBuffer()->getRenderTarget();
+            vcam.vcam_render_target->setAutoUpdated(false);
+        }
+        else
+        {
+            Ogre::NameValuePairList misc;
+            if (!SSETTING("VideoCameraFSAA", "").empty())
+                misc["FSAA"] = SSETTING("VideoCameraFSAA", "");
+
+            if (!SSETTING("VideoCameraColourDepth", "").empty())
+                misc["colourDepth"] = SSETTING("VideoCameraColourDepth", "");
+            else
+                misc["colourDepth"] = "32";
+
+            if (ISETTING("VideoCameraLeft_" + TOSTRING(counter), 0) > 0)
+                misc["left"] = SSETTING("VideoCameraLeft_" + TOSTRING(counter), "");
+
+            if (ISETTING("VideoCameraTop_" + TOSTRING(counter), 0) > 0)
+                misc["top"] = SSETTING("VideoCameraTop_" + TOSTRING(counter), "");
+            if (!SSETTING("VideoCameraWindowBorder", "").empty())
+                misc["border"] = SSETTING("VideoCameraWindowBorder", ""); // fixes for windowed mode
+
+            misc["outerDimensions"] = "true"; // fixes for windowed mode
+
+            bool fullscreen = BSETTING("VideoCameraFullscreen", false);
+            if (fullscreen)
+            {
+                int monitor = ISETTING("VideoCameraMonitor_" + TOSTRING(counter), 0);
+                misc["monitorIndex"] = TOSTRING(monitor);
+            }
+
+            const std::string window_name = (!def->camera_name.empty()) ? def->camera_name : def->material_name;
+            vcam.vcam_render_window = Ogre::Root::getSingleton().createRenderWindow(
+                window_name, def->texture_width, def->texture_height, fullscreen, &misc);
+
+            if (ISETTING("VideoCameraLeft_" + TOSTRING(counter), 0) > 0)
+                vcam.vcam_render_window->reposition(ISETTING("VideoCameraLeft_" + TOSTRING(counter), 0), ISETTING("VideoCameraTop_" + TOSTRING(counter), 0));
+
+            if (ISETTING("VideoCameraWidth_" + TOSTRING(counter), 0) > 0)
+                vcam.vcam_render_window->resize(ISETTING("VideoCameraWidth_" + TOSTRING(counter), 0), ISETTING("VideoCameraHeight_" + TOSTRING(counter), 0));
+
+            vcam.vcam_render_window->setAutoUpdated(false);
+            fixRenderWindowIcon(vcam.vcam_render_window); // Function from 'Utils.h'
+            vcam.vcam_render_window->setDeactivateOnFocusChange(false);
+            // TODO: disable texture mirrors
+        }
+
+        vcam.vcam_ogre_camera->setNearClipDistance(def->min_clip_distance);
+        vcam.vcam_ogre_camera->setFarClipDistance(def->max_clip_distance);
+        vcam.vcam_ogre_camera->setFOVy(Ogre::Degree(def->field_of_view));
+        const float aspect_ratio = static_cast<float>(def->texture_width) / static_cast<float>(def->texture_height);
+        vcam.vcam_ogre_camera->setAspectRatio(aspect_ratio);
+        vcam.vcam_material->getTechnique(0)->getPass(0)->setLightingEnabled(false);
+
+        if (vcam.vcam_type == GfxActor::VideoCamType::VCTYPE_MIRROR)
+        {
+            vcam.vcam_off_tex_name = "Chrome.dds"; // Built-in gray texture
+        }
+        else
+        {
+            // The default "NO SIGNAL" noisy blue screen texture
+            vcam.vcam_off_tex_name = vcam.vcam_material->getTechnique(0)->getPass(0)->getTextureUnitState(0)->getTextureName();
+        }
+
+        if (vcam.vcam_render_target)
+        {
+            Ogre::Viewport* vp = vcam.vcam_render_target->addViewport(vcam.vcam_ogre_camera);
+            vp->setClearEveryFrame(true);
+            vp->setBackgroundColour(gEnv->mainCamera->getViewport()->getBackgroundColour());
+            vp->setVisibilityMask(~HIDE_MIRROR);
+            vp->setVisibilityMask(~DEPTHMAP_DISABLED);
+            vp->setOverlaysEnabled(false);
+
+            vcam.vcam_material->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setTextureName(vcam.vcam_render_tex->getName());
+
+            // this is a mirror, flip the image left<>right to have a mirror and not a cameraimage
+            if (def->camera_role == 1)
+                vcam.vcam_material->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setTextureUScale(-1);
+        }
+
+        if (vcam.vcam_render_window)
+        {
+            Ogre::Viewport* vp = vcam.vcam_render_window->addViewport(vcam.vcam_ogre_camera);
+            vp->setClearEveryFrame(true);
+            vp->setBackgroundColour(gEnv->mainCamera->getViewport()->getBackgroundColour());
+            vp->setVisibilityMask(~HIDE_MIRROR);
+            vp->setVisibilityMask(~DEPTHMAP_DISABLED);
+            vp->setOverlaysEnabled(false);
+            vcam.vcam_material->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setTextureName(vcam.vcam_off_tex_name);
+        }
+
+        if (App::GetDiagVideoCameras())
+        {
+            Ogre::ManualObject* mo = CreateVideocameraDebugMesh(); // local helper function
+            vcam.vcam_debug_node = gEnv->sceneManager->getRootSceneNode()->createChildSceneNode();
+            vcam.vcam_debug_node->attachObject(mo);
+        }
+
+        m_rig->m_gfx_actor->m_videocameras.push_back(vcam);
+    }
+    catch (std::exception & ex)
+    {
+        this->AddMessage(Message::TYPE_ERROR, ex.what());
+    }
+    catch (...)
+    {
+        this->AddMessage(Message::TYPE_ERROR, "An unknown exception has occured");
+    }
+}
+
+void RigSpawner::CreateMirrorPropVideoCam(
+    Ogre::MaterialPtr custom_mat, CustomMaterial::MirrorPropType type, Ogre::SceneNode* prop_scenenode)
+{
+    static size_t mprop_counter = 0;
+    try
+    {
+        // Prepare videocamera entry
+        GfxActor::VideoCamera vcam;
+        vcam.vcam_off_tex_name = "mirror.dds";
+        vcam.vcam_prop_scenenode = prop_scenenode;
+        switch (type)
+        {
+        case CustomMaterial::MirrorPropType::MPROP_LEFT:
+            vcam.vcam_type = GfxActor::VideoCamType::VCTYPE_MIRROR_PROP_LEFT;
+            break;
+
+        case CustomMaterial::MirrorPropType::MPROP_RIGHT:
+            vcam.vcam_type = GfxActor::VideoCamType::VCTYPE_MIRROR_PROP_RIGHT;
+            break;
+
+        default:
+            this->AddMessage(Message::TYPE_ERROR, "Cannot create mirror prop of type 'MPROP_NONE'");
+            return;
+        }
+
+        // Create rendering texture
+        const std::string mirror_tex_name = this->ComposeName("MirrorPropTexture-", mprop_counter);
+        vcam.vcam_render_tex = Ogre::TextureManager::getSingleton().createManual(mirror_tex_name
+            , m_custom_resource_group
+            , Ogre::TEX_TYPE_2D
+            , 128
+            , 256
+            , 0
+            , Ogre::PF_R8G8B8
+            , Ogre::TU_RENDERTARGET);
+
+        // Create OGRE camera
+        vcam.vcam_ogre_camera = gEnv->sceneManager->createCamera(this->ComposeName("MirrorPropCamera-", mprop_counter));
+        vcam.vcam_ogre_camera->setNearClipDistance(0.2f);
+        vcam.vcam_ogre_camera->setFarClipDistance(gEnv->mainCamera->getFarClipDistance());
+        vcam.vcam_ogre_camera->setFOVy(Ogre::Degree(50));
+        vcam.vcam_ogre_camera->setAspectRatio(
+            (gEnv->mainCamera->getViewport()->getActualWidth() / gEnv->mainCamera->getViewport()->getActualHeight()) / 2.0f);
+
+        // Setup rendering
+        vcam.vcam_render_target = vcam.vcam_render_tex->getBuffer()->getRenderTarget();
+        vcam.vcam_render_target->setActive(true);
+        Ogre::Viewport* v = vcam.vcam_render_target->addViewport(vcam.vcam_ogre_camera);
+        v->setClearEveryFrame(true);
+        v->setBackgroundColour(gEnv->mainCamera->getViewport()->getBackgroundColour());
+        v->setOverlaysEnabled(false);
+
+        // Setup material
+        vcam.vcam_material = custom_mat;
+        vcam.vcam_material->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setTextureName(vcam.vcam_render_tex->getName());
+        vcam.vcam_material->getTechnique(0)->getPass(0)->setLightingEnabled(false);
+
+        // Submit the videocamera
+        m_rig->m_gfx_actor->m_videocameras.push_back(vcam);
+    }
+    catch (std::exception & ex)
+    {
+        this->AddMessage(Message::TYPE_ERROR, ex.what());
+    }
+    catch (...)
+    {
+        this->AddMessage(Message::TYPE_ERROR, "An unknown exception has occured");
+    }
+    ++mprop_counter;
 }

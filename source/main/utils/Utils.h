@@ -33,9 +33,7 @@
 #include "utf8/checked.h"
 #include "utf8/unchecked.h"
 
-#ifdef USE_MYGUI
 #include <MyGUI.h>
-#endif //USE_MYGUI
 
 // from http://stahlforce.com/dev/index.php?tool=csc01
 Ogre::String hexdump(void* pAddressIn, long lSize);
@@ -43,9 +41,6 @@ Ogre::String hexdump(void* pAddressIn, long lSize);
 Ogre::UTFString tryConvertUTF(const char* buffer);
 
 Ogre::UTFString formatBytes(double bytes);
-
-Ogre::String getASCIIFromCharString(char* str, int maxlen);
-Ogre::String getASCIIFromOgreString(Ogre::String s, int maxlen);
 
 int getTimeStamp();
 
@@ -64,7 +59,6 @@ Ogre::UTFString ANSI_TO_UTF(const Ogre::String source);
 
 void trimUTFString(Ogre::UTFString& str, bool left = true, bool right = true);
 
-#ifdef USE_MYGUI
 inline MyGUI::UString convertToMyGUIString(char* charstr)
 {
     return MyGUI::UString(ANSI_TO_WCHAR(charstr));
@@ -89,7 +83,6 @@ inline Ogre::UTFString convertFromMyGUIString(MyGUI::UString str)
 {
     return Ogre::UTFString(str.asWStr());
 }
-#endif // USE_MYGUI
 
 inline void replaceString(std::string& str, std::string searchString, std::string replaceString)
 {

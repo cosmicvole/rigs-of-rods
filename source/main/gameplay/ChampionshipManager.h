@@ -340,6 +340,9 @@ public:
     {
         current_difficulty_level = level;
     }
+	
+	inline void SetSimController(RoRFrameListener *sim) { m_sim_controller = sim; }
+	inline RoRFrameListener *GetSimController() { return m_sim_controller; }
     
 private:
     Ogre::String file_hash;
@@ -365,6 +368,7 @@ private:
     std::map<int, RaceCompetitor*> competitorsByTruckNum;
     std::vector<DifficultyLevel> difficultyLevels;
     int current_difficulty_level;
+	RoRFrameListener *m_sim_controller;
 };
 
 

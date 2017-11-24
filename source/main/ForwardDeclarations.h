@@ -30,15 +30,20 @@
 
 namespace RoR
 {
+    class  BeamFactory;
     class  ContentManager;
+    class  GfxActor;
     class  GUIManager;
     struct GuiManagerImpl;
     class  GuiManagerInterface;
-    class  MainThread;
+    class  MainMenu;
     class  OgreSubsystem;
     struct PlatformUtils;
     class  RigLoadingProfiler;
     class  SceneMouse;
+    class  Skidmark;
+    class  SkidmarkConfig;
+    struct SkinDef;
     class  SkinManager;
     class  Console;
 
@@ -58,6 +63,16 @@ namespace RoR
 namespace MyGUI
 {
     class  OgrePlatform;
+}
+
+namespace RoRnet
+{
+    struct Header;
+    struct UserInfo;
+    struct StreamRegister;
+    struct TruckStreamRegister;
+    struct ServerInfo;
+    struct TruckState;
 }
 
 struct node_t;
@@ -86,9 +101,6 @@ struct hook_t;
 struct ground_model_t;
 struct client_t;
 struct authorinfo_t;
-struct header_t;
-struct user_info_t;
-struct stream_register_t;
 
 namespace MOC
 {
@@ -97,9 +109,11 @@ namespace MOC
 
 namespace Ogre
 {
-    class MovableText;
-    class TerrainGroup;
+    class Camera;
     class ConfigFile;
+    class MovableText;
+    class RenderTarget;
+    class TerrainGroup;
 }
 
 class AeroEngine;
@@ -109,7 +123,6 @@ class Autopilot;
 class Axle;
 class Beam;
 class BeamEngine;
-class BeamFactory;
 class BeamThreadStats;
 class Buoyance;
 class CacheEntry;
@@ -126,6 +139,7 @@ class DashBoardManager;
 class DOFManager;
 class DotSceneLoader;
 class DustPool;
+class DustManager;
 class Editor;
 class Envmap;
 class Flexable;
@@ -145,10 +159,9 @@ class IWater;
 class HydraxWater;
 class Landusemap;
 class MapTextureCreator;
-class MaterialFunctionMapper;
-class MaterialReplacer;
 class MeshObject;
 class Mirror;
+class MumbleIntegration;
 class Network;
 class OverlayWrapper;
 class OutProtocol;
@@ -165,8 +178,6 @@ class Road;
 class RoRFrameListener;
 class ScopeLog;
 class Screwprop;
-class Skidmark;
-class Skin;
 class SkyManager;
 class SlideNode;
 class ShadowManager;
@@ -185,7 +196,6 @@ class ThreadPool;
 class ThreadWorker;
 class TorqueCurve;
 class TruckEditor;
-class TruckHUD;
 class Turbojet;
 class Turboprop;
 class VideoCamera;

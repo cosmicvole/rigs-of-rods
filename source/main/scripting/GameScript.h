@@ -61,6 +61,12 @@ public:
     void log(const Ogre::String& msg);
 
     /**
+     * writes a message to the games log (RoR.log)
+     * @param msg string to log
+     */
+    void logFormat(const char* fmt, ...);
+
+    /**
      * moves the person relative
      * @param vec translation vector
      */
@@ -192,7 +198,7 @@ public:
      * set direction arrow
      * @param text text to be displayed. "" to hide the text
      */
-    void setDirectionArrow(Ogre::String& text, Ogre::Vector3& vec);
+    void UpdateDirectionArrow(Ogre::String& text, Ogre::Vector3& vec);
 
     /**
      * returns the size of the font used by the chat box

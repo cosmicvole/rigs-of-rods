@@ -22,8 +22,8 @@
 /// @author Thomas Fischer (thomas{AT}thomasfischer{DOT}biz)
 /// @date   7th of September 2009
 
-#ifdef USE_MYGUI
-#ifdef USE_SOCKETW
+//cosmic vole November 24 2017 SOCKETW fix
+#ifdef USING_SOCKETW
 
 #include "GUI_MultiplayerClientList.h"
 
@@ -31,7 +31,7 @@
 #include "GUIManager.h"
 #include "Language.h"
 #include "Network.h"
-#include "PlayerColours.h"
+#include "RoRFrameListener.h"
 
 using namespace RoR;
 using namespace GUI;
@@ -43,7 +43,7 @@ MpClientList::MpClientList() :
     , msgwin(0)
 {
     // allocate some buffers
-    clients = (client_t *)calloc(MAX_PEERS, sizeof(client_t));
+    clients = (client_t *)calloc(RORNET_MAX_PEERS, sizeof(client_t));
 
     // tooltip window
     tooltipPanel = MyGUI::Gui::getInstance().createWidget<MyGUI::Widget>("PanelSkin", 0, 0, 200, 20, MyGUI::Align::Default, "ToolTip");
@@ -86,7 +86,7 @@ MpClientList::MpClientList() :
 
     y = 5;
     UTFString tmp;
-    for (int i = 0; i < MAX_PEERS + 1; i++) // plus 1 for local entry
+    for (int i = 0; i < RORNET_MAX_PEERS + 1; i++) // plus 1 for local entry
     {
         x = 100; // space for icons
         player_row_t* row = &player_rows[i];
@@ -169,7 +169,7 @@ MpClientList::~MpClientList()
     }
 }
 
-void MpClientList::updateSlot(player_row_t* row, user_info_t c, bool self)
+void MpClientList::updateSlot(player_row_t* row, RoRnet::UserInfo c, bool self)
 {
     if (!row)
         return;
@@ -178,8 +178,10 @@ void MpClientList::updateSlot(player_row_t* row, user_info_t c, bool self)
     int y = row->playername->getPosition().top;
     // name
     row->playername->setCaption(c.username);
-    ColourValue col = PlayerColours::getSingleton().getColour(c.colournum);
+#if USE_SOCKETW
+    ColourValue col = Networking::GetPlayerColor(c.colournum);
     row->playername->setTextColour(MyGUI::Colour(col.r, col.g, col.b, col.a));
+#endif
     row->playername->setVisible(true);
     x -= 18;
 
@@ -202,11 +204,11 @@ void MpClientList::updateSlot(player_row_t* row, user_info_t c, bool self)
 
     UTFString tmp;
     // auth
-    if (c.authstatus == AUTH_NONE)
+    if (c.authstatus == RoRnet::AUTH_NONE)
     {
         row->statimg->setVisible(false);
     }
-    else if (c.authstatus & AUTH_ADMIN)
+    else if (c.authstatus & RoRnet::AUTH_ADMIN)
     {
         row->statimg->setVisible(true);
         row->statimg->setImageTexture("flag_red.png");
@@ -215,7 +217,7 @@ void MpClientList::updateSlot(player_row_t* row, user_info_t c, bool self)
         row->statimg->setPosition(x, y);
         x -= 18;
     }
-    else if (c.authstatus & AUTH_MOD)
+    else if (c.authstatus & RoRnet::AUTH_MOD)
     {
         row->statimg->setVisible(true);
         row->statimg->setImageTexture("flag_blue.png");
@@ -224,7 +226,7 @@ void MpClientList::updateSlot(player_row_t* row, user_info_t c, bool self)
         row->statimg->setPosition(x, y);
         x -= 18;
     }
-    else if (c.authstatus & AUTH_RANKED)
+    else if (c.authstatus & RoRnet::AUTH_RANKED)
     {
         row->statimg->setVisible(true);
         row->statimg->setImageTexture("flag_green.png");
@@ -246,7 +248,7 @@ void MpClientList::updateSlot(player_row_t* row, user_info_t c, bool self)
         row->userTruckOKRemoteImg->setPosition(x, y);
         x -= 10;
 
-        int ok = BeamFactory::getSingleton().checkStreamsOK(c.uniqueid);
+        int ok = m_sim_controller->GetBeamFactory()->checkStreamsOK(c.uniqueid);
         if (ok == 0)
         {
             row->userTruckOKImg->setImageTexture("arrow_down_red.png");
@@ -266,7 +268,7 @@ void MpClientList::updateSlot(player_row_t* row, user_info_t c, bool self)
             row->userTruckOKImg->setUserString("tooltip", tmp.asUTF8());
         }
 
-        int rok = BeamFactory::getSingleton().checkStreamsRemoteOK(c.uniqueid);
+        int rok = m_sim_controller->GetBeamFactory()->checkStreamsRemoteOK(c.uniqueid);
         if (rok == 0)
         {
             row->userTruckOKRemoteImg->setImageTexture("arrow_up_red.png");
@@ -298,6 +300,7 @@ void MpClientList::updateSlot(player_row_t* row, user_info_t c, bool self)
 
 void MpClientList::update()
 {
+#ifdef USE_SOCKETW
     int slotid = 0;
 
     MyGUI::IntSize gui_area = MyGUI::RenderManager::getInstance().getViewSize();
@@ -305,13 +308,13 @@ void MpClientList::update()
     mpPanel->setPosition(x, y);
 
     // add local player to first slot always
-    user_info_t lu = RoR::Networking::GetLocalUserData();
+    RoRnet::UserInfo lu = RoR::Networking::GetLocalUserData();
     updateSlot(&player_rows[slotid], lu, true);
     slotid++;
 
     // add remote players
-    std::vector<user_info_t> users = RoR::Networking::GetUserInfos();
-    for (user_info_t user : users)
+    std::vector<RoRnet::UserInfo> users = RoR::Networking::GetUserInfos();
+    for (RoRnet::UserInfo user : users)
     {
         player_row_t* row = &player_rows[slotid];
         slotid++;
@@ -323,7 +326,7 @@ void MpClientList::update()
         {
         }
     }
-    for (int i = slotid; i < MAX_PEERS; i++)
+    for (int i = slotid; i < RORNET_MAX_PEERS; i++)
     {
         player_row_t* row = &player_rows[i];
         // not used, hide everything
@@ -339,6 +342,7 @@ void MpClientList::update()
 
     int height = lineheight * (slotid + 1);
     mpPanel->setSize(sidebarWidth, height);
+#endif
 }
 
 void MpClientList::clickUserGoIcon(MyGUI::WidgetPtr sender)
@@ -384,5 +388,4 @@ bool MpClientList::IsVisible()
     return mpPanel->getVisible();
 }
 
-#endif // USE_SOCKETW
-#endif // USE_MYGUI
+#endif //USING_SOCKETW cosmic vole November 24 2017

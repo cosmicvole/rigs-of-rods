@@ -19,7 +19,6 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_MYGUI
 
 #include "GUI_GameConsole.h"
 
@@ -31,7 +30,7 @@
 #include "IHeightFinder.h"
 #include "IWater.h"
 #include "Language.h"
-#include "MainThread.h"
+#include "MainMenu.h"
 #include "Network.h"
 #include "OverlayWrapper.h"
 #include "RoRFrameListener.h"
@@ -48,10 +47,9 @@
 using namespace Ogre;
 using namespace RoR;
 
-//Console layout manager
-
 // class
-Console::Console()
+Console::Console():
+    m_sim_controller(nullptr)
 {
     MyGUI::WindowPtr win = dynamic_cast<MyGUI::WindowPtr>(mMainWidget);
     win->eventWindowButtonPressed += MyGUI::newDelegate(this, &Console::notifyWindowButtonPressed); //The "X" button thing
@@ -184,8 +182,6 @@ void Console::messageLogged(const String& message, LogMessageLevel lml, bool mas
     }
 }
 
-#endif //MYGUI
-
 void Console::eventMouseButtonClickSendButton(MyGUI::WidgetPtr _sender)
 {
     m_Console_TextBox->_riseKeyButtonPressed(MyGUI::KeyCode::Return, ' ');
@@ -259,7 +255,7 @@ void Console::eventCommandAccept(MyGUI::Edit* _sender)
 
             putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_HELP, _L("/quit - exit Rigs of Rods"), "table_save.png");
 
-#ifdef USE_ANGELSCRIPT	
+#ifdef USE_ANGELSCRIPT
             putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_HELP, _L("/as <code here> - interpret angel code using console"), "script_go.png");
 #endif // USE_ANGELSCRIPT
 
@@ -315,7 +311,7 @@ void Console::eventCommandAccept(MyGUI::Edit* _sender)
         }
         else if (args[0] == "/pos" && (is_appstate_sim && !is_sim_select))
         {
-            Beam* b = BeamFactory::getSingleton().getCurrentTruck();
+            Beam* b = m_sim_controller->GetBeamFactory()->getCurrentTruck();
             if (!b && gEnv->player)
             {
                 Vector3 pos = gEnv->player->getPosition();
@@ -332,13 +328,13 @@ void Console::eventCommandAccept(MyGUI::Edit* _sender)
         //cosmic vole added code to display vehicle rotation information October 12 2016 TODO some of these calcs are BUGGY
         else if (args[0] == "/rot" && (is_appstate_sim && !is_sim_select))//&& (gEnv->frameListener->m_loading_state == TERRAIN_LOADED || gEnv->frameListener->m_loading_state == ALL_LOADED))
         {
-            Beam *b = BeamFactory::getSingleton().getCurrentTruck();
+            Beam *b = m_sim_controller->GetBeamFactory()->getCurrentTruck();
             /*if (!b && gEnv->player)
             {
                 Vector3 pos = gEnv->player->getPosition();
                 putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_SYSTEM_REPLY, _L("Character position: ") + String("x: ") + TOSTRING(pos.x) + String(" y: ") + TOSTRING(pos.y) + String(" z: ") + TOSTRING(pos.z), "world.png");
             }
-            else */if (b && (b->cameranodepos[0] >= 0 && b->cameranodepos[0] < MAX_NODES))
+            else */if (b && (b->cameranodepos[0] >= 0 && b->cameranodepos[0] < b->free_node))//MAX_NODES))
             {
                 Vector3 beamDir = b->getDirection();
                 beamDir.normalise();
@@ -394,7 +390,7 @@ void Console::eventCommandAccept(MyGUI::Edit* _sender)
 
             Vector3 pos = Vector3(PARSEREAL(args[1]), PARSEREAL(args[2]), PARSEREAL(args[3]));
 
-            Beam* b = BeamFactory::getSingleton().getCurrentTruck();
+            Beam* b = m_sim_controller->GetBeamFactory()->getCurrentTruck();
             if (!b && gEnv->player)
             {
                 gEnv->player->setPosition(pos);
@@ -414,7 +410,7 @@ void Console::eventCommandAccept(MyGUI::Edit* _sender)
                 return;
             Vector3 pos = Vector3::ZERO;
 
-            Beam* b = BeamFactory::getSingleton().getCurrentTruck();
+            Beam* b = m_sim_controller->GetBeamFactory()->getCurrentTruck();
             if (!b && gEnv->player)
             {
                 pos = gEnv->player->getPosition();
@@ -434,7 +430,7 @@ void Console::eventCommandAccept(MyGUI::Edit* _sender)
             putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_TITLE, "Rigs of Rods:", "information.png");
             putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_SYSTEM_REPLY, " Version: " + String(ROR_VERSION_STRING), "information.png");
             putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_SYSTEM_REPLY, " Protocol version: " + String(RORNET_VERSION), "information.png");
-            putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_SYSTEM_REPLY, " build time: " + String(__DATE__) + ", " + String(__TIME__), "information.png");
+            putMessage(CONSOLE_MSGTYPE_INFO, CONSOLE_SYSTEM_REPLY, " build time: " + String(ROR_BUILD_DATE) + ", " + String(ROR_BUILD_TIME), "information.png");
             return;
         }
         else if (args[0] == "/quit")

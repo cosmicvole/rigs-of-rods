@@ -2,6 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
+    Copyright 2016-2017 Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -20,25 +21,24 @@
 
 #pragma once
 
-#include <OgrePrerequisites.h>
-#include <OgreTimer.h>
-
-#include "RoRPrerequisites.h"
+#include "BeamData.h"
+#include "GfxActor.h"
 #include "PerVehicleCameraContext.h"
 #include "RigDef_Prerequisites.h"
+#include "RoRPrerequisites.h"
 
 /* Cosmic Vole added headers for Boost serialization to save truck */
 #include <fstream>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 
-#include "BeamData.h"
-
+#include <OgrePrerequisites.h>
+#include <OgreTimer.h>
 #include <memory>
 
 class Task;
 
-/** 
+/**
 * Represents an entire rig (any vehicle type)
 * Contains logic related to physics, network, sound, threading, rendering. It's a bit of a monster class :(
 */
@@ -71,8 +71,9 @@ public:
     * @param preloaded_with_terrain Is this rig being pre-loaded along with terrain?
     * @param cache_entry_number Needed for flexbody caching. Pass -1 if unavailable (flexbody caching will be disabled)
     */
-    Beam( 
-          int tnum
+    Beam(
+          RoRFrameListener* sim_controller
+        , int tnum
         , Ogre::Vector3 pos
         , Ogre::Quaternion rot
         , const char* fname
@@ -82,7 +83,7 @@ public:
         , collision_box_t *spawnbox = nullptr
         , bool ismachine = false
         , const std::vector<Ogre::String> *truckconfig = nullptr
-        , Skin *skin = nullptr
+        , RoR::SkinDef *skin = nullptr
         , bool freeposition = false
         , bool preloaded_with_terrain = false
         , int cache_entry_number = -1
@@ -135,7 +136,7 @@ public:
     /**
     * Call this one to reset a truck from any context
     */
-    void reset(bool keepPosition = false); 
+    void reset(bool keepPosition = false);
 
     /**
     * Call this one to repair the truck by a small increment - cosmic vole
@@ -145,7 +146,7 @@ public:
     /**
     * Call this one to displace a truck
     */
-    void displace(Ogre::Vector3 translation, float rotation); 
+    void displace(Ogre::Vector3 translation, float rotation);
 
     /**
      * Return the rotation center of the truck
@@ -162,8 +163,8 @@ public:
     */
     bool LoadTruck(
         RoR::RigLoadingProfiler* rig_loading_profiler,
-        Ogre::String const & file_name, 
-        Ogre::SceneNode *parent_scene_node, 
+        Ogre::String const & file_name,
+        Ogre::SceneNode *parent_scene_node,
         Ogre::Vector3 const & spawn_position,
         Ogre::Quaternion & spawn_rotation,
         collision_box_t *spawn_box,
@@ -178,14 +179,16 @@ public:
      * Saves truck deformation, race results etc. cosmic vole.
      */
     void save();
+    
+    inline VehicleAI*    getVehicleAI()                   { return vehicle_ai; }
+    inline bool          IsNodeIdValid(int id) const      { return (id > 0) && (id < free_node); }
 
-    VehicleAI* getVehicleAI() { return vehicle_ai; }
+
 
     bool replayStep();
 
-    void updateForceFeedback(int steps);
+    void ForceFeedbackStep(int steps);
     void updateAngelScriptEvents(float dt);
-    void updateVideocameras(float dt);
     void handleResetRequests(float dt);
 
     void setupDefaultSoundSources();
@@ -246,7 +249,7 @@ public:
     */
     void beaconsToggle();
     void forwardCommands();
-    
+
     /**
     * Event handler; toggle replay mode.
     */
@@ -285,7 +288,7 @@ public:
     * Prepares vehicle for in-cabin camera use.
     */
     void prepareInside(bool inside);
-    
+
     /**
     * Display.
     */
@@ -300,7 +303,7 @@ public:
     /**
     * TIGHT-LOOP; Logic: display (+overlays +particles), sound
     * Does a mixture of tasks:
-    * - Sound: updates sound sources; plays aircraft radio chatter; 
+    * - Sound: updates sound sources; plays aircraft radio chatter;
     * - Particles: updates particles (dust, exhausts, custom)
     * - Display: updates wings; updates props; updates rig-skeleton + cab fade effect; updates debug overlay
     */
@@ -328,17 +331,17 @@ public:
     */
     void setDetailLevel(int v);
 
-    /** 
+    /**
     * Display; displays "skeleton" (visual rig) mesh.
     */
     void showSkeleton(bool meshes=true, bool linked=true);
 
-    /** 
+    /**
     * Display; hides "skeleton" (visual rig) mesh.
     */
     void hideSkeleton(bool linked=true);
 
-    /** 
+    /**
     * Display; updates the "skeleton" (visual rig) mesh.
     */
     void updateSimpleSkeleton();
@@ -349,7 +352,7 @@ public:
     float currentScale;
 
     /**
-    * TIGHT-LOOP (optional); 
+    * TIGHT-LOOP (optional);
     */
     void updateDebugOverlay();
     void setDebugOverlayState(int mode);
@@ -364,7 +367,7 @@ public:
     bool left_blink_on, right_blink_on, warn_blink_on;
     //! @}
 
-    
+
     //! @{ calc forces euler division
     void calcTruckEngine(bool doUpdate, Ogre::Real dt);
     void calcAnimatedProps(bool doUpdate, Ogre::Real dt);
@@ -386,13 +389,13 @@ public:
     void calcCommands(bool doUpdate, Ogre::Real dt);
     void calcReplay(bool doUpdate, Ogre::Real dt);
     //! @}
-    
+
     //! @{ helper routines
 
     void calcBeam(beam_t& beam, bool doUpdate, Ogre::Real dt, int& increased_accuracy);
     //! @}
-    
-    
+
+
     /* functions to be sorted */
     Ogre::Quaternion specialGetRotationTo(const Ogre::Vector3& src, const Ogre::Vector3& dest) const;
     Ogre::String getAxleLockName();	//! get the name of the current differential model
@@ -458,13 +461,13 @@ public:
     int flap;
 
     Ogre::Vector3 fusedrag;
-    
+
     bool disableDrag;
     bool disableTruckTruckCollisions;
     bool disableTruckTruckSelfCollisions;
     int currentcamera;
     int m_custom_camera_node;
-    
+
     int wheel_node_count;
     int first_wheel_node;
     int netbuffersize;
@@ -473,16 +476,14 @@ public:
 
     std::string getTruckName();
     std::string getTruckFileName();
-    std::string getTruckHash();
     int getTruckType();
     inline int getTruckNumber() { return trucknum; } // cosmic vole added for scripting January 17 2017
-    
+
     std::vector<authorinfo_t> getAuthors();
     std::vector<std::string> getDescription();
 
     int getBeamCount();
     beam_t *getBeams();
-    float getDefaultDeformation();
 
     int getNodeCount();
     node_t *getNodes();
@@ -493,7 +494,7 @@ public:
     int nodeBeamConnections(int nodeid);
 
     /**
-    * Logic: sound, display; Notify this vehicle that camera changed; 
+    * Logic: sound, display; Notify this vehicle that camera changed;
     */
     void changedCamera();
 
@@ -508,11 +509,11 @@ public:
     Ogre::String realtruckfilename;
 
     /**
-     * @return Returns a list of all connected (hooked) beams 
+     * @return Returns a list of all connected (hooked) beams
      */
     std::list<Beam*> getAllLinkedBeams() { return linkedBeams; };
 
-    /** 
+    /**
     * This must be in the header as the network stuff is using it...
     */
     bool getBrakeLightVisible();
@@ -533,13 +534,11 @@ public:
     float getHeadingDirectionAngle();
     bool getCustomParticleMode();
     int getLowestNode();
-    
+
     bool simulated;
     int airbrakeval;
     Ogre::Vector3 cameranodeacc;
     int cameranodecount;
-
-    bool m_is_videocamera_disabled;
 
     int m_source_id;
     int m_stream_id;
@@ -572,7 +571,7 @@ public:
     * Returns the position of the node
     * @param the nuber of the node
     * @return vector3 of the world position for the node
-    */	
+    */
     Ogre::Vector3 getNodePosition(int nodeNumber);
     Ogre::Real getMinimalCameraRadius();
 
@@ -588,10 +587,9 @@ public:
     // Inline getters
     inline Ogre::SceneNode*                 getSceneNode()            { return beamsRoot; }
     inline RoR::PerVehicleCameraContext*    GetCameraContext()        { return &m_camera_context; }
+    inline RoR::GfxActor*                   GetGfxActor()             { return m_gfx_actor.get(); }
 
-#ifdef USE_MYGUI
     DashBoardManager *dash;
-#endif // USE_MYGUI
 
     void updateDashBoards(float dt);
 
@@ -603,17 +601,17 @@ public:
     void postUpdatePhysics(float dt);
 
     /**
-    * TIGHT LOOP; Physics; 
+    * TIGHT LOOP; Physics;
     */
     bool calcForcesEulerPrepare(int doUpdate, Ogre::Real dt, int step = 0, int maxsteps = 1);
 
     /**
-    * TIGHT LOOP; Physics; 
+    * TIGHT LOOP; Physics;
     */
     void calcForcesEulerCompute(int doUpdate, Ogre::Real dt, int step = 0, int maxsteps = 1);
 
     /**
-    * TIGHT LOOP; Physics; 
+    * TIGHT LOOP; Physics;
     */
     void calcForcesEulerFinal(int doUpdate, Ogre::Real dt, int step = 0, int maxsteps = 1);
 
@@ -635,7 +633,7 @@ protected:
     void serialize(Archive & ar, const unsigned int version);
 
     /**
-    * TIGHT LOOP; Physics & sound; 
+    * TIGHT LOOP; Physics & sound;
     * @param doUpdate Only passed to Beam::calcShocks2()
     */
     void calcBeams(int doUpdate, Ogre::Real dt, int step, int maxsteps);
@@ -646,17 +644,17 @@ protected:
     void calcBeamsInterTruck(int doUpdate, Ogre::Real dt, int step, int maxsteps);
 
     /**
-    * TIGHT LOOP; Physics; 
+    * TIGHT LOOP; Physics;
     */
     void calcNodes(int doUpdate, Ogre::Real dt, int step, int maxsteps);
 
     /**
-    * TIGHT LOOP; Physics; 
+    * TIGHT LOOP; Physics;
     */
     void calcHooks();
 
     /**
-    * TIGHT LOOP; Physics; 
+    * TIGHT LOOP; Physics;
     */
     void calcRopes();
     void calcShocks2(int beam_i, Ogre::Real difftoBeamL, Ogre::Real &k, Ogre::Real &d, Ogre::Real dt, int update);
@@ -711,13 +709,15 @@ protected:
     blinktype blinkingtype;
 
     Ogre::Real hydrolen;
-    
+
     Ogre::SceneNode *smokeNode;
     Ogre::ParticleSystem* smoker;
     float stabsleep;
     Replay *replay;
     PositionStorage *posStorage;
+    RoRFrameListener* m_sim_controller; // Temporary ~ only_a_ptr, 01/2017
     std::shared_ptr<RigDef::File> m_definition;
+    std::unique_ptr<RoR::GfxActor> m_gfx_actor;
 
     RoR::PerVehicleCameraContext m_camera_context;
 
@@ -748,9 +748,9 @@ protected:
 
     std::vector<Ogre::String> m_truck_config;
 
-    oob_t *oob1; //!< Network; Triple buffer for incoming data (truck properties)
-    oob_t *oob2; //!< Network; Triple buffer for incoming data (truck properties)
-    oob_t *oob3; //!< Network; Triple buffer for incoming data (truck properties)
+    RoRnet::TruckState *oob1; //!< Network; Triple buffer for incoming data (truck properties)
+    RoRnet::TruckState *oob2; //!< Network; Triple buffer for incoming data (truck properties)
+    RoRnet::TruckState *oob3; //!< Network; Triple buffer for incoming data (truck properties)
     char *netb1; //!< Network; Triple buffer for incoming data
     char *netb2; //!< Network; Triple buffer for incoming data
     char *netb3; //!< Network; Triple buffer for incoming data
@@ -782,7 +782,7 @@ protected:
     Ogre::ManualObject *simpleSkeletonManualObject;
     Ogre::SceneNode *simpleSkeletonNode;
     bool simpleSkeletonInitiated; //!< Was the rig-skeleton mesh built?
-    /** 
+    /**
     * Builds the rig-skeleton mesh.
     */
     void initSimpleSkeleton();
@@ -831,6 +831,7 @@ protected:
      * @return a pair containing the rail, and the distant to the SlideNode
      */
     std::pair<RailGroup*, Ogre::Real> getClosestRailOnTruck( Beam* truck, const SlideNode& node);
+
 };
 
 //cosmic vole March 9 2017

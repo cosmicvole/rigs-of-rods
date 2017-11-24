@@ -5,11 +5,12 @@
 #include "Beam.h"
 #include "BeamFactory.h"
 #include "BeamEngine.h"
+#include "RoRFrameListener.h"
 #include "VehicleAI.h"
 
 using namespace Ogre;
 
-CollisionAvoidance_GridQuad::CollisionAvoidance_GridQuad()
+CollisionAvoidance_GridQuad::CollisionAvoidance_GridQuad() : m_sim_controller(nullptr)
 {
     frontLeft = Vector3::ZERO;
     frontRight = Vector3::ZERO;
@@ -228,7 +229,7 @@ bool CollisionAvoidance_GridQuad::IsLaneOccupied(float inFront, float behind, fl
             continue;
         }
         
-        Beam *truck = BeamFactory::getSingleton().getTruck(truckNum);
+        Beam *truck = m_sim_controller->GetBeamFactory()->getTruck(truckNum);
         //TODO Get path and position and examine! Get current lane number for it!
         VehicleAI *truckAI = truck->getVehicleAI();
         if (!truckAI)
@@ -312,7 +313,7 @@ bool CollisionAvoidance_GridQuad::LaneHasSlowerVehicleInFront(float inFront, flo
             PredictedTruckPosition ptp = vehicles[i];
             if (ptp.minTime <= endTime && ptp.maxTime >= startTime && ptp.truckNum != ignoreTruckNum)
             {
-                Beam *truck = BeamFactory::getSingleton().getTruck(ptp.truckNum);
+                Beam *truck = m_sim_controller->GetBeamFactory()->getTruck(ptp.truckNum);
                 if (truck && (maxSpeed < 0 || truck->getVelocity().length() <= maxSpeed))
                 {
                     if (ignoreTrucksUsingOtherLanes)
@@ -368,7 +369,7 @@ bool CollisionAvoidance_GridQuad::LaneHasSlowerVehicleInFront(float inFront, flo
                     PredictedTruckPosition ptp = vehicles[i];
                     if (ptp.minTime <= endTime && ptp.maxTime >= startTime && ptp.truckNum != ignoreTruckNum)
                     {
-                        Beam *truck = BeamFactory::getSingleton().getTruck(ptp.truckNum);
+                        Beam *truck = m_sim_controller->GetBeamFactory()->getTruck(ptp.truckNum);
                         if (truck && (maxSpeed < 0 || truck->getVelocity().length() <= maxSpeed))
                         {
                             if (ignoreTrucksUsingOtherLanes)

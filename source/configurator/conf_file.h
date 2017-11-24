@@ -39,6 +39,8 @@
 #define ISETTING(x, y)    Settings::getSingleton().getIntegerSetting(x, y)     //<! get int setting
 #define FSETTING(x, y)    Settings::getSingleton().getFloatSetting(x, y)       //<! get float setting
 
+std::string SanitizeUtf8String(std::string const& str_in);
+
 class Settings : public RoRSingleton<Settings>, public ZeroedMemoryAllocator
 {
     friend class RoRSingleton<Settings>;
@@ -53,7 +55,7 @@ public:
 
     void setSetting(Ogre::String key, Ogre::String value);
     void setUTFSetting(Ogre::UTFString key, Ogre::UTFString value);
-    
+
     bool setupPaths();
     void loadSettings(Ogre::String configFile, bool overwrite=false);
 
@@ -82,5 +84,3 @@ protected:
     bool get_system_paths(char *program_path, char *user_path);
 
 };
-
-

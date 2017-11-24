@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013+     Petr Ohlidal & contributors
+    Copyright 2013-2017 Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -29,6 +29,7 @@
 #include "Landusemap.h"
 #include "Language.h"
 #include "MovableText.h"
+#include "RoRFrameListener.h"
 #include "Scripting.h"
 #include "Settings.h"
 #include "TerrainManager.h"
@@ -110,21 +111,16 @@ unsigned int sbox[] =
 
 using namespace Ogre;
 
-Collisions::Collisions() :
-      collision_count(0)
-    , collision_tris(0)
+Collisions::Collisions(RoRFrameListener* sim_controller)
+    : m_sim_controller(sim_controller)
     , debugMode(false)
     , forcecam(false)
-    , free_collision_box(0)
-    , free_collision_tri(0)
     , free_eventsource(0)
     , hashmask(0)
     , landuse(0)
-    , largest_cellcount(0)
-    , last_called_cbox(0)
+    , m_last_called_cbox(nullptr)
     , last_called_trucknum(-2)
     , last_used_ground_model(0)
-    , max_col_tris(MAX_COLLISION_TRIS)
 {
     hFinder = gEnv->terrainManager->getHeightFinder();
 
@@ -135,14 +131,7 @@ Collisions::Collisions() :
         hashmask++;
     }
 
-    for (int i=0; i < HASH_SIZE; i++)
-    {
-        hashtable[i].cellid = UNUSED_CELLID; // conversion from 'const int' to 'unsigned int', signed/unsigned mismatch!
-    }
-
         //cosmic vole added to handle collisions with multiple trucks
-
-    collision_tris = (collision_tri_t*)malloc(sizeof(collision_tri_t) * MAX_COLLISION_TRIS);
 
     loadDefaultModels();
     defaultgm = getGroundModelByString("concrete");
@@ -159,28 +148,6 @@ Collisions::~Collisions()
 {
 }
 
-void Collisions::resizeMemory(long newSize)
-{
-    if (collision_tris)
-    {
-        free(collision_tris);
-    }
-
-    free_collision_tri = 0;
-    max_col_tris = newSize;
-    collision_tris = (collision_tri_t*)malloc(sizeof(collision_tri_t) * newSize);
-
-    if (collision_tris==NULL)
-    {
-        LOG("COLL: Failed to allocate " + TOSTRING(sizeof(collision_tri_t) * newSize) + "bytes of memory");
-        if (newSize > Collisions::MAX_COLLISION_TRIS)
-        {
-            // Try to restore the default memory size
-            resizeMemory(MAX_COLLISION_TRIS);
-        }
-    }
-}
-
 int Collisions::loadDefaultModels()
 {
     return loadGroundModelsConfigFile(RoR::App::GetSysConfigDir() + PATH_SLASH + "ground_models.cfg");
@@ -192,7 +159,8 @@ int Collisions::loadGroundModelsConfigFile(Ogre::String filename)
     try
     {
         group = ResourceGroupManager::getSingleton().findGroupContainingResource(filename);
-    }catch(...)
+    }
+    catch (...)
     {
         // we wont catch anything, since the path could be absolute as well, then the group is not found
     }
@@ -205,7 +173,8 @@ int Collisions::loadGroundModelsConfigFile(Ogre::String filename)
             cfg.loadDirect(filename);
         else
             cfg.loadFromResourceSystem(filename, group, "\x09:=", true);
-    } catch(Ogre::Exception& e)
+    }
+    catch (Ogre::Exception& e)
     {
         ErrorUtils::ShowError("Error while loading ground model", e.getFullDescription());
         return 1;
@@ -398,11 +367,14 @@ unsigned int Collisions::hashfunc(unsigned int cellid)
 
 int Collisions::removeCollisionTri(int number)
 {
-    if (number > free_collision_tri) return -1;
+    if (number > this->GetNumCollisionTris()) // NOTE: probably should have been '>=', left as-is for compatibility ~ only_a_ptr, 10/2017
+    {
+        return -1;
+    }
 
-    Vector3 p1 = collision_tris[number].a;
-    Vector3 p2 = collision_tris[number].b;
-    Vector3 p3 = collision_tris[number].c;
+    Vector3 p1 = m_collision_tris[number].a;
+    Vector3 p2 = m_collision_tris[number].b;
+    Vector3 p3 = m_collision_tris[number].c;
 
     // compute tri AAB
     AxisAlignedBox aab;
@@ -423,7 +395,7 @@ int Collisions::removeCollisionTri(int number)
     {
         for (int j=iloz; j <= ihiz; j++)
         {
-            hash_free(i,j,number+MAX_COLLISION_BOXES);
+            hash_free(i,j,number+hash_coll_element_t::ELEMENT_TRI_BASE_INDEX);
         }
     }
     return 0;
@@ -431,92 +403,43 @@ int Collisions::removeCollisionTri(int number)
 
 void Collisions::hash_free(int cell_x, int cell_z, int value)
 {
-    unsigned int cellid = (cell_x << 16) + cell_z;
-    unsigned int pos    = hashfunc(cellid);
+    unsigned int cell_id = (cell_x << 16) + cell_z;
+    unsigned int pos    = hashfunc(cell_id);
 
-    // set cell to free state
-    if (hashtable[pos].cellid != UNUSED_CELLID)
+    auto itor = hashtable[pos].begin();
+    auto endi = hashtable[pos].end();
+    for (; itor != endi; ++itor)
     {
-        cell_t *cell = hashtable[pos].cell;
-        // cell has content, search it
-        for (unsigned int i=0; i < cell->size(); i++)
+        if ((itor->cell_id == cell_id) && (itor->element_index == value))
         {
-            if ((*cell)[i] == value)
-            {
-                // remove that element
-                cell->erase(cell->begin() + i);
-                break;
-            }
+            hashtable[pos].erase(itor);
+            return;
         }
     }
 }
 
 void Collisions::hash_add(int cell_x, int cell_z, int value)
 {
-    unsigned int cellid = (cell_x << 16) + cell_z;
-    unsigned int pos    = hashfunc(cellid);
+    unsigned int cell_id = (cell_x << 16) + cell_z;
+    unsigned int pos    = hashfunc(cell_id);
 
-    // Cycle through hashtable: start at pos
-    for (unsigned int i=0; i < HASH_SIZE; i++)
-    {
-        if (hashtable[pos].cellid == UNUSED_CELLID || hashtable[pos].cellid == cellid)
-            break;
-
-        pos++;
-        if (pos >= HASH_SIZE) pos = 0;
-    }
-
-    if (hashtable[pos].cellid == UNUSED_CELLID)
-    {
-        // create a new cell
-        cell_t* newcell = new cell_t;
-        
-        hashtable[pos].cellid = cellid;
-        hashtable[pos].cell = newcell;
-        newcell->push_back(value);
-        cells.push_back(newcell);
-        if (pos != hashfunc(cellid))
-        {
-            collision_count++;
-        }
-        largest_cellcount = std::max(largest_cellcount, (int)newcell->size());
-    } else if (hashtable[pos].cellid == cellid)
-    {
-        // there is already a cell ready
-        hashtable[pos].cell->push_back(value);
-        largest_cellcount = std::max(largest_cellcount, (int)hashtable[pos].cell->size());
-    } else
-    {
-        LOG("COLL: The hashtable is full.");
-    }
+    hashtable[pos].emplace_back(cell_id, value);
 }
 
-cell_t *Collisions::hash_find(int cell_x, int cell_z)
+int Collisions::hash_find(int cell_x, int cell_z)
 {
     unsigned int cellid = (cell_x << 16) + cell_z;
     unsigned int pos    = hashfunc(cellid);
 
-    // Cycle through hashtable: start at pos
-    for (unsigned int i=0; i < HASH_SIZE; i++)
-    {
-        if (hashtable[pos].cellid == UNUSED_CELLID)
-            return NULL;
-
-        if (hashtable[pos].cellid == cellid)
-            return hashtable[pos].cell;
-
-        pos++;
-        if (pos >= HASH_SIZE) pos = 0;
-    }
-
-    return NULL;
+    return static_cast<int>(pos);
 }
 
 int Collisions::addCollisionBox(SceneNode *tenode, bool rotating, bool virt, Vector3 pos, Ogre::Vector3 rot, Ogre::Vector3 l, Ogre::Vector3 h, Ogre::Vector3 sr, const Ogre::String &eventname, const Ogre::String &instancename, bool forcecam, Ogre::Vector3 campos, Ogre::Vector3 sc /* = Vector3::UNIT_SCALE */, Ogre::Vector3 dr /* = Vector3::ZERO */, int event_filter /* = EVENT_ALL */, int scripthandler /* = -1 */)
 {
     Quaternion rotation  = Quaternion(Degree(rot.x), Vector3::UNIT_X) * Quaternion(Degree(rot.y), Vector3::UNIT_Y) * Quaternion(Degree(rot.z), Vector3::UNIT_Z);
     Quaternion direction = Quaternion(Degree(dr.x), Vector3::UNIT_X) * Quaternion(Degree(dr.y), Vector3::UNIT_Y) * Quaternion(Degree(dr.z), Vector3::UNIT_Z);
-    collision_box_t& coll_box = collision_boxes[free_collision_box];
+    int coll_box_index = this->GetNumCollisionBoxes();
+    collision_box_t coll_box;
 
     coll_box.enabled = true;
     
@@ -562,7 +485,7 @@ int Collisions::addCollisionBox(SceneNode *tenode, bool rotating, bool virt, Vec
         strcpy(eventsources[free_eventsource].boxname, eventname.c_str());
         strcpy(eventsources[free_eventsource].instancename, instancename.c_str());
         eventsources[free_eventsource].scripthandler = scripthandler;
-        eventsources[free_eventsource].cbox = free_collision_box;
+        eventsources[free_eventsource].cbox = coll_box_index;
         eventsources[free_eventsource].snode = tenode;
         eventsources[free_eventsource].direction = direction;
         eventsources[free_eventsource].enabled = true;
@@ -729,7 +652,7 @@ int Collisions::addCollisionBox(SceneNode *tenode, bool rotating, bool virt, Vec
         // setup a label
         if (virt)
         {
-            String labelName = "collision_box_label_"+TOSTRING(free_collision_box);
+            String labelName = "collision_box_label_"+TOSTRING(coll_box_index);
             String labelCaption = "EVENTBOX\nevent:"+String(eventname) + "\ninstance:" + String(instancename);
             if (scripthandler != -1)
                 labelCaption += "\nhandler:" + TOSTRING(scripthandler);
@@ -763,21 +686,20 @@ int Collisions::addCollisionBox(SceneNode *tenode, bool rotating, bool virt, Vec
         for (int j=coll_box.ilo.z; j <= coll_box.ihi.z; j++)
         {
             //LOG("Adding a reference to cell "+TOSTRING(i)+" "+TOSTRING(j)+" at index "+TOSTRING(collision_index_free[i*NUM_COLLISON_CELLS+j]));
-            hash_add(i,j,free_collision_box);
+            hash_add(i,j,coll_box_index);
         }
     }
-    int num = free_collision_box;
-    free_collision_box++;
 
-    return num;
+    m_collision_boxes.push_back(coll_box);
+    return coll_box_index;
 }
 
 int Collisions::removeCollisionBox(int num)
 {
-    if (num < 0 || num > free_collision_box)
+    if (num < 0 || num > this->GetNumCollisionBoxes()) // NOTE: Should probably have been '>=', keeping for compatibility ~ only_a_ptr, 10/2017
         return 1;
     
-    collision_box_t& coll_box = collision_boxes[num];
+    collision_box_t& coll_box = m_collision_boxes[num];
     
     if (!coll_box.enabled)
         return 2;
@@ -806,12 +728,13 @@ int Collisions::removeCollisionBox(int num)
 
 int Collisions::addCollisionTri(Vector3 p1, Vector3 p2, Vector3 p3, ground_model_t* gm)
 {
-    if (free_collision_tri >= max_col_tris) return -1;
-    collision_tris[free_collision_tri].a=p1;
-    collision_tris[free_collision_tri].b=p2;
-    collision_tris[free_collision_tri].c=p3;
-    collision_tris[free_collision_tri].gm=gm;
-    collision_tris[free_collision_tri].enabled=true;
+    int new_tri_index = this->GetNumCollisionTris();
+    collision_tri_t new_tri;
+    new_tri.a=p1;
+    new_tri.b=p2;
+    new_tri.c=p3;
+    new_tri.gm=gm;
+    new_tri.enabled=true;
     // compute transformations
     // base construction
     Vector3 bx=p2-p1;
@@ -819,10 +742,10 @@ int Collisions::addCollisionTri(Vector3 p1, Vector3 p2, Vector3 p3, ground_model
     Vector3 bz=bx.crossProduct(by);
     bz.normalise();
     // coordinates change matrix
-    collision_tris[free_collision_tri].reverse.SetColumn(0, bx);
-    collision_tris[free_collision_tri].reverse.SetColumn(1, by);
-    collision_tris[free_collision_tri].reverse.SetColumn(2, bz);
-    collision_tris[free_collision_tri].forward=collision_tris[free_collision_tri].reverse.Inverse();
+    new_tri.reverse.SetColumn(0, bx);
+    new_tri.reverse.SetColumn(1, by);
+    new_tri.reverse.SetColumn(2, bz);
+    new_tri.forward=new_tri.reverse.Inverse();
 
     // compute tri AAB
     AxisAlignedBox aab;
@@ -844,7 +767,7 @@ int Collisions::addCollisionTri(Vector3 p1, Vector3 p2, Vector3 p3, ground_model
     {
         for (int j=ilo.z; j<=ihi.z; j++)
         {
-            hash_add(i,j,free_collision_tri+MAX_COLLISION_BOXES);
+            hash_add(i,j,new_tri_index+hash_coll_element_t::ELEMENT_TRI_BASE_INDEX);
         }
     }
     
@@ -855,16 +778,8 @@ int Collisions::addCollisionTri(Vector3 p1, Vector3 p2, Vector3 p3, ground_model
         debugmo->position(p3);
     }
 
-    return free_collision_tri++;
-}
-
-void Collisions::printStats()
-{
-    LOG("COLL: Collision system statistics:");
-    LOG("COLL: Cell size: "+TOSTRING((float)CELL_SIZE)+" m");
-    LOG("COLL: Hashtable occupation: "+TOSTRING(cells.size()));
-    LOG("COLL: Hashtable collisions: "+TOSTRING(collision_count));
-    LOG("COLL: Largest cell: "+TOSTRING(largest_cellcount));
+    m_collision_tris.push_back(new_tri);
+    return new_tri_index;
 }
 
 bool Collisions::envokeScriptCallback(collision_box_t *cbox, node_t *node, int truckNum, float dt)
@@ -916,7 +831,7 @@ bool Collisions::envokeScriptCallback(collision_box_t *cbox, node_t *node, int t
         //We need to consider whether those cases also need debouncing, and how to do it. 
         //If the character is standing on a checkpoint that a truck is also parked on, it could cause real problems here.
         //For now, this might help a bit:
-        if (last_called_cbox == cbox && cbox->last_called_trucknum == truckNum)
+        if (m_last_called_cbox == cbox && cbox->last_called_trucknum == truckNum)
         {
             alreadyDone = true;
         }
@@ -927,7 +842,7 @@ bool Collisions::envokeScriptCallback(collision_box_t *cbox, node_t *node, int t
     {
         if (!ScriptEngine::getSingleton().envokeCallback(eventsources[cbox->eventsourcenum].scripthandler, &eventsources[cbox->eventsourcenum], node, 0, truckNum))
             handled = true;
-        last_called_cbox = cbox;
+        m_last_called_cbox = cbox;
         cbox->last_called_trucknum = truckNum;
     }
 #endif //USE_ANGELSCRIPT
@@ -937,7 +852,7 @@ bool Collisions::envokeScriptCallback(collision_box_t *cbox, node_t *node, int t
 
 void Collisions::clearEventCache()
 {
-    last_called_cbox = 0;
+    m_last_called_cbox = nullptr;
     last_called_trucknum = -2;
 }
 
@@ -946,15 +861,13 @@ bool Collisions::collisionCorrect(Vector3 *refpos, bool envokeScriptCallbacks, i
     // find the correct cell
     bool contacted=false;
     int refx, refz;
-    unsigned int k;
 
     Vector3 mapSize = gEnv->terrainManager->getMaxTerrainSize();
     if (!(refpos->x>0 && refpos->x<mapSize.x && refpos->z>0 && refpos->z<mapSize.z)) return false;
 
     refx=(int)(refpos->x/(float)CELL_SIZE);
     refz=(int)(refpos->z/(float)CELL_SIZE);
-    cell_t *cell=hash_find(refx, refz);
-    if ( !cell ) return false;
+    int hash = hash_find(refx, refz);
 
     collision_tri_t *minctri=0;
     float minctridist=100.0;
@@ -962,11 +875,12 @@ bool Collisions::collisionCorrect(Vector3 *refpos, bool envokeScriptCallbacks, i
 
     bool isScriptCallbackEnvoked = false;
 
-    for (k=0; k<cell->size(); k++)
+    size_t num_elements = hashtable[hash].size();
+    for (size_t k=0; k < num_elements; k++)
     {
-        if ((*cell)[k] != (int)UNUSED_CELLELEMENT && (*cell)[k]<MAX_COLLISION_BOXES)
+        if (hashtable[hash][k].IsCollisionBox())
         {
-            collision_box_t *cbox=&collision_boxes[(*cell)[k]];
+            collision_box_t* cbox = &m_collision_boxes[hashtable[hash][k].element_index];
             if ( !( (*refpos) > cbox->lo && (*refpos) < cbox->hi ) ) continue;
 
             if (cbox->refined || cbox->selfrotated)
@@ -1033,9 +947,11 @@ bool Collisions::collisionCorrect(Vector3 *refpos, bool envokeScriptCallbacks, i
                     (*refpos) = calcCollidedSide((*refpos), cbox->lo, cbox->hi);
                 }
             }
-        } else
+        }
+        else // The element is a triangle
         {
-            collision_tri_t *ctri=&collision_tris[(*cell)[k]-MAX_COLLISION_BOXES];
+            const int ctri_index = hashtable[hash][k].element_index - hash_coll_element_t::ELEMENT_TRI_BASE_INDEX;
+            collision_tri_t *ctri=&m_collision_tris[ctri_index];
             if (!ctri->enabled)
                 continue;
             // check if this tri is minimal
@@ -1073,7 +989,7 @@ bool Collisions::collisionCorrect(Vector3 *refpos, bool envokeScriptCallbacks, i
 bool Collisions::permitEvent(int filter, int truckNum)
 {
     //Bug fix - the truck being collision detected isn't always the player's currently selected truck - especially when AI is active. cosmic vole October 6 2016.
-	Beam *b = (truckNum < 0) ? BeamFactory::getSingleton().getCurrentTruck() : BeamFactory::getSingleton().getTruck(truckNum);
+    Beam *b = (truckNum < 0) ? m_sim_controller->GetBeamFactory()->getCurrentTruck() : m_sim_controller->GetBeamFactory()->getTruck(truckNum);
 
     switch (filter)
     {
@@ -1096,11 +1012,11 @@ bool Collisions::permitEvent(int filter, int truckNum)
 
 int Collisions::enableCollisionTri(int number, bool enable)
 {
-    if (number > free_collision_tri) 
+    if (number >= this->GetNumCollisionTris())
         return -1;
 
-    collision_tris[number].enabled = enable;
-    
+    m_collision_tris[number].enabled = enable;
+
     return 0;
 }
 
@@ -1109,87 +1025,45 @@ bool Collisions::nodeCollision(node_t *node, bool contacted, float dt, float* ns
     bool smoky = false;
     // float corrf=1.0;
     Vector3 oripos = node->AbsPosition;
-    unsigned int k;
     // find the correct cell
     int refx = (int)(node->AbsPosition.x/CELL_SIZE);
     int refz = (int)(node->AbsPosition.z/CELL_SIZE);
-    cell_t *cell = hash_find(refx, refz);
-    //LOG("Checking cell "+TOSTRING(refx)+" "+TOSTRING(refz)+" total indexes: "+TOSTRING(num_cboxes_index[refp]));
+    int hash = hash_find(refx, refz);
+    unsigned int cell_id = (refx << 16) + refz;
 
     collision_tri_t *minctri = 0;
     float minctridist = 100.0;
     Vector3 minctripoint;
 
-    if (cell)
+    size_t num_elements = hashtable[hash].size();
+    for (size_t k=0; k < num_elements; k++)
     {
-        for (k=0; k<cell->size(); k++)
+        if (hashtable[hash][k].cell_id != cell_id)
         {
-            if ((*cell)[k] != (int)UNUSED_CELLELEMENT && (*cell)[k] < MAX_COLLISION_BOXES)
+            continue;
+        }
+        else if (hashtable[hash][k].IsCollisionBox())
+        {
+            collision_box_t *cbox = &m_collision_boxes[hashtable[hash][k].element_index];
+            if (node->AbsPosition > cbox->lo && node->AbsPosition < cbox->hi)
             {
-                collision_box_t *cbox = &collision_boxes[(*cell)[k]];
-                if (node->AbsPosition > cbox->lo && node->AbsPosition < cbox->hi)
+                if (cbox->refined || cbox->selfrotated)
                 {
-                    if (cbox->refined || cbox->selfrotated)
+                    // we may have a collision, do a change of repere
+                    Vector3 Pos = node->AbsPosition-cbox->center;
+                    if (cbox->refined) Pos = cbox->unrot*Pos;
+                    if (cbox->selfrotated)
                     {
-                        // we may have a collision, do a change of repere
-                        Vector3 Pos = node->AbsPosition-cbox->center;
-                        if (cbox->refined) Pos = cbox->unrot*Pos;
-                        if (cbox->selfrotated)
-                        {
-                            Pos=Pos-cbox->selfcenter;
-                            Pos=cbox->selfunrot*Pos;
-                            Pos=Pos+cbox->selfcenter;
-                        }
-                        // now test with the inner box
-                        if (Pos > cbox->relo && Pos < cbox->rehi)
-                        {
-							if (cbox->eventsourcenum!=-1 && permitEvent(cbox->event_filter, truckNum))
-                            {
-								envokeScriptCallback(cbox, node, truckNum, dt);
-                            }
-                            if (cbox->camforced && !forcecam)
-                            {
-                                forcecam=true;
-                                forcecampos=cbox->campos;
-                            }
-                            if (!cbox->virt)
-                            {
-                                // collision, process as usual
-                                // we have a collision
-                                contacted=true;
-                                // setup smoke
-                                //float ns=node->Velocity.length();
-                                smoky=true;
-                                //*nso=ns;
-                                // determine which side collided
-                                float min=Pos.z-(cbox->relo).z;
-                                Vector3 normal=Vector3(0,0,-1);
-                                float t=(cbox->rehi).z-Pos.z;
-                                if (t<min){min=t; normal=Vector3(0,0,1);}; //north
-                                t=Pos.x-(cbox->relo).x;
-                                if (t<min) {min=t; normal=Vector3(-1,0,0);}; //west
-                                t=(cbox->rehi).x-Pos.x;
-                                if (t<min) {min=t; normal=Vector3(1,0,0);}; //east
-                                t=Pos.y-(cbox->relo).y;
-                                if (t<min) {min=t; normal=Vector3(0,-1,0);}; //down
-                                t=(cbox->rehi).y-Pos.y;
-                                if (t<min) {min=t; normal=Vector3(0,1,0);}; //up
-
-                                // we need the normal, and the depth
-                                // resume repere for the normal
-                                if (cbox->selfrotated) normal=cbox->selfrot*normal;
-                                if (cbox->refined) normal=cbox->rot*normal;
-
-                                // collision boxes are always out of concrete as it seems
-                                primitiveCollision(node, node->Forces, node->Velocity, normal, dt, defaultgm, nso);
-                                if (ogm) *ogm=defaultgm;
-                                }
-                            }
-                    } else
+                        Pos=Pos-cbox->selfcenter;
+                        Pos=cbox->selfunrot*Pos;
+                        Pos=Pos+cbox->selfcenter;
+                    }
+                    // now test with the inner box
+                    if (Pos > cbox->relo && Pos < cbox->rehi)
                     {
-						if (cbox->eventsourcenum!=-1 && permitEvent(cbox->event_filter, truckNum))
+                        if (cbox->eventsourcenum!=-1 && permitEvent(cbox->event_filter, truckNum))
                         {
-							envokeScriptCallback(cbox, node, truckNum, dt);
+                            envokeScriptCallback(cbox, node, truckNum, dt);
                         }
                         if (cbox->camforced && !forcecam)
                         {
@@ -1198,6 +1072,7 @@ bool Collisions::nodeCollision(node_t *node, bool contacted, float dt, float* ns
                         }
                         if (!cbox->virt)
                         {
+                            // collision, process as usual
                             // we have a collision
                             contacted=true;
                             // setup smoke
@@ -1205,47 +1080,92 @@ bool Collisions::nodeCollision(node_t *node, bool contacted, float dt, float* ns
                             smoky=true;
                             //*nso=ns;
                             // determine which side collided
-                            float min=node->AbsPosition.z-cbox->lo.z;
+                            float min=Pos.z-(cbox->relo).z;
                             Vector3 normal=Vector3(0,0,-1);
-                            float t=cbox->hi.z-node->AbsPosition.z;
-                            if (t<min) {min=t; normal=Vector3(0,0,1);}; //north
-                            t=node->AbsPosition.x-cbox->lo.x;
+                            float t=(cbox->rehi).z-Pos.z;
+                            if (t<min){min=t; normal=Vector3(0,0,1);}; //north
+                            t=Pos.x-(cbox->relo).x;
                             if (t<min) {min=t; normal=Vector3(-1,0,0);}; //west
-                            t=cbox->hi.x-node->AbsPosition.x;
+                            t=(cbox->rehi).x-Pos.x;
                             if (t<min) {min=t; normal=Vector3(1,0,0);}; //east
-                            t=node->AbsPosition.y-cbox->lo.y;
+                            t=Pos.y-(cbox->relo).y;
                             if (t<min) {min=t; normal=Vector3(0,-1,0);}; //down
-                            t=cbox->hi.y-node->AbsPosition.y;
+                            t=(cbox->rehi).y-Pos.y;
                             if (t<min) {min=t; normal=Vector3(0,1,0);}; //up
-                            // we need the normal
+
+                            // we need the normal, and the depth
                             // resume repere for the normal
                             if (cbox->selfrotated) normal=cbox->selfrot*normal;
                             if (cbox->refined) normal=cbox->rot*normal;
+
+                            // collision boxes are always out of concrete as it seems
                             primitiveCollision(node, node->Forces, node->Velocity, normal, dt, defaultgm, nso);
                             if (ogm) *ogm=defaultgm;
+                            }
                         }
-                    }
-                }
-            } else
-            {
-                // tri collision
-                collision_tri_t *ctri=&collision_tris[(*cell)[k]-MAX_COLLISION_BOXES];
-                // check if this tri is minimal
-                // transform
-                Vector3 point=ctri->forward*(node->AbsPosition-ctri->a);
-                // test if within tri collision volume (potential cause of bug!)
-                if (point.x>=0 && point.y>=0 && (point.x+point.y)<=1.0 && point.z<0 && point.z>-0.1)
+                } else
                 {
-                    if (-point.z<minctridist)
+                    if (cbox->eventsourcenum!=-1 && permitEvent(cbox->event_filter, truckNum))
                     {
-                        minctridist=-point.z;
-                        minctri=ctri;
-                        minctripoint=point;
+                        envokeScriptCallback(cbox, node, truckNum, dt);
+                    }
+                    if (cbox->camforced && !forcecam)
+                    {
+                        forcecam=true;
+                        forcecampos=cbox->campos;
+                    }
+                    if (!cbox->virt)
+                    {
+                        // we have a collision
+                        contacted=true;
+                        // setup smoke
+                        //float ns=node->Velocity.length();
+                        smoky=true;
+                        //*nso=ns;
+                        // determine which side collided
+                        float min=node->AbsPosition.z-cbox->lo.z;
+                        Vector3 normal=Vector3(0,0,-1);
+                        float t=cbox->hi.z-node->AbsPosition.z;
+                        if (t<min) {min=t; normal=Vector3(0,0,1);}; //north
+                        t=node->AbsPosition.x-cbox->lo.x;
+                        if (t<min) {min=t; normal=Vector3(-1,0,0);}; //west
+                        t=cbox->hi.x-node->AbsPosition.x;
+                        if (t<min) {min=t; normal=Vector3(1,0,0);}; //east
+                        t=node->AbsPosition.y-cbox->lo.y;
+                        if (t<min) {min=t; normal=Vector3(0,-1,0);}; //down
+                        t=cbox->hi.y-node->AbsPosition.y;
+                        if (t<min) {min=t; normal=Vector3(0,1,0);}; //up
+                        // we need the normal
+                        // resume repere for the normal
+                        if (cbox->selfrotated) normal=cbox->selfrot*normal;
+                        if (cbox->refined) normal=cbox->rot*normal;
+                        primitiveCollision(node, node->Forces, node->Velocity, normal, dt, defaultgm, nso);
+                        if (ogm) *ogm=defaultgm;
                     }
                 }
             }
         }
+        else
+        {
+            // tri collision
+            const int ctri_index = hashtable[hash][k].element_index - hash_coll_element_t::ELEMENT_TRI_BASE_INDEX;
+            collision_tri_t *ctri=&m_collision_tris[ctri_index];
+            // check if this tri is minimal
+            // transform
+            Vector3 point=ctri->forward*(node->AbsPosition-ctri->a);
+            // test if within tri collision volume (potential cause of bug!)
+            if (point.x>=0 && point.y>=0 && (point.x+point.y)<=1.0 && point.z<0 && point.z>-0.1)
+            {
+                if (-point.z<minctridist)
+                {
+                    minctridist=-point.z;
+                    minctri=ctri;
+                    minctripoint=point;
+                }
+            }
+        }
     }
+
     // process minctri collision
     if (minctri)
     {
@@ -1298,7 +1218,7 @@ Vector3 Collisions::getPosition(const Ogre::String &inst, const Ogre::String &bo
     {
         if (!strcmp(inst.c_str(), eventsources[i].instancename) && !strcmp(box.c_str(), eventsources[i].boxname))
         {
-            return collision_boxes[eventsources[i].cbox].center+collision_boxes[eventsources[i].cbox].rot*collision_boxes[eventsources[i].cbox].selfcenter;
+            return m_collision_boxes[eventsources[i].cbox].center+m_collision_boxes[eventsources[i].cbox].rot*m_collision_boxes[eventsources[i].cbox].selfcenter;
         }
     }
     return Vector3::ZERO;
@@ -1310,7 +1230,7 @@ Quaternion Collisions::getDirection(const Ogre::String &inst, const Ogre::String
     {
         if (!strcmp(inst.c_str(), eventsources[i].instancename) && !strcmp(box.c_str(), eventsources[i].boxname))
         {
-            return collision_boxes[eventsources[i].cbox].rot*eventsources[i].direction;
+            return m_collision_boxes[eventsources[i].cbox].rot*eventsources[i].direction;
         }
     }
     return Quaternion::ZERO;
@@ -1322,7 +1242,7 @@ collision_box_t *Collisions::getBox(const Ogre::String &inst, const Ogre::String
     {
         if (!strcmp(inst.c_str(), eventsources[i].instancename) && !strcmp(box.c_str(), eventsources[i].boxname))
         {
-            return &collision_boxes[eventsources[i].cbox];
+            return &m_collision_boxes[eventsources[i].cbox];
         }
     }
     return NULL;
@@ -1334,7 +1254,7 @@ eventsource_t *Collisions::isTruckInEventBox(Beam *truck)
     // check all boxes
     for (int i=0; i<free_eventsource; i++)
     {
-        collision_box_t *cb = &collision_boxes[eventsources[i].cbox];
+        collision_box_t *cb = &m_collision_boxes[eventsources[i].cbox];
 
         if (!cb->enabled)
             continue;
@@ -1578,8 +1498,8 @@ int Collisions::createCollisionDebugVisualization()
         {
             int cellx = (int)(x/(float)CELL_SIZE);
             int cellz = (int)(z/(float)CELL_SIZE);
-            cell_t *cell=hash_find(cellx, cellz);
-            if (cell)
+            const int hash = hash_find(cellx, cellz);
+            if (hashtable[hash].size() > 0)
             {
                 float groundheight = -9999;
                 float x2 = x+CELL_SIZE;
@@ -1601,11 +1521,8 @@ int Collisions::createCollisionDebugVisualization()
                 groundheight+=0.1; // 10 cm hover
                 // ground height should fit
 
-                //int deep = 0;
-                int cc = (int)cell->size();
-                float percent = cc / (float)CELL_BLOCKSIZE;
+                float percentd = static_cast<float>(hashtable[hash].size()) / static_cast<float>(CELL_BLOCKSIZE);
 
-                float percentd = percent;
                 if (percentd > 1) percentd = 1;
                 String matName = "mat-coll-dbg-"+TOSTRING((int)(percentd*100));
                 String cell_name="("+TOSTRING(cellx)+","+ TOSTRING(cellz)+")";
@@ -1702,7 +1619,7 @@ int Collisions::addCollisionMesh(Ogre::String meshname, Ogre::Vector3 pos, Ogre:
         n->setScale(scale);
         n->setOrientation(q);
     
-        String labelName = "collision_mesh_label_"+TOSTRING(free_collision_tri);
+        String labelName = "collision_mesh_label_"+TOSTRING(this->GetNumCollisionTris());
         String labelCaption = "COLLMESH\nmeshname:"+meshname + "\ngroundmodel:" + String(gm->name);
         MovableText *mt = new MovableText(labelName, labelCaption);
         mt->setFontName("highcontrast_black");

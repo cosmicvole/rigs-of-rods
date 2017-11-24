@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013-2016 Petr Ohlidal
+    Copyright 2013-2017 Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -34,7 +34,7 @@
 namespace RoR {
 
 // Forward
-namespace GUI { class SimUtils; class TopMenubar; }
+namespace GUI { class SimUtils; class TopMenubar; class TeleportWindow; }
 
 class GUIManager :
     public GUIInputManager
@@ -64,6 +64,7 @@ public:
 #endif    
     void SetVisible_FrictionSettings    (bool visible);
     void SetVisible_TextureToolWindow   (bool visible);
+    void SetVisible_TeleportWindow      (bool visible);
     void SetVisible_LoadingWindow       (bool visible);
     void SetVisible_TopMenubar          (bool visible);
     void SetVisible_Console             (bool visible);
@@ -84,6 +85,7 @@ public:
     bool IsVisible_VehicleDescription   ();
     bool IsVisible_FrictionSettings     ();
     bool IsVisible_TextureToolWindow    ();
+    bool IsVisible_TeleportWindow       ();
     bool IsVisible_LoadingWindow        ();
     bool IsVisible_TopMenubar           ();
     bool IsVisible_Console              ();
@@ -101,6 +103,7 @@ public:
     GUI::SimUtils*              GetSimUtils();
     GUI::TopMenubar*            GetTopMenubar();
     GUI::RaceSelector*          GetRaceSelector(); // cosmic vole October 9 2017
+    GUI::TeleportWindow* GetTeleport();
 
     // GUI manipulation
     void pushMessageChatBox(Ogre::String txt);
@@ -131,14 +134,15 @@ public:
     void FrictionSettingsUpdateCollisions();
     void ShutdownMyGUI();
     void ReflectGameState();
+    void SetMouseCursorVisible(bool visible);
 
     virtual void AddRigLoadingReport(std::string const& vehicle_name, std::string const& text, int num_errors, int num_warnings, int num_other);
 
     static Ogre::String getRandomWallpaperImage();
 
-private:
+    void SetSimController(RoRFrameListener* sim);
 
-    bool create();
+private:
 
     virtual bool frameStarted(const Ogre::FrameEvent& _evt);
     virtual bool frameEnded(const Ogre::FrameEvent& _evt);

@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013+     Petr Ohlidal & contributors
+    Copyright 2013-2017 Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -33,6 +33,7 @@
 #include "MeshObject.h"
 #include "ProceduralManager.h"
 #include "Road2.h"
+#include "RoRFrameListener.h"
 #include "Settings.h"
 #include "SoundScriptManager.h"
 #include "SurveyMapEntity.h"
@@ -129,7 +130,8 @@ void TerrainObjectManager::proceduralTests()
 		ent2->setMaterialName("Examples/Road");
 		ent2->setCastShadows(true);
 
-	} catch(Exception &e)
+	}
+    catch (Exception &e)
 	{
 		ErrorUtils::ShowError("Error within procedural tests", e.what());
 	}
@@ -163,8 +165,8 @@ void TerrainObjectManager::loadObjectConfigFile(Ogre::String odefname)
         return;
     }
 
-    int mapsizex = terrainManager->getGeometryManager()->getMaxTerrainSize().x;
-    int mapsizez = terrainManager->getGeometryManager()->getMaxTerrainSize().z;
+    int m_terrain_size_x = terrainManager->getGeometryManager()->getMaxTerrainSize().x;
+    int m_map_size_z = terrainManager->getGeometryManager()->getMaxTerrainSize().z;
 
     Vector3 r2lastpos = Vector3::ZERO;
     Quaternion r2lastrot = Quaternion::IDENTITY;
@@ -178,9 +180,9 @@ void TerrainObjectManager::loadObjectConfigFile(Ogre::String odefname)
         int progress = ((float)(ds->tell()) / (float)(ds->size())) * 100.0f;
         if (progress - lastprogress > 20)
         {
-#ifdef USE_MYGUI
+
             RoR::App::GetGuiManager()->GetLoadingWindow()->setProgress(progress, _L("Loading Terrain Objects"));
-#endif //MYGUI
+
             lastprogress = progress;
         }
 
@@ -195,13 +197,6 @@ void TerrainObjectManager::loadObjectConfigFile(Ogre::String odefname)
             continue; //comments
         if (!strcmp("end", line))
             break;
-
-        if (!strncmp(line, "collision-tris", 14))
-        {
-            long amount = Collisions::MAX_COLLISION_TRIS;
-            sscanf(line, "collision-tris %ld", &amount);
-            gEnv->collisions->resizeMemory(amount);
-        }
 
         if (!strncmp(line, "grid", 4))
         {
@@ -293,7 +288,7 @@ void TerrainObjectManager::loadObjectConfigFile(Ogre::String odefname)
                 continue;
             }
             densityMap->setFilter(Forests::MAPFILTER_BILINEAR);
-            //densityMap->setMapBounds(TRect(0, 0, mapsizex, mapsizez));
+            //densityMap->setMapBounds(TRect(0, 0, m_terrain_size_x, m_map_size_z));
 
             paged_geometry_t paged;
             paged.geom = new PagedGeometry();
@@ -301,7 +296,7 @@ void TerrainObjectManager::loadObjectConfigFile(Ogre::String odefname)
             paged.geom->setCamera(gEnv->mainCamera);
             paged.geom->setPageSize(50);
             paged.geom->setInfinite();
-            Ogre::TRect<Ogre::Real> bounds = TBounds(0, 0, mapsizex, mapsizez);
+            Ogre::TRect<Ogre::Real> bounds = TBounds(0, 0, m_terrain_size_x, m_map_size_z);
             paged.geom->setBounds(bounds);
 
             //Set up LODs
@@ -314,7 +309,7 @@ void TerrainObjectManager::loadObjectConfigFile(Ogre::String odefname)
             if (max < 10)
                 max = 10;
             paged.geom->addDetailLevel<ImpostorPage>(max, max / 10);
-            TreeLoader2D* treeLoader = new TreeLoader2D(paged.geom, TBounds(0, 0, mapsizex, mapsizez));
+            TreeLoader2D* treeLoader = new TreeLoader2D(paged.geom, TBounds(0, 0, m_terrain_size_x, m_map_size_z));
             paged.geom->setPageLoader(treeLoader);
             treeLoader->setHeightFunction(&getTerrainHeight);
             if (String(ColorMap) != "none")
@@ -327,9 +322,9 @@ void TerrainObjectManager::loadObjectConfigFile(Ogre::String odefname)
             if (gridspacing > 0)
             {
                 // grid style
-                for (float x = 0; x < mapsizex; x += gridspacing)
+                for (float x = 0; x < m_terrain_size_x; x += gridspacing)
                 {
-                    for (float z = 0; z < mapsizez; z += gridspacing)
+                    for (float z = 0; z < m_map_size_z; z += gridspacing)
                     {
                         float density = densityMap->_getDensityAt_Unfiltered(x, z, bounds);
                         if (density < 0.8f)
@@ -358,9 +353,9 @@ void TerrainObjectManager::loadObjectConfigFile(Ogre::String odefname)
                 }
                 float hd = highdens;
                 // normal style, random
-                for (float x = 0; x < mapsizex; x += gridsize)
+                for (float x = 0; x < m_terrain_size_x; x += gridsize)
                 {
-                    for (float z = 0; z < mapsizez; z += gridsize)
+                    for (float z = 0; z < m_map_size_z; z += gridsize)
                     {
                         if (highdens < 0)
                             hd = Math::RangeRandom(0, -highdens);
@@ -440,7 +435,7 @@ void TerrainObjectManager::loadObjectConfigFile(Ogre::String odefname)
                 else
                     grassLayer->setRenderTechnique(static_cast<GrassTechnique>(techn), false);
 
-                grassLayer->setMapBounds(TBounds(0, 0, mapsizex, mapsizez));
+                grassLayer->setMapBounds(TBounds(0, 0, m_terrain_size_x, m_map_size_z));
 
                 if (strcmp(colorMapFilename, "none") != 0)
                 {
@@ -828,15 +823,13 @@ void TerrainObjectManager::loadObject(const Ogre::String& name, const Ogre::Vect
 
     SceneNode* tenode = gEnv->sceneManager->getRootSceneNode()->createChildSceneNode();
 
-    MeshObject* mo = NULL;
+    MeshObject* mo = nullptr;
     if (String(mesh) != "none")
     {
-        mo = new MeshObject(mesh, entity_name, tenode, NULL, background_loading);
+        mo = new MeshObject(mesh, entity_name, tenode, background_loading);
         meshObjects.push_back(mo);
     }
 
-    //mo->setQueryFlags(OBJECTS_MASK);
-    //tenode->attachObject(te);
     tenode->setScale(sc);
     tenode->setPosition(pos);
     tenode->rotate(rotation);
@@ -1242,7 +1235,6 @@ void TerrainObjectManager::loadObject(const Ogre::String& name, const Ogre::Vect
             Vector3 lpos, ldir;
             float lrange = 10, innerAngle = 45, outerAngle = 45;
             ColourValue lcol;
-            String lname = "spotlight_" + TOSTRING(Math::RangeRandom(1000, 9999));
 
             int res = sscanf(ptline, "spotlight %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f",
                 &lpos.x, &lpos.y, &lpos.z, &ldir.x, &ldir.y, &ldir.z, &lcol.r, &lcol.g, &lcol.b, &lrange, &innerAngle, &outerAngle);
@@ -1252,7 +1244,11 @@ void TerrainObjectManager::loadObject(const Ogre::String& name, const Ogre::Vect
                 continue;
             }
 
-            Light* spotLight = gEnv->sceneManager->createLight(lname);
+            static size_t counter = 0;
+            char name[50];
+            snprintf(name, 50, "terrn2/spotlight-%x", counter);
+            ++counter;
+            Light* spotLight = gEnv->sceneManager->createLight(name);
 
             spotLight->setType(Light::LT_SPOTLIGHT);
             spotLight->setPosition(lpos);
@@ -1281,7 +1277,6 @@ void TerrainObjectManager::loadObject(const Ogre::String& name, const Ogre::Vect
             Vector3 lpos, ldir;
             float lrange = 10;
             ColourValue lcol;
-            String lname = "pointlight_" + TOSTRING(Math::RangeRandom(1000, 9999));
 
             int res = sscanf(ptline, "pointlight %f, %f, %f, %f, %f, %f, %f, %f, %f, %f",
                 &lpos.x, &lpos.y, &lpos.z, &ldir.x, &ldir.y, &ldir.z, &lcol.r, &lcol.g, &lcol.b, &lrange);
@@ -1291,7 +1286,11 @@ void TerrainObjectManager::loadObject(const Ogre::String& name, const Ogre::Vect
                 continue;
             }
 
-            Light* pointlight = gEnv->sceneManager->createLight(lname);
+            static size_t counter = 0;
+            char name[50];
+            snprintf(name, 50, "terrn2/pointlight-%x", counter);
+            ++counter;
+            Light* pointlight = gEnv->sceneManager->createLight(name);
 
             pointlight->setType(Light::LT_POINT);
             pointlight->setPosition(lpos);
@@ -1318,7 +1317,7 @@ void TerrainObjectManager::loadObject(const Ogre::String& name, const Ogre::Vect
     }
 
     //add icons if type is set
-#ifdef USE_MYGUI
+
     String typestr = "";
     if (!type.empty() && gEnv->surveyMap)
     {
@@ -1345,7 +1344,7 @@ void TerrainObjectManager::loadObject(const Ogre::String& name, const Ogre::Vect
             }
         }
     }
-#endif //USE_MYGUI
+
 }
 
 bool TerrainObjectManager::updateAnimatedObjects(float dt)
@@ -1377,7 +1376,7 @@ void TerrainObjectManager::loadPreloadedTrucks()
     for (unsigned int i = 0; i < truck_preload.size(); i++)
     {
         Vector3 pos = Vector3(truck_preload[i].px, truck_preload[i].py, truck_preload[i].pz);
-        Beam* b = BeamFactory::getSingleton().CreateLocalRigInstance(
+        Beam* b = terrainManager->GetSimController()->GetBeamFactory()->CreateLocalRigInstance(
             pos,
             truck_preload[i].rotation,
             truck_preload[i].name,
@@ -1389,7 +1388,7 @@ void TerrainObjectManager::loadPreloadedTrucks()
             truck_preload[i].freePosition,
             true /* preloaded_with_terrain */
         );
-#ifdef USE_MYGUI
+
         if (b && gEnv->surveyMap)
         {
             SurveyMapEntity* e = gEnv->surveyMap->createNamedMapEntity("Truck" + TOSTRING(b->trucknum), SurveyMapManager::getTypeByDriveable(b->driveable));
@@ -1401,7 +1400,7 @@ void TerrainObjectManager::loadPreloadedTrucks()
                 e->setRotation(-Radian(b->getHeadingDirectionAngle()));
             }
         }
-#endif //USE_MYGUI
+
     }
 }
 

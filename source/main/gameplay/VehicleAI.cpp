@@ -21,6 +21,7 @@
 */
 
 #ifdef USE_ANGELSCRIPT
+#include "ChampionshipManager.h"
 #include "CollisionAvoidance_GridQuad.h"
 #include "VehicleAI.h"
 #include "Application.h" //To flash debug message - cosmic vole July 2 2017
@@ -31,17 +32,18 @@
 #include "GUI_GameConsole.h"
 //cosmic vole - OgreSubsystem() needed for timer used in collision avoidance May 31 2017
 #include "OgreSubsystem.h"
-
-#include "MainThread.h"
+#include "RoRFrameListener.h"
+#include "MainMenu.h"
+#include "Network.h"
 //cosmic vole added AI driver model November 21 2016
 #include "CharacterFactory.h"
-#include "PlayerColours.h"
+//#include "PlayerColours.h"
 
 #include "scriptdictionary/scriptdictionary.h"
 
 using namespace Ogre;
 
-VehicleAI::VehicleAI(Beam* b)
+VehicleAI::VehicleAI(Beam* b) : m_sim_controller(nullptr)
 {
     //Initialization moved into constructor to avoid Visual Studio error 'only static const integral data members can be initialized within a class'
     maxspeed = 50;//!<(KM/H) The max speed the AI is allowed to drive.
@@ -156,6 +158,10 @@ VehicleAI::~VehicleAI()
         }
         gridQuads.clear();
     }
+	if (character != nullptr)
+	{
+		delete(character);
+	}
 }
 
 //Define the static vectors for lane based collision avoidance - cosmic vole May 26 2017
@@ -169,13 +175,14 @@ void VehicleAI::SetActive(bool value)
     //cosmic vole added AI Character driver model November 21 2016
     if (value && BSETTING("ShowAIDrivers", true) && character == nullptr)
     {
-        int aiColour = PlayerColours::getSingleton().getRandomColourNum();//Ogre::ColourValue(frand(), frand(), frand(), 1.0f);
-        character = CharacterFactory::getSingleton().createAIInstance(beam->trucknum, (int)aiColour);
+        //int aiColour = /*PlayerColours::getSingleton().getRandomColourNum();*/Ogre::ColourValue(frand(), frand(), frand(), 1.0f);
+        int aiColor = RoR::Networking::GetRandomColorNum();
+		character = new Character(beam->trucknum, aiColor);//CharacterFactory::getSingleton().createAIInstance(beam->trucknum, (int)aiColour);
         character->setBeamCoupling(true, beam);
     }
     else if (!value && character != nullptr)
     {
-        CharacterFactory::getSingleton().removeAIInstance(beam->trucknum);
+        delete character;//CharacterFactory::getSingleton().removeAIInstance(beam->trucknum);
     }
 }
 
@@ -201,11 +208,12 @@ void VehicleAI::AddWaypoint(String& id, Vector3& point)
 
 void VehicleAI::AddWaypoints(AngelScript::CScriptDictionary& d)
 {
-    for (auto dict : d.dict)
+    for (auto item : d)
     {
-        String id = dict.first;
-        Vector3* point = (Vector3 *)dict.second.valueObj;
-        AddWaypoint(id, *(point));
+        Ogre::Vector3* point;
+        item.GetValue(point, item.GetTypeId());
+        Ogre::String key(item.GetKey());
+        this->AddWaypoint(key, (*point));
     }
 }
 
@@ -920,6 +928,7 @@ void VehicleAI::CollisionAvoidance_GenerateLanes(int startWaypoint, int endWaypo
                 else
                 {
                     pQuad = new CollisionAvoidance_GridQuad();
+					pQuad->SetSimController(ChampionshipManager::getSingleton().GetSimController());
                     waypointQuads.push_back(pQuad);
                 }
                 pQuad->SetCoordinates(laneLeftFront, laneRightFront, laneRightRear, laneLeftRear);
@@ -1150,7 +1159,7 @@ void VehicleAI::CollisionAvoidance_FollowLane(VehicleAI *truckAI, int lane, int 
     float debugMaxAdjustment = 0.0f;
     float debugMinRoadWidth = 10000.0f;
     float debugMaxLaneWidth = 0.0f;
-    bool debugIsCurrentTruck = truckAI->beam && BeamFactory::getSingleton().getCurrentTruck() && truckAI->beam->trucknum == BeamFactory::getSingleton().getCurrentTruck()->trucknum;
+    bool debugIsCurrentTruck = truckAI->beam && m_sim_controller->GetBeamFactory()->getCurrentTruck() && truckAI->beam->trucknum == m_sim_controller->GetBeamFactory()->getCurrentTruck()->trucknum;
         
     for (int i=startWaypoint; i<=endWaypoint; i++)
     {
@@ -1491,8 +1500,8 @@ void VehicleAI::CollisionAvoidance_AvoidCollisions(float currentTime/*, std::vec
     int maxIterations = 3;
     float minDistForSwerve = 20.0f;//50.0f;//12.0f;//15.0f;//13.0f;//12.0f;//14.0f;//16.0f;//18.0f;//20.0f;//TODO estimate this from predicted average speed
     float timeSafetyMargin = 0.4f;//0.5f;//0.65f;//0.7f;//0.6f;//0.5f;
-    Beam** trucks = BeamFactory::getSingleton().getTrucks();
-    int numTrucks = BeamFactory::getSingleton().getTruckCount();
+    Beam** trucks = m_sim_controller->GetBeamFactory()->getTrucks();
+    int numTrucks = m_sim_controller->GetBeamFactory()->getTruckCount();
     
     CollisionAvoidance_ClearVehiclePaths(Ogre::StringUtil::BLANK, false);
     
@@ -1539,7 +1548,7 @@ void VehicleAI::CollisionAvoidance_AvoidCollisions(float currentTime/*, std::vec
         bool noEvasiveAction = true;
         bool noCollisions = true;
         Beam *agentTruck = &truck;//truckAI.beam;
-        bool isCurrentTruck = agentTruck && BeamFactory::getSingleton().getCurrentTruck() && agentTruck->trucknum == BeamFactory::getSingleton().getCurrentTruck()->trucknum;
+        bool isCurrentTruck = agentTruck && m_sim_controller->GetBeamFactory()->getCurrentTruck() && agentTruck->trucknum == m_sim_controller->GetBeamFactory()->getCurrentTruck()->trucknum;
         Vector3 agentPos = agentTruck->getPosition();
         Vector3 agentVelocity = agentTruck->getVelocity();
         Vector3 agentPos2D = agentPos;
@@ -1763,7 +1772,7 @@ void VehicleAI::CollisionAvoidance_AvoidCollisions(float currentTime/*, std::vec
             for (std::vector<PredictedTruckPosition>::iterator iter = quadCollisions.begin(); iter != quadCollisions.end(); ++iter)
             {
                 PredictedTruckPosition ptp2 = *iter;
-                otherTruck = BeamFactory::getSingleton().getTruck(ptp2.truckNum);
+                otherTruck = m_sim_controller->GetBeamFactory()->getTruck(ptp2.truckNum);
                 //Check the *current* positions and approach angles of the two trucks. Who is behind who? cosmic vole July 1 2017
                 Vector3 otherPos = otherTruck->getPosition();
                 Vector3 otherVelocity = otherTruck->getVelocity();
@@ -2583,7 +2592,7 @@ void VehicleAI::CollisionAvoidance_AvoidCollisions(float currentTime/*, std::vec
             }
         }
         
-        if (agentTruck && BeamFactory::getSingleton().getCurrentTruck() && agentTruck->trucknum == BeamFactory::getSingleton().getCurrentTruck()->trucknum)
+        if (agentTruck && m_sim_controller->GetBeamFactory()->getCurrentTruck() && agentTruck->trucknum == m_sim_controller->GetBeamFactory()->getCurrentTruck()->trucknum)
         {
             CollisionAvoidance_ShowDebugMsg(isCurLaneOccupied, !noCollisions, hasCollisionWithTruckInFront, canAvoidTruck, currentLane, targetLane, debugInfo);
         }
@@ -3104,7 +3113,7 @@ void VehicleAI::CollisionAvoidance_PredictVehiclePath(float currentTime/*Vector3
             }//<--- added this as TEMP debug because the debug rects weren't appearing!s    
         //#if 0                
                 //Debug projected positions of the vehicles - cosmic vole March 10 2017
-                Beam *curTruck = BeamFactory::getSingleton().getCurrentTruck();
+                Beam *curTruck = m_sim_controller->GetBeamFactory()->getCurrentTruck();
                 static std::vector<SceneNode*> debugCol = std::vector<SceneNode*>();
                 //TODO these debug rects never seem to be showing up now! And it seg faults if we run this too much!
                 if (curTruck && waypointChanged && (curTruck == beam /*|| gridQuad.HasCollisionWith(ptp)*/) /*&& (step % 6 == 0)*/)//(curTruck->trucknum == beam->trucknum))
@@ -3783,8 +3792,8 @@ void VehicleAI::CollisionAvoidance_ClearVehiclePaths(Ogre::String raceID = Ogre:
         }
     }
     
-    Beam** trucks = BeamFactory::getSingleton().getTrucks();
-    int numTrucks = BeamFactory::getSingleton().getTruckCount();
+    Beam** trucks = m_sim_controller->GetBeamFactory()->getTrucks();
+    int numTrucks = m_sim_controller->GetBeamFactory()->getTruckCount();
     
     for (int t = 0; t < numTrucks; t++)
     {
@@ -3916,11 +3925,11 @@ void VehicleAI::CollisionAvoidance_DebugVehiclePath(int truckNum)
     Beam *curTruck;
     if (truckNum < 0)
     {
-        curTruck = BeamFactory::getSingleton().getCurrentTruck();
+        curTruck = m_sim_controller->GetBeamFactory()->getCurrentTruck();
     }
     else
     {
-        curTruck = BeamFactory::getSingleton().getTruck(truckNum);
+        curTruck = m_sim_controller->GetBeamFactory()->getTruck(truckNum);
     }
     if (!curTruck)
         return;
@@ -4207,7 +4216,7 @@ void VehicleAI::CollisionAvoidance_ShowDebugMsg(bool isLaneOccupied, bool hasCol
 
 void VehicleAI::updateWaypoint()
 {
-    if (beam == BeamFactory::getSingleton().getCurrentTruck())
+    if (beam == m_sim_controller->GetBeamFactory()->getCurrentTruck())
     {
         RoR::App::GetConsole()->putMessage(RoR::Console::CONSOLE_MSGTYPE_SCRIPT, RoR::Console::CONSOLE_SYSTEM_NOTICE, "Reached waypoint: " + waypoint_names[current_waypoint_id] + " Truck: " + TOSTRING(beam->trucknum) + " Coords: " + TOSTRING(current_waypoint), "note.png");
         LOG("Reached waypoint: " + waypoint_names[current_waypoint_id] + " Truck: " + TOSTRING(beam->trucknum) + " Coords: " + TOSTRING(current_waypoint));
@@ -4300,7 +4309,7 @@ void VehicleAI::updateWaypoint()
     }
     
     //Debugging - draw blue spheres on the track for the original and adjusted waypoints - cosmic vole June 30th 2017
-    if (beam == BeamFactory::getSingleton().getCurrentTruck())
+    if (beam == m_sim_controller->GetBeamFactory()->getCurrentTruck())
     {
         Vector3 debugAdjustedWpt = current_waypoint;
         Vector3 debugOrigWpt = waypoints[current_waypoint_id];
@@ -4575,7 +4584,7 @@ void VehicleAI::update(float dt, int doUpdate)
                     //}
                     //else
                     //{
-                    resetPos = beam->initial_node_pos[0];//waypoints[current_waypoint_id];
+                    resetPos = beam->nodes[0].initial_pos;//initial_node_pos[0];//waypoints[current_waypoint_id];
                     if (resetPos.squaredDistance(beam->nodes[0].AbsPosition) < 9.0)
                     {
                         //It's already on the spawn point so don't reset
@@ -4609,8 +4618,8 @@ void VehicleAI::update(float dt, int doUpdate)
                                 //Too far away. Give up and wait for the track to clear.
                                 break;
                             }
-                            Beam** trucks = BeamFactory::getSingleton().getTrucks();
-                            int numTrucks = BeamFactory::getSingleton().getTruckCount();
+                            Beam** trucks = m_sim_controller->GetBeamFactory()->getTrucks();
+                            int numTrucks = m_sim_controller->GetBeamFactory()->getTruckCount();
 
                             do
                             {
@@ -4755,7 +4764,7 @@ void VehicleAI::update(float dt, int doUpdate)
                             // Set origin of rotation to camera node
                             Vector3 origin = nodes[0].AbsPosition;
 
-                            if (beam->cameranodepos[0] >= 0 && beam->cameranodepos[0] < MAX_NODES)
+                            if (beam->cameranodepos[0] >= 0 && beam->cameranodepos[0] < nodeCount)//MAX_NODES)
                             {
                                 origin = nodes[beam->cameranodepos[0]].AbsPosition;
                             }

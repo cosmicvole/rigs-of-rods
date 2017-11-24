@@ -21,28 +21,66 @@
 
 #pragma once
 
-#ifdef USE_SOCKETW
-
 #include "RoRPrerequisites.h"
 
-#include "rornet.h"
+#ifdef USE_SOCKETW
+
+#include "RoRnet.h"
 
 namespace RoR {
 namespace Networking {
 
+// ----------------------- Network messages (packed) -------------------------
+
+#pragma pack(push, 1)
+
+enum CharacterCmd
+{
+    CHARACTER_CMD_INVALID,
+    CHARACTER_CMD_POSITION,
+    CHARACTER_CMD_ATTACH,
+    CHARACTER_CMD_DETACH
+};
+
+struct CharacterMsgGeneric
+{
+    int32_t command;
+};
+
+struct CharacterMsgPos
+{
+    int32_t command;
+    float   pos_x, pos_y, pos_z;
+    float   rot_angle;
+    float   anim_time;
+    char    anim_name[CHARACTER_ANIM_NAME_LEN];
+};
+
+struct CharacterMsgAttach
+{
+    int32_t command;
+    int32_t source_id;
+    int32_t stream_id;
+    int32_t position;
+};
+
 struct recv_packet_t
 {
-    header_t header;
-    char buffer[MAX_MESSAGE_LENGTH];
+    RoRnet::Header header;
+    char buffer[RORNET_MAX_MESSAGE_LENGTH];
 };
+
+#pragma pack(pop)
+
+// ------------------------ End of network messages --------------------------
 
 bool Connect();
 void Disconnect();
 
 void AddPacket(int streamid, int type, int len, char *content);
-void AddLocalStream(stream_register_t *reg, int size);
+void AddLocalStream(RoRnet::StreamRegister *reg, int size);
 
-void HandleStreamData();
+std::vector<recv_packet_t> GetIncomingStreamData();
 
 int GetUID();
 int GetNetQuality();
@@ -51,9 +89,11 @@ Ogre::String GetTerrainName();
 
 int GetUserColor();
 Ogre::UTFString GetUsername();
-user_info_t GetLocalUserData();
-std::vector<user_info_t> GetUserInfos();
-bool GetUserInfo(int uid, user_info_t &result);
+RoRnet::UserInfo GetLocalUserData();
+std::vector<RoRnet::UserInfo> GetUserInfos();
+bool GetUserInfo(int uid, RoRnet::UserInfo &result);
+Ogre::ColourValue GetPlayerColor(int color_num);
+int GetRandomColorNum();
 
 Ogre::UTFString GetErrorMessage();
 bool CheckError();
@@ -61,4 +101,14 @@ bool CheckError();
 } // namespace Networking
 } // namespace RoR
 
+//cosmic vole - If SOCKETW unavailable, still build support for random colors for use by the bots
+#else // USE_SOCKETW
+namespace RoR {
+namespace Networking {
+
+Ogre::ColourValue GetPlayerColor(int color_num);
+int GetRandomColorNum();
+
+} // namespace Networking
+} // namespace RoR
 #endif // USE_SOCKETW

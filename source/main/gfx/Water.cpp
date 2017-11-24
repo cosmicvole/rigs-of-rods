@@ -52,7 +52,9 @@ public:
         // Hide plane
         pPlaneEnt->setVisible(false);
         //hide Water spray
-        BeamFactory::getSingleton().GetParticleManager().setVisible(false);
+        //// Commented out while de-singletonizing BeamFactory 
+        //// because I don't know (and don't care) whether this code is actually used ~ only_a_ptr, 01/2017
+        ////BeamFactory ::getSingleton().GetParticleManager().setVisible(false);
     }
 
     void postRenderTargetUpdate(const RenderTargetEvent& evt)
@@ -61,7 +63,9 @@ public:
         pPlaneEnt->setVisible(true);
         waterSceneMgr->getRenderQueue()->getQueueGroup(RENDER_QUEUE_MAIN)->setShadowsEnabled(true);
         //restore Water spray;
-        BeamFactory::getSingleton().GetParticleManager().setVisible(true);
+        //// Commented out while de-singletonizing BeamFactory 
+        //// because I don't know (and don't care) whether this code is actually used ~ only_a_ptr, 01/2017
+        ////BeamFactory ::getSingleton().GetParticleManager().setVisible(true);
     }
 };
 
@@ -87,7 +91,7 @@ RefractionTextureListener mRefractionListener;
 ReflectionTextureListener mReflectionListener;
 //End ugly code
 
-Water::Water(const Ogre::ConfigFile& mTerrainConfig) :
+Water::Water() :
     maxampl(0),
     free_wavetrain(0),
     visible(true),
@@ -106,9 +110,6 @@ Water::Water(const Ogre::ConfigFile& mTerrainConfig) :
     mapSize = gEnv->terrainManager->getMaxTerrainSize();
     fade = gEnv->sceneManager->getFogColour();
     waterSceneMgr = gEnv->sceneManager;
-
-    wHeight = PARSEREAL(mTerrainConfig.getSetting("WaterLine", "General"));
-    wbHeight = PARSEREAL(mTerrainConfig.getSetting("WaterBottomLine", "General"));
 
     if (mapSize.x < 1500 && mapSize.z < 1500)
         mScale = 1.5f;

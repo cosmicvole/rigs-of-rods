@@ -21,7 +21,7 @@
 
 #pragma once
 
-#ifdef USE_MYGUI
+
 
 #include "RoRPrerequisites.h"
 
@@ -31,7 +31,7 @@ class SurveyMapTextureCreator;
 
 ATTRIBUTE_CLASS_LAYOUT(SurveyMapManager, "MapControl.layout");
 
-class SurveyMapManager : public wraps::BaseLayout // TODO: public IManager ...
+class SurveyMapManager : public wraps::BaseLayout
 {
 public:
 
@@ -72,7 +72,7 @@ public:
     void toggleMapView();
     void toggleMapAlpha();
 
-    void update(Ogre::Real dt);
+    void Update(Ogre::Real dt, Beam* curr_truck);
 
     static Ogre::String getTypeByDriveable(int driveable);
 
@@ -84,7 +84,8 @@ public:
         SURVEY_MAP_END
     };
 
-    void Update(Beam** vehicles, int num_vehicles);
+    void          UpdateVehicles(Beam** vehicles, int num_vehicles);
+    std::string   GetMinimapTextureName();
 
 protected:
 
@@ -121,4 +122,4 @@ protected:
     void updateRenderMetrics();
 };
 
-#endif // USE_MYGUI
+

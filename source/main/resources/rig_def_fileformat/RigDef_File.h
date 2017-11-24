@@ -54,6 +54,8 @@
 
 namespace RigDef {
 
+extern const char* ROOT_MODULE_NAME;
+
 /* -------------------------------------------------------------------------- */
 /* Utility                                                                    */
 /* -------------------------------------------------------------------------- */
@@ -451,8 +453,8 @@ struct Cinecam
 {
     Cinecam():
         position(Ogre::Vector3::ZERO),
-        spring(8000),
-        damping(800),
+        spring(8000.f),
+        damping(800.f),
         node_mass(20.f)
     {}
 
@@ -2037,7 +2039,7 @@ struct File
         KEYWORD_DESCRIPTION,
         KEYWORD_DETACHER_GROUP,
         KEYWORD_DISABLEDEFAULTSOUNDS,
-        KEYWORD_ENABLE_ADVANCED_DEFORMATION,
+        KEYWORD_ENABLE_ADVANCED_DEFORM,
         KEYWORD_END,
         KEYWORD_END_SECTION,
         KEYWORD_ENGINE,
@@ -2094,13 +2096,13 @@ struct File
         KEYWORD_SET_BEAM_DEFAULTS_SCALE,
         KEYWORD_SET_COLLISION_RANGE,
         KEYWORD_SET_INERTIA_DEFAULTS,
-        KEYWORD_SET_MANAGEDMATERIALS_OPTIONS,
+        KEYWORD_SET_MANAGEDMATS_OPTIONS,
         KEYWORD_SET_NODE_DEFAULTS,
         KEYWORD_SET_SHADOWS,
         KEYWORD_SET_SKELETON_SETTINGS,
         KEYWORD_SHOCKS,
         KEYWORD_SHOCKS2,
-        KEYWORD_SLIDENODE_CONNECT_INSTANTLY,
+        KEYWORD_SLIDENODE_CONNECT_INSTANT,
         KEYWORD_SLIDENODES,
         KEYWORD_SLOPE_BRAKE,
         KEYWORD_SOUNDSOURCES,
@@ -2159,7 +2161,7 @@ struct File
         SECTION_HYDROS,
         SECTION_LOCKGROUPS,
         SECTION_MANAGED_MATERIALS,
-        SECTION_MATERIAL_FLARE_BINDINGS,
+        SECTION_MAT_FLARE_BINDINGS,
         SECTION_MESH_WHEELS,
         SECTION_MESH_WHEELS_2,
         SECTION_MINIMASS,
@@ -2240,11 +2242,11 @@ struct File
     float minimum_mass;
     bool _minimum_mass_set;
 
-    /* Vehicle sections */
-    std::shared_ptr<Module> root_module;
-    std::map< Ogre::String, std::shared_ptr<Module> > modules;
+    // Vehicle modules (caled 'sections' in truckfile doc)
+    std::shared_ptr<Module> root_module; ///< Required to exist. `shared_ptr` is used for unified handling with other modules.
+    std::map< Ogre::String, std::shared_ptr<Module> > user_modules;
 
-    /* File sections */
+    // File sections
     std::vector<Author> authors;
     std::shared_ptr<Fileinfo> file_info;
 };

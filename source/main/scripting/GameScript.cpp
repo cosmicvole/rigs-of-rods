@@ -2,6 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
+    Copyright 2013-2017 Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -30,13 +31,11 @@
 #include "OgreSubsystem.h"
 
 // AS addons start
-#include "contextmgr/contextmgr.h"
 #include "scriptany/scriptany.h"
 #include "scriptarray/scriptarray.h"
 #include "scripthelper/scripthelper.h"
 #include "scriptmath/scriptmath.h"
 #include "scriptstdstring/scriptstdstring.h"
-#include "scriptstring/scriptstring.h"
 // AS addons end
 
 #include "Application.h"
@@ -50,7 +49,7 @@
 #include "GUIManager.h"
 #include "IHeightFinder.h"
 #include "Language.h"
-#include "MainThread.h"
+#include "MainMenu.h"
 #include "Network.h"
 #include "RoRFrameListener.h"
 #include "RoRVersion.h"
@@ -78,17 +77,31 @@ GameScript::~GameScript()
 
 void GameScript::log(const String& msg)
 {
-    SLOG(msg);
+    ScriptEngine::getSingleton().SLOG(msg);
+}
+
+void GameScript::logFormat(const char* format, ...)
+{
+    char buffer[4000] = {};
+    sprintf(buffer, "[RoR|Script] "); // Length: 13 characters
+    char* buffer_pos = buffer + 13;
+
+    va_list args;
+    va_start(args, format);
+        vsprintf(buffer_pos, format, args);
+    va_end(args);
+
+    ScriptEngine::getSingleton().SLOG(buffer);
 }
 
 void GameScript::activateAllVehicles()
 {
-    BeamFactory::getSingleton().activateAllTrucks();
+    mse->GetFrameListener()->GetBeamFactory()->activateAllTrucks();
 }
 
 void GameScript::setTrucksForcedActive(bool forceActive)
 {
-    BeamFactory::getSingleton().setTrucksForcedActive(forceActive);
+    mse->GetFrameListener()->GetBeamFactory()->setTrucksForcedActive(forceActive);
 }
 
 double GameScript::getTime()
@@ -107,8 +120,8 @@ void GameScript::setPersonPosition(const Vector3& vec)
 
 void GameScript::loadTerrain(const String& terrain)
 {
-    RoR::App::SetSimNextTerrain(terrain);
-    RoR::App::GetMainThreadLogic()->LoadTerrain();
+    App::SetSimNextTerrain(terrain);
+    mse->GetFrameListener()->LoadTerrain();
 }
 
 Vector3 GameScript::getPersonPosition()
@@ -232,7 +245,7 @@ float GameScript::getWaterHeight()
 
 Beam* GameScript::getCurrentTruck()
 {
-    return BeamFactory::getSingleton().getCurrentTruck();
+    return mse->GetFrameListener()->GetBeamFactory()->getCurrentTruck();
 }
 
 float GameScript::getGravity()
@@ -247,20 +260,20 @@ void GameScript::setGravity(float value)
 
 Beam* GameScript::getTruckByNum(int num)
 {
-    return BeamFactory::getSingleton().getTruck(num);
+    return mse->GetFrameListener()->GetBeamFactory()->getTruck(num);
 }
 
 int GameScript::getNumTrucks()
 {
-    return BeamFactory::getSingleton().getTruckCount();
+    return mse->GetFrameListener()->GetBeamFactory()->getTruckCount();
 }
 
 int GameScript::getNumTrucksByFlag(int flag)
 {
     int result = 0;
-    for (int i = 0; i < BeamFactory::getSingleton().getTruckCount(); i++)
+    for (int i = 0; i < mse->GetFrameListener()->GetBeamFactory()->getTruckCount(); i++)
     {
-        Beam* truck = BeamFactory::getSingleton().getTruck(i);
+        Beam* truck = mse->GetFrameListener()->GetBeamFactory()->getTruck(i);
         if (!truck && !flag)
             result++;
         if (!truck)
@@ -273,7 +286,7 @@ int GameScript::getNumTrucksByFlag(int flag)
 
 int GameScript::getCurrentTruckNumber()
 {
-    return BeamFactory::getSingleton().getCurrentTruckNumber();
+    return mse->GetFrameListener()->GetBeamFactory()->getCurrentTruckNumber();
 }
 
 void GameScript::registerForEvent(int eventValue)
@@ -284,24 +297,24 @@ void GameScript::registerForEvent(int eventValue)
 
 void GameScript::flashMessage(String& txt, float time, float charHeight)
 {
-#ifdef USE_MYGUI
+
     RoR::App::GetConsole()->putMessage(Console::CONSOLE_MSGTYPE_SCRIPT, Console::CONSOLE_SYSTEM_NOTICE, txt, "script_code_red.png");
     RoR::App::GetGuiManager()->PushNotification("Script:", txt);
-#endif // USE_MYGUI
+
 }
 
 void GameScript::message(String& txt, String& icon, float timeMilliseconds, bool forceVisible)
 {
     //TODO: Notification system
-#ifdef USE_MYGUI
+
     RoR::App::GetConsole()->putMessage(Console::CONSOLE_MSGTYPE_SCRIPT, Console::CONSOLE_SYSTEM_NOTICE, txt, icon, timeMilliseconds, forceVisible);
     RoR::App::GetGuiManager()->PushNotification("Script:", txt);
-#endif // USE_MYGUI
+
 }
 
-void GameScript::setDirectionArrow(String& text, Vector3& vec)
+void GameScript::UpdateDirectionArrow(String& text, Vector3& vec)
 {
-    mse->GetFrameListener()->setDirectionArrow(const_cast<char*>(text.c_str()), Vector3(vec.x, vec.y, vec.z));
+    mse->GetFrameListener()->UpdateDirectionArrow(const_cast<char*>(text.c_str()), Vector3(vec.x, vec.y, vec.z));
 }
 
 int GameScript::getChatFontSize()
@@ -316,7 +329,7 @@ void GameScript::setChatFontSize(int size)
 
 void GameScript::showChooser(const String& type, const String& instance, const String& box)
 {
-#ifdef USE_MYGUI
+
     LoaderType ntype = LT_None;
 
     if (type == "airplane")
@@ -344,25 +357,25 @@ void GameScript::showChooser(const String& type, const String& instance, const S
 
     if (ntype != LT_None)
     {
-        mse->GetFrameListener()->showLoad(ntype, instance, box);
+        mse->GetFrameListener()->ShowLoaderGUI(ntype, instance, box);
     }
-#endif //USE_MYGUI
+
 }
 
 void GameScript::repairVehicle(const String& instance, const String& box, bool keepPosition)
 {
-    BeamFactory::getSingleton().repairTruck(gEnv->collisions, instance, box, keepPosition);
+    mse->GetFrameListener()->GetBeamFactory()->repairTruck(gEnv->collisions, instance, box, keepPosition);
 }
 
 //cosmic vole added partial repairs
 void GameScript::repairVehiclePartially(const String &instance, const String &box)
 {
-    BeamFactory::getSingleton().repairTruck(gEnv->collisions, instance, box, true, true);
+    mse->GetFrameListener()->GetBeamFactory()->repairTruck(gEnv->collisions, instance, box, true, true);
 }
 
 void GameScript::removeVehicle(const String& instance, const String& box)
 {
-    BeamFactory::getSingleton().removeTruck(gEnv->collisions, instance, box);
+    mse->GetFrameListener()->GetBeamFactory()->removeTruck(gEnv->collisions, instance, box);
 }
 
 void GameScript::destroyObject(const String& instanceName)
@@ -383,32 +396,50 @@ void GameScript::moveObjectVisuals(const String& instanceName, const Vector3& po
 
 void GameScript::spawnObject(const String& objectName, const String& instanceName, const Vector3& pos, const Vector3& rot, const String& eventhandler, bool uniquifyMaterials)
 {
-    AngelScript::asIScriptModule* mod = 0;
+    if ((gEnv->terrainManager == nullptr) || (gEnv->terrainManager->getObjectManager() == nullptr))
+    {
+        this->logFormat("spawnObject(): Cannot spawn object, no terrain loaded!");
+        return;
+    }
+
     try
     {
-        mod = mse->getEngine()->GetModule(mse->moduleName, AngelScript::asGM_ONLY_IF_EXISTS);
+        AngelScript::asIScriptModule* module = mse->getEngine()->GetModule(mse->moduleName, AngelScript::asGM_ONLY_IF_EXISTS);
+        if (module == nullptr)
+        {
+            this->logFormat("spawnObject(): Failed to fetch/create script module '%s'", mse->moduleName);
+            return;
+        }
+
+        int handler_func_id = -1; // no function
+        if (!eventhandler.empty())
+        {
+            AngelScript::asIScriptFunction* handler_func = module->GetFunctionByName(eventhandler.c_str());
+            if (handler_func != nullptr)
+            {
+                handler_func_id = handler_func->GetId();
+            }
+            else
+            {
+                this->logFormat("spawnObject(): Warning; Failed to find handler function '%s' in script module '%s'",
+                    eventhandler.c_str(), mse->moduleName);
+            }
+        }
+
+        SceneNode* bakeNode = gEnv->sceneManager->getRootSceneNode()->createChildSceneNode();
+        const String type = "";
+        gEnv->terrainManager->getObjectManager()->loadObject(objectName, pos, rot, bakeNode, instanceName, type, true, handler_func_id, uniquifyMaterials);
     }
     catch (std::exception e)
     {
-        SLOG("Exception in spawnObject(): " + String(e.what()));
+        this->logFormat("spawnObject(): An exception occurred, message: %s", e.what());
         return;
-    }
-    if (!mod)
-        return;
-    int functionPtr = mod->GetFunctionIdByName(eventhandler.c_str());
-
-    // trying to create the new object
-    SceneNode* bakeNode = gEnv->sceneManager->getRootSceneNode()->createChildSceneNode();
-    if (gEnv->terrainManager && gEnv->terrainManager->getObjectManager())
-    {
-        const String type = "";
-        gEnv->terrainManager->getObjectManager()->loadObject(objectName, pos, rot, bakeNode, instanceName, type, true, functionPtr, uniquifyMaterials);
     }
 }
 
 void GameScript::hideDirectionArrow()
 {
-    mse->GetFrameListener()->setDirectionArrow(0, Vector3::ZERO);
+    mse->GetFrameListener()->UpdateDirectionArrow(0, Vector3::ZERO);
 }
 
 int GameScript::setMaterialAmbient(const String& materialName, float red, float green, float blue)
@@ -422,7 +453,7 @@ int GameScript::setMaterialAmbient(const String& materialName, float red, float 
     }
     catch (Exception e)
     {
-        SLOG("Exception in setMaterialAmbient(): " + e.getFullDescription());
+        this->log("Exception in setMaterialAmbient(): " + e.getFullDescription());
         return 0;
     }
     return 1;
@@ -439,7 +470,7 @@ int GameScript::setMaterialDiffuse(const String& materialName, float red, float 
     }
     catch (Exception e)
     {
-        SLOG("Exception in setMaterialDiffuse(): " + e.getFullDescription());
+        this->log("Exception in setMaterialDiffuse(): " + e.getFullDescription());
         return 0;
     }
     return 1;
@@ -456,7 +487,7 @@ int GameScript::setMaterialSpecular(const String& materialName, float red, float
     }
     catch (Exception e)
     {
-        SLOG("Exception in setMaterialSpecular(): " + e.getFullDescription());
+        this->log("Exception in setMaterialSpecular(): " + e.getFullDescription());
         return 0;
     }
     return 1;
@@ -473,7 +504,7 @@ int GameScript::setMaterialEmissive(const String& materialName, float red, float
     }
     catch (Exception e)
     {
-        SLOG("Exception in setMaterialEmissive(): " + e.getFullDescription());
+        this->log("Exception in setMaterialEmissive(): " + e.getFullDescription());
         return 0;
     }
     return 1;
@@ -513,7 +544,7 @@ int GameScript::getSafeTextureUnitState(TextureUnitState** tu, const String mate
     }
     catch (Exception e)
     {
-        SLOG("Exception in getSafeTextureUnitState(): " + e.getFullDescription());
+        this->log("Exception in getSafeTextureUnitState(): " + e.getFullDescription());
     }
     return 1;
 }
@@ -690,7 +721,10 @@ static size_t curlWriteMemoryCallback(void* ptr, size_t size, size_t nmemb, void
 
 int GameScript::useOnlineAPIDirectly(OnlineAPIParams_t params)
 {
-#ifdef USE_CURL
+    // ### Disabled until new multiplayer portal supports it ##
+
+#if 0 
+//#ifdef USE_CURL
     struct curlMemoryStruct chunk;
 
     chunk.memory = (char *)malloc(1); /* will be grown as needed by the realloc above */
@@ -759,12 +793,11 @@ int GameScript::useOnlineAPIDirectly(OnlineAPIParams_t params)
     curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "MP_NetworkEnabled", CURLFORM_COPYCONTENTS, (mp_connected) ? "Yes" : "No", CURLFORM_END);
     curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "APIProtocolVersion", CURLFORM_COPYCONTENTS, "2", CURLFORM_END);
 
-    if (BeamFactory::getSingleton().getCurrentTruck())
+    if (mse->GetFrameListener()->GetBeamFactory()->getCurrentTruck())
     {
-        Beam* truck = BeamFactory::getSingleton().getCurrentTruck();
+        Beam* truck = mse->GetFrameListener()->GetBeamFactory()->getCurrentTruck();
         curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "Truck_Name", CURLFORM_COPYCONTENTS, truck->getTruckName().c_str(), CURLFORM_END);
         curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "Truck_FileName", CURLFORM_COPYCONTENTS, truck->getTruckFileName().c_str(), CURLFORM_END);
-        curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "Truck_Hash", CURLFORM_COPYCONTENTS, truck->getTruckHash().c_str(), CURLFORM_END);
 
         // look for any locked trucks
         int i = 0;
@@ -777,8 +810,6 @@ int GameScript::useOnlineAPIDirectly(OnlineAPIParams_t params)
                 curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, name.c_str(), CURLFORM_COPYCONTENTS, trailer->getTruckName().c_str(), CURLFORM_END);
                 String filename = "Trailer_" + TOSTRING(i) + "_FileName";
                 curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, filename.c_str(), CURLFORM_COPYCONTENTS, trailer->getTruckFileName().c_str(), CURLFORM_END);
-                String hash = "Trailer_" + TOSTRING(i) + "_Hash";
-                curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, hash.c_str(), CURLFORM_COPYCONTENTS, trailer->getTruckHash().c_str(), CURLFORM_END);
             }
         }
         curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, "Trailer_Count", CURLFORM_COPYCONTENTS, TOSTRING(i).c_str(), CURLFORM_END);
@@ -854,20 +885,23 @@ int GameScript::useOnlineAPIDirectly(OnlineAPIParams_t params)
 
     LOG("online API result: " + result);
 
-#ifdef USE_MYGUI
+
     Console* con = RoR::App::GetConsole();
     if (con)
     {
         con->putMessage(Console::CONSOLE_MSGTYPE_HIGHSCORE, Console::CONSOLE_SYSTEM_NOTICE, ANSI_TO_UTF(result));
         RoR::App::GetGuiManager()->PushNotification("Script:", ANSI_TO_UTF(result));
     }
-#endif // USE_MYGUI
+
 #endif //USE_CURL
     return 0;
 }
 
 int GameScript::useOnlineAPI(const String& apiquery, const AngelScript::CScriptDictionary& d, String& result)
 {
+#if 0 // ========================== disabled until new multiplayer portal supports it =============================
+      // At the moment, the call to "useOnlineAPIDirectly()" is dummy, making this whole function dummy.
+
     // malloc this, so we are safe from this function scope
     OnlineAPIParams_t* params = (OnlineAPIParams_t *)malloc(sizeof(OnlineAPIParams_t));
     if (!params)
@@ -887,12 +921,12 @@ int GameScript::useOnlineAPI(const String& apiquery, const AngelScript::CScriptD
     // tell the script that there will be no direct feedback
     result = "asynchronous";
 
-#ifdef USE_MYGUI
+
     Console* con = RoR::App::GetConsole();
     if (con)
         con->putMessage(Console::CONSOLE_MSGTYPE_INFO, Console::CONSOLE_SYSTEM_NOTICE, _L("using Online API..."), "information.png", 2000);
     RoR::App::GetGuiManager()->PushNotification("Notice:", _L("using Online API..."));
-#endif // USE_MYGUI
+
 
     // fix the String objects in the dict
     // why we need to do this: when we copy the std::map (dict) over, we calso jsut copy the pointers to String in it.
@@ -923,13 +957,15 @@ int GameScript::useOnlineAPI(const String& apiquery, const AngelScript::CScriptD
             free(params);
         }).detach();
 
+#endif // #if 0 =============== END disabled block of code ========================
+
     return 0;
 }
 
 void GameScript::boostCurrentTruck(float factor)
 {
     // add C++ code here
-    Beam* b = BeamFactory::getSingleton().getCurrentTruck();
+    Beam* b = mse->GetFrameListener()->GetBeamFactory()->getCurrentTruck();
     if (b && b->engine)
     {
         float rpm = b->engine->getRPM();
@@ -941,7 +977,7 @@ void GameScript::boostCurrentTruck(float factor)
 // Code to adjust the performance of a specified truck (intended to adjust AI difficulty but could be used for power-ups / cheats!) cosmic vole January 6 2017
 void GameScript::tuneTruck(int truckNum, bool relative, float maxTorque, float maxRPM, float inertia, float brakingForce, float grip)
 {
-    Beam* b = BeamFactory::getSingleton().getTruck(truckNum);
+    Beam* b = mse->GetFrameListener()->GetBeamFactory()->getTruck(truckNum);
     if (b && b->engine)
     {
         b->engine->tune(relative, maxTorque, maxRPM, inertia);
@@ -1017,7 +1053,7 @@ int GameScript::sendGameCmd(const String& message)
 #ifdef USE_SOCKETW
     if (RoR::App::GetActiveMpState() == RoR::App::MP_STATE_CONNECTED)
     {
-        RoR::Networking::AddPacket(0, MSG2_GAME_CMD, (int)message.size(), const_cast<char*>(message.c_str()));
+        RoR::Networking::AddPacket(0, RoRnet::MSG2_GAME_CMD, (int)message.size(), const_cast<char*>(message.c_str()));
         return 0;
     }
 #endif // USE_SOCKETW
@@ -1027,7 +1063,7 @@ int GameScript::sendGameCmd(const String& message)
 
 VehicleAI* GameScript::getCurrentTruckAI()
 {
-    Beam* b = BeamFactory::getSingleton().getCurrentTruck();
+    Beam* b = mse->GetFrameListener()->GetBeamFactory()->getCurrentTruck();
     if (b)
         return b->vehicle_ai;
     return nullptr;
@@ -1035,7 +1071,7 @@ VehicleAI* GameScript::getCurrentTruckAI()
 
 VehicleAI* GameScript::getTruckAIByNum(int num)
 {
-    Beam* b = BeamFactory::getSingleton().getTruck(num);
+    Beam* b = mse->GetFrameListener()->GetBeamFactory()->getTruck(num);
     if (b)
         return b->vehicle_ai;
     return nullptr;
@@ -1044,7 +1080,7 @@ VehicleAI* GameScript::getTruckAIByNum(int num)
 Beam* GameScript::spawnTruck(Ogre::String& truckName, Ogre::Vector3& pos, Ogre::Vector3& rot)
 {
     Ogre::Quaternion rotation = Quaternion(Degree(rot.x), Vector3::UNIT_X) * Quaternion(Degree(rot.y), Vector3::UNIT_Y) * Quaternion(Degree(rot.z), Vector3::UNIT_Z);
-    return BeamFactory::getSingleton().CreateLocalRigInstance(pos, rotation, truckName);
+    return mse->GetFrameListener()->GetBeamFactory()->CreateLocalRigInstance(pos, rotation, truckName);
 }
 
 void GameScript::showMessageBox(Ogre::String& mTitle, Ogre::String& mText, bool button1, Ogre::String& mButton1, bool AllowClose, bool button2, Ogre::String& mButton2)

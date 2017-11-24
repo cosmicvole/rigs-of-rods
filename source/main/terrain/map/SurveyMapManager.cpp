@@ -18,7 +18,7 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_MYGUI
+
 
 #include "SurveyMapManager.h"
 
@@ -78,6 +78,11 @@ void SurveyMapManager::init()
     setMapTexture(mMapTextureCreator->getTextureName());
 
     mMapCenterThreshold = FSETTING("SurveyMapCenterThreshold", 5.0f);
+}
+
+std::string SurveyMapManager::GetMinimapTextureName()
+{
+    return mMapTextureCreator->getTextureName();
 }
 
 SurveyMapEntity* SurveyMapManager::createMapEntity(String type)
@@ -272,12 +277,11 @@ Ogre::String SurveyMapManager::getTypeByDriveable(int driveable)
     }
 }
 
-void SurveyMapManager::update(Ogre::Real dt)
+void SurveyMapManager::Update(Ogre::Real dt, Beam* curr_truck)
 {
     if (dt == 0)
         return;
 
-    Beam* curr_truck = BeamFactory::getSingleton().getCurrentTruck();
     mVelocity = 0.0f;
 
     if (curr_truck)
@@ -424,7 +428,7 @@ void SurveyMapManager::toggleMapAlpha()
     }
 }
 
-void SurveyMapManager::Update(Beam** vehicles, int num_vehicles)
+void SurveyMapManager::UpdateVehicles(Beam** vehicles, int num_vehicles)
 {
     for (int t = 0; t < num_vehicles; t++)
     {
@@ -441,4 +445,4 @@ void SurveyMapManager::Update(Beam** vehicles, int num_vehicles)
     }
 }
 
-#endif // USE_MYGUI
+

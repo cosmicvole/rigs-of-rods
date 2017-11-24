@@ -19,11 +19,10 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-/// @file   GUIMenu.h
+/// @file
 /// @date   13th of August 2009
 /// @author Thomas Fischer thomas{AT}thomasfischer{DOT}biz
 
-#ifdef USE_MYGUI
 
 #include "GUI_TopMenubar.h"
 
@@ -35,7 +34,7 @@
 #include "GUI_GameConsole.h"
 #include "GUI_MainSelector.h"
 #include "Language.h"
-#include "MainThread.h"
+#include "MainMenu.h"
 #include "Network.h"
 #include "RoRFrameListener.h"
 #include "Settings.h"
@@ -52,18 +51,19 @@ TopMenubar::TopMenubar() :
       m_item_activate_all(nullptr)
     , m_item_never_sleep(nullptr)
     , m_item_sleep_all(nullptr)
-    , m_menu_width(800)
+    , m_menu_width(350)
     , m_menu_height(20)
     , m_vehicle_list_needs_update(false)
+    , m_sim_controller(nullptr)
 {
 
     /* -------------------------------------------------------------------------------- */
     /* MENU BAR */
 
-    m_menubar_widget = MyGUI::Gui::getInstance().createWidget<MyGUI::MenuBar>("MenuBar", 0, 0, m_menu_width, m_menu_height,  MyGUI::Align::HStretch | MyGUI::Align::Top, "Main");
+    m_menubar_widget = MyGUI::Gui::getInstance().createWidget<MyGUI::MenuBar>("MenuBar", 0, 0, m_menu_width, m_menu_height, MyGUI::Align::Top, "Main");
     m_menubar_widget->setCoord(0, 0, m_menu_width, m_menu_height);
     m_menubar_widget->setVisible(false);
-    
+
     /* -------------------------------------------------------------------------------- */
     /* SIMULATION POPUP MENU */
 
@@ -72,7 +72,7 @@ TopMenubar::TopMenubar() :
     mi->setItemType(MyGUI::MenuItemType::Popup);
     mi->setCaption(_L("Simulation"));
     p->setPopupAccept(true);
-    
+
     p->addItem(_L("Get new vehicle"),                 MyGUI::MenuItemType::Normal);
     p->addItem(_L("Show vehicle description"),		  MyGUI::MenuItemType::Normal);
     p->addItem(_L("Reload current vehicle"),          MyGUI::MenuItemType::Normal);
@@ -103,28 +103,18 @@ TopMenubar::TopMenubar() :
     m_popup_menus.push_back(p);
 
     /* -------------------------------------------------------------------------------- */
-    /* EDITOR POPUP MENU */
-
-    mi = m_menubar_widget->createWidget<MyGUI::MenuItem>("MenuBarButton", 0, 0, 60, m_menu_height,  MyGUI::Align::Default);
-    p = mi->createWidget<MyGUI::PopupMenu>(MyGUI::WidgetStyle::Popup, "PopupMenu",MyGUI::IntCoord(0,0,88,68),MyGUI::Align::Default, "Popup");
-    mi->setItemType(MyGUI::MenuItemType::Popup);
-    mi->setCaption("Editor");
-    
-    p->addItem(_L("Open rig editor"), MyGUI::MenuItemType::Normal, "rig-editor-enter");
-    m_popup_menus.push_back(p);
-
-    /* -------------------------------------------------------------------------------- */
     /* WINDOWS POPUP MENU */
 
     mi = m_menubar_widget->createWidget<MyGUI::MenuItem>("MenuBarButton", 0, 0, 60, m_menu_height,  MyGUI::Align::Default);
     p = mi->createWidget<MyGUI::PopupMenu>(MyGUI::WidgetStyle::Popup, "PopupMenu",MyGUI::IntCoord(0,0,88,68),MyGUI::Align::Default, "Popup");
     mi->setItemType(MyGUI::MenuItemType::Popup);
     mi->setCaption("Windows");
-    
+
     p->addItem(_L("Friction Settings"),  MyGUI::MenuItemType::Normal, "frictiongui");
     p->addItem(_L("Show Console"),       MyGUI::MenuItemType::Normal, "showConsole");
     p->addItem(_L("Texture Tool"),       MyGUI::MenuItemType::Normal, "texturetool");
     p->addItem(_L("Debug Options"),		 MyGUI::MenuItemType::Normal, "debugoptions");
+    m_item_spawner_log = p->addItem(_L("Spawner log"), MyGUI::MenuItemType::Normal, "spawnerlog");
     m_popup_menus.push_back(p);
 
     /* -------------------------------------------------------------------------------- */
@@ -149,14 +139,6 @@ TopMenubar::TopMenubar() :
     m_popup_menus.push_back(p);
 
     /* -------------------------------------------------------------------------------- */
-    /* RIG LOADING REPORT WINDOW */
-
-    mi = m_menubar_widget->createWidget<MyGUI::MenuItem>("MenuBarButton", 0, 0, 60, m_menu_height,  MyGUI::Align::Default);
-    mi->setItemType(MyGUI::MenuItemType::Popup);
-    mi->setCaption("Spawner log");
-    mi->eventMouseButtonClick += MyGUI::newDelegate( this, &TopMenubar::MenubarShowSpawnerReportButtonClicked);
-
-    /* -------------------------------------------------------------------------------- */
     /* MENU BAR POSITION */
 
     MyGUI::IntSize s = mi->getTextSize();
@@ -179,22 +161,22 @@ TopMenubar::~TopMenubar()
     m_menubar_widget = nullptr;
 }
 
-UTFString TopMenubar::getUserString(user_info_t &user, int num_vehicles)
+UTFString TopMenubar::getUserString(RoRnet::UserInfo &user, int num_vehicles)
 {
     UTFString tmp = RoR::ChatSystem::GetColouredName(user.username, user.colournum);
 
     tmp = tmp + U(": ");
 
     // some more info
-    if (user.authstatus & AUTH_BOT)
+    if (user.authstatus & RoRnet::AUTH_BOT)
         tmp = tmp + _L("#0000c9 Bot, ");
-    else if (user.authstatus & AUTH_BANNED)
+    else if (user.authstatus & RoRnet::AUTH_BANNED)
         tmp = tmp + _L("banned, ");
-    else if (user.authstatus & AUTH_RANKED)
+    else if (user.authstatus & RoRnet::AUTH_RANKED)
         tmp = tmp + _L("#00c900 Ranked, ");
-    else if (user.authstatus & AUTH_MOD)
+    else if (user.authstatus & RoRnet::AUTH_MOD)
         tmp = tmp + _L("#c90000 Moderator, ");
-    else if (user.authstatus & AUTH_ADMIN)
+    else if (user.authstatus & RoRnet::AUTH_ADMIN)
         tmp = tmp + _L("#c97100 Admin, ");
 
     tmp = tmp + _L("#ff8d00 version: #3eff20 ");
@@ -213,10 +195,11 @@ UTFString TopMenubar::getUserString(user_info_t &user, int num_vehicles)
     return tmp;
 }
 
-void TopMenubar::addUserToMenu(user_info_t &user)
+void TopMenubar::addUserToMenu(RoRnet::UserInfo &user)
 {
-    int numTrucks = BeamFactory::getSingleton().getTruckCount();
-    Beam **trucks = BeamFactory::getSingleton().getTrucks();
+#ifdef USE_SOCKETW
+    int numTrucks = m_sim_controller->GetBeamFactory()->getTruckCount();
+    Beam **trucks = m_sim_controller->GetBeamFactory()->getTrucks();
 
     // now search the vehicles of that user together
     std::vector<int> matches;
@@ -249,17 +232,18 @@ void TopMenubar::addUserToMenu(user_info_t &user)
             }
         }
     }
+#endif
 }
 
 void TopMenubar::vehiclesListUpdate()
 {
     m_vehicles_menu_widget->removeAllItems();
-    
+
     if (!(App::GetActiveMpState() == App::MP_STATE_CONNECTED))
     {
         // single player mode: add vehicles simply, no users
-        int numTrucks = BeamFactory::getSingleton().getTruckCount();
-        Beam **trucks = BeamFactory::getSingleton().getTrucks();
+        int numTrucks = m_sim_controller->GetBeamFactory()->getTruckCount();
+        Beam **trucks = m_sim_controller->GetBeamFactory()->getTrucks();
 
         // simple iterate through :)
         for (int i = 0; i < numTrucks; i++)
@@ -278,7 +262,7 @@ void TopMenubar::vehiclesListUpdate()
 #ifdef USE_SOCKETW
         // sort the list according to the network users
 
-        user_info_t local_user = RoR::Networking::GetLocalUserData();
+        RoRnet::UserInfo local_user = RoR::Networking::GetLocalUserData();
         addUserToMenu(local_user);
 
         auto users = RoR::Networking::GetUserInfos();
@@ -299,9 +283,9 @@ void TopMenubar::onMenuBtn(MyGUI::MenuCtrlPtr _sender, MyGUI::MenuItemPtr _item)
     if (id.substr(0,6) == "TRUCK_")
     {
         int truck = PARSEINT(id.substr(6));
-        if (truck >= 0 && truck < BeamFactory::getSingleton().getTruckCount())
+        if (truck >= 0 && truck < m_sim_controller->GetBeamFactory()->getTruckCount())
         {
-            BeamFactory::getSingleton().setCurrentTruck(truck);
+            m_sim_controller->GetBeamFactory()->setCurrentTruck(truck);
         }
     }
 
@@ -317,14 +301,18 @@ void TopMenubar::onMenuBtn(MyGUI::MenuCtrlPtr _sender, MyGUI::MenuItemPtr _item)
         //RoR::App::GetConsole()->startPrivateChat(user_uid);
         //TODO: Separate Chat and console
     }
-    
+
     const auto app_state = App::GetActiveAppState();
     if (app_state == App::APP_STATE_BOOTSTRAP)
     {
         return;
     }
 
-    if (miname == _L("Get new vehicle") && gEnv->player)
+    if (_item == m_item_spawner_log)
+    {
+        App::GetGuiManager()->SetVisible_SpawnerReport(true);
+    }
+    else if (miname == _L("Get new vehicle") && gEnv->player)
     {
         if (app_state != App::APP_STATE_SIMULATION)
         {
@@ -335,9 +323,9 @@ void TopMenubar::onMenuBtn(MyGUI::MenuCtrlPtr _sender, MyGUI::MenuItemPtr _item)
 
     } else if (miname == _L("Reload current vehicle") && gEnv->player)
     {
-        if (BeamFactory::getSingleton().getCurrentTruckNumber() != -1)
+        if ((m_sim_controller->GetBeamFactory()->getCurrentTruckNumber() != -1) && (m_sim_controller != nullptr))
         {
-            App::GetMainThreadLogic()->GetFrameListener()->reloadCurrentTruck(); // TODO: Use SIM_STATE + 'pending' mechanisms
+            m_sim_controller->ReloadCurrentTruck(); // TODO: Use SIM_STATE + 'pending' mechanisms
             gui_man->UnfocusGui();
         }
     }
@@ -347,28 +335,28 @@ void TopMenubar::onMenuBtn(MyGUI::MenuCtrlPtr _sender, MyGUI::MenuItemPtr _item)
     }
     else if (miname == _L("Remove current vehicle"))
     {
-        BeamFactory::getSingleton().removeCurrentTruck();
+        m_sim_controller->GetBeamFactory()->removeCurrentTruck();
 
     } else if (miname == _L("Activate all vehicles"))
     {
-        BeamFactory::getSingleton().activateAllTrucks();
+        m_sim_controller->GetBeamFactory()->activateAllTrucks();
 
-    } else if (miname == _L("Activated vehicles never sleep")) 
+    } else if (miname == _L("Activated vehicles never sleep"))
     {
-        BeamFactory::getSingleton().setTrucksForcedActive(true);
+        m_sim_controller->GetBeamFactory()->setTrucksForcedActive(true);
         _item->setCaption(_L("Activated vehicles can sleep"));
 
-    } else if (miname == _L("Activated vehicles can sleep")) 
+    } else if (miname == _L("Activated vehicles can sleep"))
     {
-        BeamFactory::getSingleton().setTrucksForcedActive(false);
+        m_sim_controller->GetBeamFactory()->setTrucksForcedActive(false);
         _item->setCaption(_L("Activated vehicles never sleep"));
 
     } else if (miname == _L("Send all vehicles to sleep"))
     {
         // get out first
-        if (BeamFactory::getSingleton().getCurrentTruckNumber() != -1)
-            BeamFactory::getSingleton().setCurrentTruck(-1);
-        BeamFactory::getSingleton().sendAllTrucksSleeping();
+        if (m_sim_controller->GetBeamFactory()->getCurrentTruckNumber() != -1)
+            m_sim_controller->GetBeamFactory()->setCurrentTruck(-1);
+        m_sim_controller->GetBeamFactory()->sendAllTrucksSleeping();
 
     } else if (miname == _L("Friction Settings"))
     {
@@ -383,51 +371,51 @@ void TopMenubar::onMenuBtn(MyGUI::MenuCtrlPtr _sender, MyGUI::MenuItemPtr _item)
     // the debug menu
     else if (miname == _L("no visual debug"))
     {
-        Beam *b = BeamFactory::getSingleton().getCurrentTruck();
+        Beam *b = m_sim_controller->GetBeamFactory()->getCurrentTruck();
         if (b) b->setDebugOverlayState(0);
     } else if (miname == _L("show Node numbers"))
     {
-        Beam *b = BeamFactory::getSingleton().getCurrentTruck();
+        Beam *b = m_sim_controller->GetBeamFactory()->getCurrentTruck();
         if (b) b->setDebugOverlayState(1);
     } else if (miname == _L("show Beam numbers"))
     {
-        Beam *b = BeamFactory::getSingleton().getCurrentTruck();
+        Beam *b = m_sim_controller->GetBeamFactory()->getCurrentTruck();
         if (b) b->setDebugOverlayState(2);
     } else if (miname == _L("show Node&Beam numbers"))
     {
-        Beam *b = BeamFactory::getSingleton().getCurrentTruck();
+        Beam *b = m_sim_controller->GetBeamFactory()->getCurrentTruck();
         if (b) b->setDebugOverlayState(3);
     } else if (miname == _L("show Node mass"))
     {
-        Beam *b = BeamFactory::getSingleton().getCurrentTruck();
+        Beam *b = m_sim_controller->GetBeamFactory()->getCurrentTruck();
         if (b) b->setDebugOverlayState(4);
     } else if (miname == _L("show Node locked"))
     {
-        Beam *b = BeamFactory::getSingleton().getCurrentTruck();
+        Beam *b = m_sim_controller->GetBeamFactory()->getCurrentTruck();
         if (b) b->setDebugOverlayState(5);
     } else if (miname == _L("show Beam compression"))
     {
-        Beam *b = BeamFactory::getSingleton().getCurrentTruck();
+        Beam *b = m_sim_controller->GetBeamFactory()->getCurrentTruck();
         if (b) b->setDebugOverlayState(6);
     } else if (miname == _L("show Beam broken"))
     {
-        Beam *b = BeamFactory::getSingleton().getCurrentTruck();
+        Beam *b = m_sim_controller->GetBeamFactory()->getCurrentTruck();
         if (b) b->setDebugOverlayState(7);
     } else if (miname == _L("show Beam stress"))
     {
-        Beam *b = BeamFactory::getSingleton().getCurrentTruck();
+        Beam *b = m_sim_controller->GetBeamFactory()->getCurrentTruck();
         if (b) b->setDebugOverlayState(8);
     } else if (miname == _L("show Beam strength"))
     {
-        Beam *b = BeamFactory::getSingleton().getCurrentTruck();
+        Beam *b = m_sim_controller->GetBeamFactory()->getCurrentTruck();
         if (b) b->setDebugOverlayState(9);
     } else if (miname == _L("show Beam hydros"))
     {
-        Beam *b = BeamFactory::getSingleton().getCurrentTruck();
+        Beam *b = m_sim_controller->GetBeamFactory()->getCurrentTruck();
         if (b) b->setDebugOverlayState(10);
     } else if (miname == _L("show Beam commands"))
     {
-        Beam *b = BeamFactory::getSingleton().getCurrentTruck();
+        Beam *b = m_sim_controller->GetBeamFactory()->getCurrentTruck();
         if (b) b->setDebugOverlayState(11);
     }
     else if (miname == _L("Texture Tool"))
@@ -440,7 +428,7 @@ void TopMenubar::onMenuBtn(MyGUI::MenuCtrlPtr _sender, MyGUI::MenuItemPtr _item)
     }
     else if (miname == _L("Show vehicle description"))
     {
-        if (BeamFactory::getSingleton().getCurrentTruck() != 0)
+        if (m_sim_controller->GetBeamFactory()->getCurrentTruck() != 0)
         {
             gui_man->SetVisible_VehicleDescription(true);
         }
@@ -491,11 +479,6 @@ void TopMenubar::triggerUpdateVehicleList()
     m_vehicle_list_needs_update = true;
 }
 
-void TopMenubar::MenubarShowSpawnerReportButtonClicked(MyGUI::Widget* sender)
-{
-    App::GetGuiManager()->SetVisible_SpawnerReport(true);
-}
-
 void TopMenubar::ReflectMultiplayerState()
 {
     const bool online = App::GetActiveMpState() == App::MP_STATE_CONNECTED;
@@ -507,5 +490,3 @@ void TopMenubar::ReflectMultiplayerState()
 
 } // namespace GUI
 } // namespace RoR
-
-#endif // USE_MYGUI

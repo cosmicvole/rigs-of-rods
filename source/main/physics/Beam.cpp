@@ -50,6 +50,7 @@
 #include "CartesianToTriangleTransform.h"
 #include "CmdKeyInertia.h"
 #include "Collisions.h"
+#include "GfxActor.h"
 #include "GUI_GameConsole.h"
 #include "DashBoardManager.h"
 #include "Differentials.h"
@@ -63,9 +64,8 @@
 #include "IHeightFinder.h"
 #include "InputEngine.h"
 #include "Language.h"
-#include "MaterialReplacer.h"
 #include "MeshObject.h"
-#include "Mirrors.h"
+
 #include "MovableText.h"
 #include "Network.h"
 #include "PointColDetector.h"
@@ -73,6 +73,7 @@
 #include "Replay.h"
 #include "RigLoadingProfiler.h"
 #include "RigSpawner.h"
+#include "RoRFrameListener.h"
 #include "ScrewProp.h"
 #include "Scripting.h"
 #include "Settings.h"
@@ -85,7 +86,6 @@
 #include "TurboJet.h"
 #include "TurboProp.h"
 #include "VehicleAI.h"
-#include "VideoCamera.h"
 #include "Water.h"
 #include "GUIManager.h"
 
@@ -113,11 +113,9 @@ Beam::~Beam()
     this->setMeshVisibility(false);
 
     // delete all classes we might have constructed
-#ifdef USE_MYGUI
     if (dash)
         delete dash;
     dash = 0;
-#endif // USE_MYGUI
 
     // stop all the Sounds
 #ifdef USE_OPENAL
@@ -141,12 +139,22 @@ Beam::~Beam()
     if (fuseAirfoil)
         delete fuseAirfoil;
     fuseAirfoil = 0;
-    if (cabMesh)
-        delete cabMesh;
-    cabMesh = 0;
-    if (materialFunctionMapper)
-        delete materialFunctionMapper;
-    materialFunctionMapper = 0;
+
+    if (cabMesh != nullptr)
+    {
+        this->fadeMesh(cabNode, 1.f); // Reset transparency of "skeleton view"
+
+        cabNode->detachAllObjects();
+        cabNode->getParentSceneNode()->removeAndDestroyChild(cabNode->getName());
+        cabNode = nullptr;
+
+        cabEntity->_getManager()->destroyEntity(cabEntity);
+        cabEntity = nullptr;
+
+        delete cabMesh; // Unloads the ManualMesh resource; do this last
+        cabMesh = nullptr;
+    }
+
     if (replay)
         delete replay;
     replay = 0;
@@ -180,8 +188,6 @@ Beam::~Beam()
         }
         deletion_Entities.clear();
     }
-
-    // delete skidmarks as well?!
 
     // delete wings
     for (int i = 0; i < free_wing; i++)
@@ -236,9 +242,12 @@ Beam::~Beam()
         }
     }
 
-    // delete cablight
-    if (cablight)
-        gEnv->sceneManager->destroyLight(cablight);
+    // delete skidmarks
+    for (int i = 0; i < free_wheel; ++i)
+    {
+        delete skidtrails[i];
+        skidtrails[i] = nullptr;
+    }
 
     // delete props
     for (int i = 0; i < free_prop; i++)
@@ -278,7 +287,7 @@ Beam::~Beam()
     }
 
     // delete flares
-    for (int i = 0; i < free_flare; i++)
+    for (size_t i = 0; i < this->flares.size(); i++)
     {
         if (flares[i].snode)
         {
@@ -290,6 +299,7 @@ Beam::~Beam()
         if (flares[i].light)
             gEnv->sceneManager->destroyLight(flares[i].light);
     }
+    this->flares.clear();
 
     // delete exhausts
     for (std::vector<exhaust_t>::iterator it = exhausts.begin(); it != exhausts.end(); it++)
@@ -347,14 +357,6 @@ Beam::~Beam()
         delete netMT;
         netMT = 0;
     }
-
-    for (VideoCamera* v : vidcams)
-    {
-        delete v;
-    }
-
-    if (materialReplacer)
-        delete materialReplacer;
 
     if (intraPointCD)
         delete intraPointCD;
@@ -494,7 +496,7 @@ void Beam::scaleTruck(float value)
     Vector3 relpos = nodes[0].RelPosition;
     for (int i = 1; i < free_node; i++)
     {
-        initial_node_pos[i] = refpos + (initial_node_pos[i] - refpos) * value;
+        nodes[i].initial_pos = refpos + (nodes[i].initial_pos - refpos) * value;
         nodes[i].AbsPosition = refpos + (nodes[i].AbsPosition - refpos) * value;
         nodes[i].RelPosition = relpos + (nodes[i].RelPosition - relpos) * value;
         nodes[i].Velocity *= value;
@@ -530,7 +532,7 @@ void Beam::scaleTruck(float value)
     }
     // tell the cabmesh that resizing is ok, and they dont need to break ;)
     if (cabMesh)
-        cabMesh->scale(value);
+        cabMesh->ScaleFlexObj(value);
     // update engine values
     if (engine)
     {
@@ -636,7 +638,7 @@ float Beam::getSpawnRotation()
 Vector3 Beam::getDirection()
 {
     Vector3 cur_dir = nodes[0].AbsPosition;
-    if (cameranodepos[0] != cameranodedir[0] && cameranodepos[0] >= 0 && cameranodepos[0] < MAX_NODES && cameranodedir[0] >= 0 && cameranodedir[0] < MAX_NODES)
+    if (cameranodepos[0] != cameranodedir[0] && this->IsNodeIdValid(cameranodepos[0]) && this->IsNodeIdValid(cameranodedir[0]))
     {
         cur_dir = nodes[cameranodepos[0]].RelPosition - nodes[cameranodedir[0]].RelPosition;
     }
@@ -663,10 +665,10 @@ Vector3 Beam::getDirection()
 
 Vector3 Beam::getInitialDirection()
 {
-    Vector3 cur_dir = initial_node_pos[0];
-    if (cameranodepos[0] != cameranodedir[0] && cameranodepos[0] >= 0 && cameranodepos[0] < MAX_NODES && cameranodedir[0] >= 0 && cameranodedir[0] < MAX_NODES)
+    Vector3 cur_dir = nodes[0].initial_pos;//initial_node_pos[0];
+    if (cameranodepos[0] != cameranodedir[0] && cameranodepos[0] >= 0 && cameranodepos[0] < free_node && cameranodedir[0] >= 0 && cameranodedir[0] < free_node)
     {
-        cur_dir = initial_node_pos[cameranodepos[0]] - initial_node_pos[cameranodedir[0]];
+        cur_dir = nodes[cameranodepos[0]].initial_pos - nodes[cameranodedir[0]].initial_pos;
     }
     else if (free_node > 1)
     {
@@ -674,14 +676,14 @@ Vector3 Beam::getInitialDirection()
         int furthest_node = 1;
         for (int i = 0; i < free_node; i++)
         {
-            float dist = initial_node_pos[i].squaredDistance(initial_node_pos[0]);
+            float dist = nodes[i].initial_pos.squaredDistance(nodes[0].initial_pos);
             if (dist > max_dist)
             {
                 max_dist = dist;
                 furthest_node = i;
             }
         }
-        cur_dir = initial_node_pos[0] - initial_node_pos[furthest_node];
+        cur_dir = nodes[0].initial_pos - nodes[furthest_node].initial_pos;
     }
 
     cur_dir.normalise();
@@ -711,9 +713,9 @@ void Beam::getCorners2D(Ogre::Vector3& frontLeft, Ogre::Vector3& frontRight, Ogr
     //The (slow) alternative would be to make a rotated axis aligned copy of the deformed nodes to find the bounding corners.
     //We also unfortunately currently rely on the initial vehicle node positions being axis aligned. cosmic vole July 3 2017
     float left, right, front, rear;
-    left = initial_node_pos[0].x;
+    left = nodes[0].initial_pos.x;
     right = left;
-    front = initial_node_pos[0].z;
+    front = nodes[0].initial_pos.z;
     rear = front;
     
     //These will store which nodes had the min and max x and z
@@ -726,7 +728,7 @@ void Beam::getCorners2D(Ogre::Vector3& frontLeft, Ogre::Vector3& frontRight, Ogr
     
     for (int i = 0; i < free_node; i++)
     {
-        Vector3& pos = initial_node_pos[i];
+        Vector3& pos = nodes[i].initial_pos;
         if (pos.x < left)
         {
             left = pos.x;
@@ -803,12 +805,12 @@ void Beam::getCorners2D(Ogre::Vector3& frontLeft, Ogre::Vector3& frontRight, Ogr
     //Note this code won't work if the vehicle is upside down, but it should be OK for AI driving control
     
     // Set origin of rotation to camera node
-    Vector3 origin = initial_node_pos[0];
+    Vector3 origin = nodes[0].initial_pos;
     Vector3 currentOrigin = nodes[0].AbsPosition;
 
-    if (cameranodepos[0] >= 0 && cameranodepos[0] < MAX_NODES)
+    if (cameranodepos[0] >= 0 && cameranodepos[0] < free_node)
     {
-        origin = initial_node_pos[cameranodepos[0]];
+        origin = nodes[cameranodepos[0]].initial_pos;
         currentOrigin = nodes[cameranodepos[0]].AbsPosition;
     }
 
@@ -892,14 +894,14 @@ void Beam::pushNetwork(char* data, int size)
         return;
 
     // check if the size of the data matches to what we expected
-    if ((unsigned int)size == (netbuffersize + sizeof(oob_t)))
+    if ((unsigned int)size == (netbuffersize + sizeof(RoRnet::TruckState)))
     {
         // we walk through the incoming data and separate it a bit
         char* ptr = data;
 
-        // put the oob_t in front, describes truck basics, engine state, flares, etc
-        memcpy((char*)oob3, ptr, sizeof(oob_t));
-        ptr += sizeof(oob_t);
+        // put the RoRnet::TruckState in front, describes truck basics, engine state, flares, etc
+        memcpy((char*)oob3, ptr, sizeof(RoRnet::TruckState));
+        ptr += sizeof(RoRnet::TruckState);
 
         // then copy the node data
         memcpy((char*)netb3, ptr, nodebuffersize);
@@ -917,13 +919,13 @@ void Beam::pushNetwork(char* data, int size)
     else
     {
         // TODO: show the user the problem in the GUI
-        LOG("WRONG network size: we expected " + TOSTRING(netbuffersize+sizeof(oob_t)) + " but got " + TOSTRING(size) + " for vehicle " + String(truckname));
+        LOG("WRONG network size: we expected " + TOSTRING(netbuffersize+sizeof(RoRnet::TruckState)) + " but got " + TOSTRING(size) + " for vehicle " + String(truckname));
         state = INVALID;
         return;
     }
 
     // and the buffer switching to have linear smoothing
-    oob_t* ot;
+    RoRnet::TruckState* ot;
     ot = oob1;
     oob1 = oob2;
     oob2 = oob3;
@@ -950,12 +952,14 @@ void Beam::pushNetwork(char* data, int size)
 
 void Beam::calcNetwork()
 {
+    using namespace RoRnet;
+
     if (netcounter < 1)
         return;
 
     if (netcounter == 1)
     {
-        memcpy((char*)oob1, oob2, sizeof(oob_t));
+        memcpy((char*)oob1, oob2, sizeof(RoRnet::TruckState));
     }
 
     BES_GFX_START(BES_GFX_calcNetwork);
@@ -1135,9 +1139,7 @@ void Beam::calcNetwork()
         SoundScriptManager::getSingleton().trigStop(trucknum, SS_TRIG_REVERSE_GEAR);
 #endif //OPENAL
 
-#ifdef USE_MYGUI
     updateDashBoards(tratio);
-#endif // USE_MYGUI
 
     BES_GFX_STOP(BES_GFX_calcNetwork);
 }
@@ -1221,8 +1223,8 @@ void Beam::calc_masses2(Real total, bool reCalc)
     {
         it->beam->p2->mass = 100.0f;
     }
-    
-     // Apply pre-defined cinecam node mass
+
+    // Apply pre-defined cinecam node mass
     for (int i = 0; i < this->freecinecamera; ++i)
     {
         // TODO: this expects all cinecams to be defined in root module (i.e. outside 'section/end_section')
@@ -1300,8 +1302,8 @@ void Beam::determineLinkedBeams()
     std::pair<std::map<Beam*, bool>::iterator, bool> ret;
 
     lookup_table.insert(std::pair<Beam*, bool>(this, false));
-
-    auto interTruckLinks = BeamFactory::getSingleton().interTruckLinks;
+    
+    auto interTruckLinks = m_sim_controller->GetBeamFactory()->interTruckLinks;
 
     while (found)
     {
@@ -1370,8 +1372,8 @@ Vector3 Beam::calculateCollisionOffset(Vector3 direction)
     Real max_distance = direction.length();
     direction.normalise();
 
-    Beam** trucks = BeamFactory::getSingleton().getTrucks();
-    int trucksnum = BeamFactory::getSingleton().getTruckCount();
+    Beam** trucks = m_sim_controller->GetBeamFactory()->getTrucks();
+    int trucksnum = m_sim_controller->GetBeamFactory()->getTruckCount();
 
     if (intraPointCD)
         intraPointCD->update(this, true);
@@ -1649,7 +1651,7 @@ void Beam::resetAngle(float rot)
     // Set origin of rotation to camera node
     Vector3 origin = nodes[0].AbsPosition;
 
-    if (cameranodepos[0] >= 0 && cameranodepos[0] < MAX_NODES)
+    if (this->IsNodeIdValid(cameranodepos[0]))
     {
         origin = nodes[cameranodepos[0]].AbsPosition;
     }
@@ -1719,7 +1721,7 @@ void Beam::resetRotation(Vector3 newHeading)
     // Set origin of rotation to camera node
     Vector3 origin = nodes[0].AbsPosition;
 
-    if (cameranodepos[0] >= 0 && cameranodepos[0] < MAX_NODES)
+    if (cameranodepos[0] >= 0 && cameranodepos[0] < nodeCount)
     {
         origin = nodes[cameranodepos[0]].AbsPosition;
     }
@@ -1806,7 +1808,7 @@ void Beam::resetPosition(Vector3 translation, bool setInitPosition)
     {
         for (int i = 0; i < free_node; i++)
         {
-            initial_node_pos[i] = nodes[i].AbsPosition;
+            nodes[i].initial_pos = nodes[i].AbsPosition;
         }
     }
 
@@ -1984,7 +1986,7 @@ Ogre::Vector3 Beam::getRotationCenter()
     if (m_is_cinecam_rotation_center)
     {
         Vector3 cinecam = nodes[0].AbsPosition;
-        if (cameranodepos[0] >= 0 && cameranodepos[0] < MAX_NODES)
+        if (this->IsNodeIdValid(cameranodepos[0])) // TODO: Check cam. nodes once on spawn! They never change --> no reason to repeat the check. ~only_a_ptr, 06/2017
         {
             cinecam = nodes[cameranodepos[0]].AbsPosition;
         }
@@ -2062,23 +2064,23 @@ void Beam::SyncReset()
         engine->start();
     for (int i = 0; i < free_node; i++)
     {
-        nodes[i].AbsPosition = initial_node_pos[i];
-        nodes[i].RelPosition = initial_node_pos[i] - origin;
+        nodes[i].AbsPosition = nodes[i].initial_pos;
+        nodes[i].RelPosition = nodes[i].initial_pos - origin;
         nodes[i].Velocity = Vector3::ZERO;
         nodes[i].Forces = Vector3::ZERO;
     }
 
     for (int i = 0; i < free_beam; i++)
     {
-        beams[i].maxposstress = default_beam_deform[i];
-        beams[i].maxnegstress = -default_beam_deform[i];
-        beams[i].minmaxposnegstress = default_beam_deform[i];
-        beams[i].strength = initial_beam_strength[i];
-        beams[i].plastic_coef = default_beam_plastic_coef[i];
-        beams[i].L = beams[i].refL;
-        beams[i].stress = 0.0;
-        beams[i].broken = false;
-        beams[i].disabled = false;
+        beams[i].maxposstress    = beams[i].default_beam_deform;
+        beams[i].maxnegstress    = -beams[i].default_beam_deform;
+        beams[i].minmaxposnegstress = beams[i].default_beam_deform;
+        beams[i].strength        = beams[i].initial_beam_strength;
+        beams[i].plastic_coef    = beams[i].default_beam_plastic_coef;
+        beams[i].L               = beams[i].refL;
+        beams[i].stress          = 0.0;
+        beams[i].broken          = false;
+        beams[i].disabled        = false;
     }
 
     disjoinInterTruckBeams();
@@ -2224,7 +2226,7 @@ void Beam::SyncPartialRepair(float step)
             }
             //Fully repair the nodes first, so we can find the right slide node positions as well TODO just cache initial slide node positions instead!
             //TODO resetAngle() and resetPosition() rotated and translated nodes[] but not initial_node_pos[] so they're potentially at different angles!
-            nodes[i].AbsPosition = initial_node_pos[i];//(initial_node_pos[i]-initial_node_pos[0])+(nodes[0].AbsPosition);//= initial_node_pos[i];
+            nodes[i].AbsPosition = nodes[i].initial_pos;//(initial_node_pos[i]-initial_node_pos[0])+(nodes[0].AbsPosition);//= initial_node_pos[i];
             nodes[i].RelPosition=nodes[i].AbsPosition-origin;
             nodes[i].Velocity=Vector3::ZERO;
             nodes[i].Forces=Vector3::ZERO;
@@ -2232,11 +2234,11 @@ void Beam::SyncPartialRepair(float step)
         
         for (int i = 0; i < free_beam; i++)
         {
-            beams[i].maxposstress = default_beam_deform[i];
-            beams[i].maxnegstress = -default_beam_deform[i];
-            beams[i].minmaxposnegstress = default_beam_deform[i];
-            beams[i].strength = initial_beam_strength[i];
-            beams[i].plastic_coef = default_beam_plastic_coef[i];
+            beams[i].maxposstress = beams[i].default_beam_deform;
+            beams[i].maxnegstress = -beams[i].default_beam_deform;
+            beams[i].minmaxposnegstress = beams[i].default_beam_deform;
+            beams[i].strength = beams[i].initial_beam_strength;
+            beams[i].plastic_coef = beams[i].default_beam_plastic_coef;
             beams[i].L = beams[i].refL;
             beams[i].stress = 0.0;
             beams[i].broken = false;
@@ -2367,11 +2369,11 @@ void Beam::SyncPartialRepair(float step)
     
     for (int i = 0; i < free_beam; i++)
     {
-        beams[i].maxposstress = default_beam_deform[i];
-        beams[i].maxnegstress = -default_beam_deform[i];
-        beams[i].minmaxposnegstress = default_beam_deform[i];
-        beams[i].strength = initial_beam_strength[i];
-        beams[i].plastic_coef = default_beam_plastic_coef[i];
+        beams[i].maxposstress = beams[i].default_beam_deform;
+        beams[i].maxnegstress = -beams[i].default_beam_deform;
+        beams[i].minmaxposnegstress = beams[i].default_beam_deform;
+        beams[i].strength = beams[i].initial_beam_strength;
+        beams[i].plastic_coef = beams[i].default_beam_plastic_coef;
         beams[i].L = beams[i].refL;
         beams[i].stress = 0.0;
         beams[i].broken = false;
@@ -2685,7 +2687,7 @@ bool Beam::replayStep()
     return true;
 }
 
-void Beam::updateForceFeedback(int steps)
+void Beam::ForceFeedbackStep(int steps)
 {
     ffforce = affforce / steps;
     ffhydro = affhydro / steps;
@@ -2712,17 +2714,6 @@ void Beam::updateAngelScriptEvents(float dt)
 #endif // USE_ANGELSCRIPT
 }
 
-void Beam::updateVideocameras(float dt)
-{
-    if (m_is_videocamera_disabled)
-        return;
-
-    for (VideoCamera* v : vidcams)
-    {
-        v->update(dt);
-    }
-}
-
 void Beam::handleResetRequests(float dt)
 {
     if (m_reset_request)
@@ -2747,8 +2738,8 @@ void Beam::handleResetRequests(float dt)
 
 void Beam::sendStreamSetup()
 {
-    stream_register_trucks_t reg;
-    memset(&reg, 0, sizeof(stream_register_trucks_t));
+    RoRnet::TruckStreamRegister reg;
+    memset(&reg, 0, sizeof(RoRnet::TruckStreamRegister));
     reg.status = 0;
     reg.type = 0;
     reg.bufferSize = netbuffersize;
@@ -2761,7 +2752,7 @@ void Beam::sendStreamSetup()
     }
 
 #ifdef USE_SOCKETW
-    RoR::Networking::AddLocalStream((stream_register_t *)&reg, sizeof(stream_register_trucks_t));
+    RoR::Networking::AddLocalStream((RoRnet::StreamRegister *)&reg, sizeof(RoRnet::TruckStreamRegister));
 #endif // USE_SOCKETW
 
     m_source_id = reg.origin_sourceid;
@@ -2770,12 +2761,14 @@ void Beam::sendStreamSetup()
 
 void Beam::sendStreamData()
 {
+    using namespace RoRnet;
+
     BES_GFX_START(BES_GFX_sendStreamData);
 #ifdef USE_SOCKETW
     lastNetUpdateTime = netTimer.getMilliseconds();
 
     //look if the packet is too big first
-    int final_packet_size = sizeof(oob_t) + sizeof(float) * 3 + first_wheel_node * sizeof(float) * 3 + free_wheel * sizeof(float);
+    int final_packet_size = sizeof(RoRnet::TruckState) + sizeof(float) * 3 + first_wheel_node * sizeof(float) * 3 + free_wheel * sizeof(float);
     if (final_packet_size > 8192)
     {
         ErrorUtils::ShowError(_L("Truck is too big to be send over the net."), _L("Network error!"));
@@ -2786,10 +2779,10 @@ void Beam::sendStreamData()
 
     unsigned int packet_len = 0;
 
-    // oob_t is at the beginning of the buffer
+    // RoRnet::TruckState is at the beginning of the buffer
     {
-        oob_t* send_oob = (oob_t *)send_buffer;
-        packet_len += sizeof(oob_t);
+        RoRnet::TruckState* send_oob = (RoRnet::TruckState *)send_buffer;
+        packet_len += sizeof(RoRnet::TruckState);
 
         send_oob->flagmask = 0;
 
@@ -2873,7 +2866,7 @@ void Beam::sendStreamData()
 
     // then process the contents
     {
-        char* ptr = send_buffer + sizeof(oob_t);
+        char* ptr = send_buffer + sizeof(RoRnet::TruckState);
         float* send_nodes = (float *)ptr;
         packet_len += netbuffersize;
 
@@ -2919,7 +2912,7 @@ void Beam::receiveStreamData(unsigned int type, int source, unsigned int streami
         return;
 
     BES_GFX_START(BES_GFX_receiveStreamData);
-    if (type == MSG2_STREAM_DATA && source == m_source_id && streamid == m_stream_id)
+    if (type == RoRnet::MSG2_STREAM_DATA && source == m_source_id && streamid == m_stream_id)
     {
         pushNetwork(buffer, len);
     }
@@ -3297,7 +3290,7 @@ void Beam::calcAnimators(const int flag_state, float& cstate, int& div, Real tim
     Vector3 cam_roll = nodes[0].RelPosition;
     Vector3 cam_dir = nodes[0].RelPosition;
 
-    if (cameranodepos[0] >= 0 && cameranodepos[0] < MAX_NODES)
+    if (this->IsNodeIdValid(cameranodepos[0])) // TODO: why check this on each update when it cannot change after spawn?
     {
         cam_pos = nodes[cameranodepos[0]].RelPosition;
         cam_roll = nodes[cameranoderoll[0]].RelPosition;
@@ -3761,11 +3754,6 @@ void Beam::updateSkidmarks()
         // ignore wheels without data
         if (wheels[i].lastContactInner == Vector3::ZERO && wheels[i].lastContactOuter == Vector3::ZERO)
             continue;
-        // create skidmark object for wheels with data if not existing
-        if (!skidtrails[i])
-        {
-            skidtrails[i] = new Skidmark(&wheels[i], beamsRoot, 300, 20);
-        }
 
         skidtrails[i]->updatePoint();
         if (skidtrails[i] && wheels[i].isSkiding)
@@ -3859,12 +3847,6 @@ void Beam::prepareInside(bool inside)
 
     if (inside)
     {
-        if (lights && cablightNode && cablight)
-        {
-            cablightNode->setVisible(true);
-            cablight->setVisible(true);
-        }
-
         mCamera->setNearClipDistance(0.1f);
 
         // enable transparent seat
@@ -3874,17 +3856,9 @@ void Beam::prepareInside(bool inside)
     }
     else
     {
-#ifdef USE_MYGUI
         if (dash)
         {
             dash->setVisible(false);
-        }
-#endif // USE_MYGUI
-
-        if (cablightNode && cablight)
-        {
-            cablightNode->setVisible(false);
-            cablight->setVisible(false);
         }
 
         mCamera->setNearClipDistance(0.5f);
@@ -3895,20 +3869,15 @@ void Beam::prepareInside(bool inside)
         seatmat->setSceneBlending(SBT_REPLACE);
     }
 
-    if (cabNode)
+    if (cabNode != nullptr)
     {
-        char transmatname[256];
-        sprintf(transmatname, "%s-trans", texname);
-        MaterialPtr transmat = (MaterialPtr)(MaterialManager::getSingleton().getByName(transmatname));
-        transmat->setReceiveShadows(!inside);
+        m_gfx_actor->GetCabTransMaterial()->setReceiveShadows(!inside);
     }
 
     if (shadowOptimizations)
     {
         SetPropsCastShadows(!inside);
     }
-
-    RoR::Mirrors::SetActive(inside);
 }
 
 void Beam::lightsToggle()
@@ -3917,11 +3886,11 @@ void Beam::lightsToggle()
     if (m_skeletonview_is_active)
         return;
 
-    Beam** trucks = BeamFactory::getSingleton().getTrucks();
-    int trucksnum = BeamFactory::getSingleton().getTruckCount();
+    Beam** trucks = m_sim_controller->GetBeamFactory()->getTrucks();
+    int trucksnum = m_sim_controller->GetBeamFactory()->getTruckCount();
 
     // export light command
-    Beam* current_truck = BeamFactory::getSingleton().getCurrentTruck();
+    Beam* current_truck = m_sim_controller->GetBeamFactory()->getCurrentTruck();
     if (state == SIMULATED && this == current_truck && forwardcommands)
     {
         for (int i = 0; i < trucksnum; i++)
@@ -3931,11 +3900,9 @@ void Beam::lightsToggle()
         }
     }
     lights = !lights;
-    if (cablight && cablightNode && isInside)
-        cablightNode->setVisible((lights != 0));
     if (!lights)
     {
-        for (int i = 0; i < free_flare; i++)
+        for (size_t i = 0; i < flares.size(); i++)
         {
             if (flares[i].type == 'f')
             {
@@ -3947,27 +3914,10 @@ void Beam::lightsToggle()
                 flares[i].isVisible = false;
             }
         }
-        if (hasEmissivePass)
-        {
-            char clomatname[256] = {};
-            sprintf(clomatname, "%s-noem", texname);
-            if (cabNode && cabNode->numAttachedObjects())
-            {
-                Entity* ent = ((Entity*)(cabNode->getAttachedObject(0)));
-                int numsubent = ent->getNumSubEntities();
-                for (int i = 0; i < numsubent; i++)
-                {
-                    SubEntity* subent = ent->getSubEntity(i);
-                    if (!strcmp((subent->getMaterialName()).c_str(), texname))
-                        subent->setMaterialName(clomatname);
-                }
-                //			((Entity*)(cabNode->getAttachedObject(0)))->setMaterialName(clomatname);
-            }
-        }
     }
     else
     {
-        for (int i = 0; i < free_flare; i++)
+        for (size_t i = 0; i < flares.size(); i++)
         {
             if (flares[i].type == 'f')
             {
@@ -3978,24 +3928,9 @@ void Beam::lightsToggle()
                     flares[i].snode->attachObject(flares[i].bbs);
             }
         }
-        if (hasEmissivePass)
-        {
-            char clomatname[256] = {};
-            sprintf(clomatname, "%s-noem", texname);
-            if (cabNode && cabNode->numAttachedObjects())
-            {
-                Entity* ent = ((Entity*)(cabNode->getAttachedObject(0)));
-                int numsubent = ent->getNumSubEntities();
-                for (int i = 0; i < numsubent; i++)
-                {
-                    SubEntity* subent = ent->getSubEntity(i);
-                    if (!strcmp((subent->getMaterialName()).c_str(), clomatname))
-                        subent->setMaterialName(texname);
-                }
-                //			((Entity*)(cabNode->getAttachedObject(0)))->setMaterialName(texname);
-            }
-        }
     }
+
+    m_gfx_actor->SetCabLightsActive(lights != 0);
 
     TRIGGER_EVENT(SE_TRUCK_LIGHT_TOGGLE, trucknum);
 }
@@ -4176,7 +4111,7 @@ void Beam::updateFlares(float dt, bool isCurrent)
     }
     //the flares
     bool keysleep = false;
-    for (int i = 0; i < free_flare; i++)
+    for (size_t i = 0; i < this->flares.size(); i++)
     {
         // let the light blink
         if (flares[i].blinkdelay != 0)
@@ -4192,12 +4127,12 @@ void Beam::updateFlares(float dt, bool isCurrent)
         {
             flares[i].blinkdelay_state = true;
         }
-        //LOG(TOSTRING(flares[i].blinkdelay_curr));
+
         // manage light states
         bool isvisible = true; //this must be true to be able to switch on the frontlight
         if (flares[i].type == 'f')
         {
-            materialFunctionMapper->toggleFunction(i, (lights == 1));
+            m_gfx_actor->SetMaterialFlareOn(i, (lights == 1));
             if (!lights)
                 continue;
         }
@@ -4214,7 +4149,7 @@ void Beam::updateFlares(float dt, bool isCurrent)
         }
         else if (flares[i].type == 'u' && flares[i].controlnumber != -1)
         {
-            if (state == SIMULATED && this == BeamFactory::getSingleton().getCurrentTruck()) // no network!!
+            if (state == SIMULATED && this == m_sim_controller->GetBeamFactory()->getCurrentTruck()) // no network!!
             {
                 // networked customs are set directly, so skip this
                 if (RoR::App::GetInputEngine()->getEventBoolValue(EV_TRUCK_LIGHTTOGGLE01 + (flares[i].controlnumber - 1)) && mTimeUntilNextToggle <= 0)
@@ -4265,9 +4200,8 @@ void Beam::updateFlares(float dt, bool isCurrent)
             dash->setBool(DD_SIGNAL_TURNLEFT, isvisible);
         }
 
-        //left_blink_on, right_blink_on, warn_blink_on;
         // update material Bindings
-        materialFunctionMapper->toggleFunction(i, isvisible);
+        m_gfx_actor->SetMaterialFlareOn(i, isvisible);
 
         flares[i].snode->setVisible(isvisible);
         if (flares[i].light)
@@ -4473,7 +4407,7 @@ void Beam::updateFlexbodiesPrepare()
     BES_GFX_START(BES_GFX_updateFlexBodies);
 
     if (cabNode && cabMesh)
-        cabNode->setPosition(cabMesh->flexit());
+        cabNode->setPosition(cabMesh->UpdateFlexObj());
 
     if (gEnv->threadPool)
     {
@@ -5100,7 +5034,7 @@ void Beam::addInterTruckBeam(beam_t* beam, Beam* a, Beam* b)
     }
 
     std::pair<Beam*, Beam*> truck_pair(a, b);
-    BeamFactory::getSingleton().interTruckLinks[beam] = truck_pair;
+    m_sim_controller->GetBeamFactory()->interTruckLinks[beam] = truck_pair;
 
     a->determineLinkedBeams();
     for (auto truck : a->linkedBeams)
@@ -5119,11 +5053,11 @@ void Beam::removeInterTruckBeam(beam_t* beam)
         interTruckBeams.erase(pos);
     }
 
-    auto it = BeamFactory::getSingleton().interTruckLinks.find(beam);
-    if (it != BeamFactory::getSingleton().interTruckLinks.end())
+    auto it = m_sim_controller->GetBeamFactory()->interTruckLinks.find(beam);
+    if (it != m_sim_controller->GetBeamFactory()->interTruckLinks.end())
     {
         auto truck_pair = it->second;
-        BeamFactory::getSingleton().interTruckLinks.erase(it);
+        m_sim_controller->GetBeamFactory()->interTruckLinks.erase(it);
 
         truck_pair.first->determineLinkedBeams();
         for (auto truck : truck_pair.first->linkedBeams)
@@ -5138,7 +5072,7 @@ void Beam::removeInterTruckBeam(beam_t* beam)
 void Beam::disjoinInterTruckBeams()
 {
     interTruckBeams.clear();
-    auto interTruckLinks = &BeamFactory::getSingleton().interTruckLinks;
+    auto interTruckLinks = &m_sim_controller->GetBeamFactory()->interTruckLinks;
     for (auto it = interTruckLinks->begin(); it != interTruckLinks->end();)
     {
         auto truck_pair = it->second;
@@ -5165,11 +5099,11 @@ void Beam::disjoinInterTruckBeams()
 
 void Beam::tieToggle(int group)
 {
-    Beam** trucks = BeamFactory::getSingleton().getTrucks();
-    int trucksnum = BeamFactory::getSingleton().getTruckCount();
+    Beam** trucks = m_sim_controller->GetBeamFactory()->getTrucks();
+    int trucksnum = m_sim_controller->GetBeamFactory()->getTruckCount();
 
     // export tie commands
-    Beam* current_truck = BeamFactory::getSingleton().getCurrentTruck();
+    Beam* current_truck = m_sim_controller->GetBeamFactory()->getCurrentTruck();
     if (state == SIMULATED && this == current_truck && forwardcommands)
     {
         for (int i = 0; i < trucksnum; i++)
@@ -5289,8 +5223,8 @@ void Beam::tieToggle(int group)
 
 void Beam::ropeToggle(int group)
 {
-    Beam** trucks = BeamFactory::getSingleton().getTrucks();
-    int trucksnum = BeamFactory::getSingleton().getTruckCount();
+    Beam** trucks = m_sim_controller->GetBeamFactory()->getTrucks();
+    int trucksnum = m_sim_controller->GetBeamFactory()->getTruckCount();
 
     // iterate over all ropes
     for (std::vector<rope_t>::iterator it = ropes.begin(); it != ropes.end(); it++)
@@ -5358,8 +5292,8 @@ void Beam::ropeToggle(int group)
 
 void Beam::hookToggle(int group, hook_states mode, int node_number)
 {
-    Beam** trucks = BeamFactory::getSingleton().getTrucks();
-    int trucksnum = BeamFactory::getSingleton().getTruckCount();
+    Beam** trucks = m_sim_controller->GetBeamFactory()->getTrucks();
+    int trucksnum = m_sim_controller->GetBeamFactory()->getTruckCount();
 
     // iterate over all hooks
     for (std::vector<hook_t>::iterator it = hooks.begin(); it != hooks.end(); it++)
@@ -5860,7 +5794,7 @@ void Beam::updateNetworkInfo()
 #ifdef USE_SOCKETW
     BES_GFX_START(BES_GFX_updateNetworkInfo);
 
-    user_info_t info;
+    RoRnet::UserInfo info;
 
     if (state == NETWORKED)
     {
@@ -5998,7 +5932,6 @@ bool Beam::isLocked()
 
 void Beam::updateDashBoards(float dt)
 {
-#ifdef USE_MYGUI
     if (!dash)
         return;
     // some temp vars
@@ -6104,7 +6037,7 @@ void Beam::updateDashBoards(float dt)
     dash->setFloat(DD_ENGINE_SPEEDO_MPH, speed_mph);
 
     // roll
-    if (cameranodepos[0] >= 0 && cameranodepos[0] < MAX_NODES)
+    if (this->IsNodeIdValid(cameranodepos[0])) // TODO: why check this on each update when it cannot change after spawn?
     {
         dir = nodes[cameranodepos[0]].RelPosition - nodes[cameranoderoll[0]].RelPosition;
         dir.normalise();
@@ -6119,7 +6052,7 @@ void Beam::updateDashBoards(float dt)
     }
 
     // active shocks / roll correction
-    if (free_active_shock)
+    if (this->has_active_shocks)
     {
         // TOFIX: certainly not working:
         float roll_corr = - stabratio * 10.0f;
@@ -6130,7 +6063,7 @@ void Beam::updateDashBoards(float dt)
     }
 
     // pitch
-    if (cameranodepos[0] >= 0 && cameranodepos[0] < MAX_NODES)
+    if (this->IsNodeIdValid(cameranodepos[0]))
     {
         dir = nodes[cameranodepos[0]].RelPosition - nodes[cameranodedir[0]].RelPosition;
         dir.normalise();
@@ -6213,7 +6146,7 @@ void Beam::updateDashBoards(float dt)
         }
 
         // water depth display, only if we have a screw prop at least
-        if (cameranodepos[0] >= 0 && cameranodepos[0] < MAX_NODES)
+        if (this->IsNodeIdValid(cameranodepos[0])) // TODO: Check cam. nodes once on spawn! They never change --> no reason to repeat the check. ~only_a_ptr, 06/2017
         {
             // position
             Vector3 dir = nodes[cameranodepos[0]].RelPosition - nodes[cameranodedir[0]].RelPosition;
@@ -6229,7 +6162,7 @@ void Beam::updateDashBoards(float dt)
         }
 
         // water speed
-        if (cameranodepos[0] >= 0 && cameranodepos[0] < MAX_NODES)
+        if (this->IsNodeIdValid(cameranodepos[0]))
         {
             Vector3 hdir = nodes[cameranodepos[0]].RelPosition - nodes[cameranodedir[0]].RelPosition;
             hdir.normalise();
@@ -6443,12 +6376,12 @@ void Beam::updateDashBoards(float dt)
 
 #endif //0
     dash->update(dt);
-#endif // USE_MYGUI
 }
 
 Vector3 Beam::getGForces()
 {
-    if (cameranodepos[0] >= 0 && cameranodepos[0] < MAX_NODES && cameranodedir[0] >= 0 && cameranodedir[0] < MAX_NODES && cameranoderoll[0] >= 0 && cameranoderoll[0] < MAX_NODES)
+    // TODO: Check cam. nodes once on spawn! They never change --> no reason to repeat the check. ~only_a_ptr, 06/2017
+    if (this->IsNodeIdValid(cameranodepos[0]) && this->IsNodeIdValid(cameranodedir[0]) && this->IsNodeIdValid(cameranoderoll[0]))
     {
         static Vector3 result = Vector3::ZERO;
 
@@ -6527,6 +6460,7 @@ void Beam::engineTriggerHelper(int engineNumber, int type, float triggerValue)
 }
 
 Beam::Beam(
+    RoRFrameListener* sim_controller,
     int truck_number,
     Ogre::Vector3 pos,
     Ogre::Quaternion rot,
@@ -6537,13 +6471,13 @@ Beam::Beam(
     collision_box_t* spawnbox, /* = nullptr */
     bool ismachine, /* = false  */
     const std::vector<Ogre::String>* truckconfig, /* = nullptr */
-    Skin* skin, /* = nullptr */
+    RoR::SkinDef* skin, /* = nullptr */
     bool freeposition, /* = false */
     bool preloaded_with_terrain, /* = false */
     int cache_entry_number /* = -1 */
-) :
-
-    GUIFeaturesChanged(false)
+) 
+    : GUIFeaturesChanged(false)
+    , m_sim_controller(sim_controller)
     , aileron(0)
     , avichatter_timer(11.0f) // some pseudo random number,  doesn't matter
     , m_beacon_light_is_active(false)
@@ -6593,7 +6527,6 @@ Beam::Beam(
     , m_custom_camera_node(-1)
     , m_hide_own_net_label(BSETTING("HideOwnNetLabel", false))
     , m_is_cinecam_rotation_center(false)
-    , m_is_videocamera_disabled(false)
     , m_preloaded_with_terrain(preloaded_with_terrain)
     , m_request_skeletonview_change(0)
     , m_reset_request(REQUEST_RESET_NONE)
@@ -6653,8 +6586,6 @@ Beam::Beam(
     networking = _networking;
     memset(truckname, 0, 256);
     sprintf(truckname, "t%i", truck_number);
-    memset(uniquetruckid, 0, 256);
-    strcpy(uniquetruckid, "-1");
     vehicle_ai = 0; // cosmic vole added January 14 2017
     driveable = NOT_DRIVEABLE;
     if (ismachine)
@@ -6732,7 +6663,7 @@ Beam::Beam(
         }
     }
 
-    // network buffer layout (without oob_t):
+    // network buffer layout (without RoRnet::TruckState):
     //
     //  - 3 floats (x,y,z) for the reference node 0
     //  - free_node - 1 times 3 short ints (compressed position info)
@@ -6765,9 +6696,9 @@ Beam::Beam(
     {
         state = NETWORKED;
         // malloc memory
-        oob1 = (oob_t*)malloc(sizeof(oob_t));
-        oob2 = (oob_t*)malloc(sizeof(oob_t));
-        oob3 = (oob_t*)malloc(sizeof(oob_t));
+        oob1 = (RoRnet::TruckState*)malloc(sizeof(RoRnet::TruckState));
+        oob2 = (RoRnet::TruckState*)malloc(sizeof(RoRnet::TruckState));
+        oob3 = (RoRnet::TruckState*)malloc(sizeof(RoRnet::TruckState));
         netb1 = (char*)malloc(netbuffersize);
         netb2 = (char*)malloc(netbuffersize);
         netb3 = (char*)malloc(netbuffersize);
@@ -6822,7 +6753,7 @@ Beam::Beam(
     mCamera = gEnv->mainCamera;
 
     // DEBUG UTILITY
-    // RigInspector::InspectRig(this, "d:\\Projects\\Rigs of Rods\\rig-inspection\\NextStable.log"); 
+    // RigInspector::InspectRig(this, "d:\\Projects\\Rigs of Rods\\rig-inspection\\NextStable.log");
 
     LOG(" ===== DONE LOADING VEHICLE");
 }
@@ -6874,7 +6805,6 @@ bool Beam::LoadTruck(
 
     if (ds.isNull() || !ds->isReadable())
     {
-#ifdef USE_MYGUI
         Console* console = RoR::App::GetConsole();
         if (console != nullptr)
         {
@@ -6888,7 +6818,6 @@ bool Beam::LoadTruck(
             );
             RoR::App::GetGuiManager()->PushNotification("Error:", "unable to load vehicle (unable to open file): " + fixed_file_name + " : " + errorStr);
         }
-#endif // USE_MYGUI
         return false;
     }
 
@@ -6961,12 +6890,12 @@ bool Beam::LoadTruck(
 
     LOG(" == Spawning vehicle: " + parser.GetFile()->name);
 
-    RigSpawner spawner;
+    RigSpawner spawner(m_sim_controller);
     spawner.Setup(this, parser.GetFile(), parent_scene_node, spawn_position, cache_entry_number);
     LOAD_RIG_PROFILE_CHECKPOINT(ENTRY_BEAM_LOADTRUCK_SPAWNER_SETUP);
     /* Setup modules */
     spawner.AddModule(parser.GetFile()->root_module);
-    if (parser.GetFile()->modules.size() > 0) /* The vehicle-selector may return selected modules even for vehicle with no modules defined! Hence this check. */
+    if (parser.GetFile()->user_modules.size() > 0) /* The vehicle-selector may return selected modules even for vehicle with no modules defined! Hence this check. */
     {
         std::vector<Ogre::String>::iterator itor = m_truck_config.begin();
         for (; itor != m_truck_config.end(); itor++)
@@ -7096,21 +7025,6 @@ bool Beam::LoadTruck(
     int mem = 0, memr = 0, tmpmem = 0;
     LOG("BEAM: memory stats following");
 
-    tmpmem = free_beam * sizeof(beam_t);
-    mem += tmpmem;
-    memr += MAX_BEAMS * sizeof(beam_t);
-    LOG("BEAM: beam memory: " + TOSTRING(tmpmem) + " B (" + TOSTRING(free_beam) + " x " + TOSTRING(sizeof(beam_t)) + " B) / " + TOSTRING(MAX_BEAMS * sizeof(beam_t)));
-
-    tmpmem = free_node * sizeof(node_t);
-    mem += tmpmem;
-    memr += MAX_NODES * sizeof(beam_t);
-    LOG("BEAM: node memory: " + TOSTRING(tmpmem) + " B (" + TOSTRING(free_node) + " x " + TOSTRING(sizeof(node_t)) + " B) / " + TOSTRING(MAX_NODES * sizeof(node_t)));
-
-    tmpmem = free_shock * sizeof(shock_t);
-    mem += tmpmem;
-    memr += MAX_SHOCKS * sizeof(beam_t);
-    LOG("BEAM: shock memory: " + TOSTRING(tmpmem) + " B (" + TOSTRING(free_shock) + " x " + TOSTRING(sizeof(shock_t)) + " B) / " + TOSTRING(MAX_SHOCKS * sizeof(shock_t)));
-
     tmpmem = free_prop * sizeof(prop_t);
     mem += tmpmem;
     memr += MAX_PROPS * sizeof(beam_t);
@@ -7121,21 +7035,10 @@ bool Beam::LoadTruck(
     memr += MAX_WHEELS * sizeof(beam_t);
     LOG("BEAM: wheel memory: " + TOSTRING(tmpmem) + " B (" + TOSTRING(free_wheel) + " x " + TOSTRING(sizeof(wheel_t)) + " B) / " + TOSTRING(MAX_WHEELS * sizeof(wheel_t)));
 
-    tmpmem = free_rigidifier * sizeof(rigidifier_t);
-    mem += tmpmem;
-    memr += MAX_RIGIDIFIERS * sizeof(beam_t);
-    LOG("BEAM: rigidifier memory: " + TOSTRING(tmpmem) + " B (" + TOSTRING(free_rigidifier) + " x " + TOSTRING(sizeof(rigidifier_t)) + " B) / " + TOSTRING(MAX_RIGIDIFIERS * sizeof(rigidifier_t)));
-
-    tmpmem = free_flare * sizeof(flare_t);
-    mem += tmpmem;
-    memr += free_flare * sizeof(beam_t);
-    LOG("BEAM: flare memory: " + TOSTRING(tmpmem) + " B (" + TOSTRING(free_flare) + " x " + TOSTRING(sizeof(flare_t)) + " B)");
-
     LOG("BEAM: truck memory used: " + TOSTRING(mem) + " B (" + TOSTRING(mem/1024) + " kB)");
     LOG("BEAM: truck memory allocated: " + TOSTRING(memr) + " B (" + TOSTRING(memr/1024) + " kB)");
 
     LOAD_RIG_PROFILE_CHECKPOINT(ENTRY_BEAM_LOADTRUCK_GROUNDMODEL_AND_STATS);
-#ifdef USE_MYGUI
     // now load any dashboards
     if (dash)
     {
@@ -7230,18 +7133,18 @@ bool Beam::LoadTruck(
         }
         dash->setVisible(false);
     }
-#endif // USE_MYGUI
     LOAD_RIG_PROFILE_CHECKPOINT(ENTRY_BEAM_LOADTRUCK_LOAD_DASHBOARDS);
 
     // Set beam defaults
     for (int i = 0; i < free_beam; i++)
     {
-        initial_beam_strength[i] = beams[i].strength;
-        default_beam_deform[i] = beams[i].minmaxposnegstress;
-        default_beam_plastic_coef[i] = beams[i].plastic_coef;
+        beams[i].initial_beam_strength       = beams[i].strength;
+        beams[i].default_beam_deform         = beams[i].minmaxposnegstress;
+        beams[i].default_beam_plastic_coef   = beams[i].plastic_coef;
     }
 
-    if (cameranodepos[0] != cameranodedir[0] && cameranodepos[0] >= 0 && cameranodepos[0] < MAX_NODES && cameranodedir[0] >= 0 && cameranodedir[0] < MAX_NODES)
+    // TODO: Check cam. nodes once on spawn! They never change --> no reason to repeat the check. ~only_a_ptr, 06/2017
+    if (cameranodepos[0] != cameranodedir[0] && this->IsNodeIdValid(cameranodepos[0]) && this->IsNodeIdValid(cameranodedir[0]))
     {
         Vector3 cur_dir = nodes[cameranodepos[0]].RelPosition - nodes[cameranodedir[0]].RelPosition;
         m_spawn_rotation = atan2(cur_dir.dotProduct(Vector3::UNIT_X), cur_dir.dotProduct(-Vector3::UNIT_Z));
@@ -7264,7 +7167,7 @@ bool Beam::LoadTruck(
     }
 
     Vector3 cinecam = nodes[0].AbsPosition;
-    if (cameranodepos[0] >= 0 && cameranodepos[0] < MAX_NODES)
+    if (this->IsNodeIdValid(cameranodepos[0]))
     {
         cinecam = nodes[cameranodepos[0]].AbsPosition;
     }
@@ -7325,11 +7228,6 @@ int Beam::getTruckType()
     return driveable;
 }
 
-std::string Beam::getTruckHash()
-{
-    return beamHash;
-}
-
 std::vector<authorinfo_t> Beam::getAuthors()
 {
     return authors;
@@ -7348,11 +7246,6 @@ int Beam::getBeamCount()
 beam_t* Beam::getBeams()
 {
     return beams;
-}
-
-float Beam::getDefaultDeformation()
-{
-    return default_deform;
 }
 
 int Beam::getNodeCount()

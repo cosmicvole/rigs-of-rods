@@ -32,7 +32,7 @@
 #include "ContentManager.h"
 #include "SkinManager.h"
 #include "RoRFrameListener.h"
-#include "MainThread.h"
+#include "MainMenu.h"
 #include "BeamFactory.h" // cosmic vole October 9 2017 Needed for races
 #include "RaceResult.h"
 #include "Race.h"
@@ -244,7 +244,7 @@ void CLASS::Cancel()
 
     if (App::GetActiveAppState() == App::APP_STATE_MAIN_MENU)
     {
-        RoR::App::GetMainThreadLogic()->LeaveMultiplayerServer();
+        //RoR::App::GetMainThreadLogic()->LeaveMultiplayerServer();
         App::GetGuiManager()->SetVisible_GameMainMenu(true);
     }
 }
@@ -797,10 +797,19 @@ void CLASS::OnSelectionDone()
     {
         //Player wants to enter the race
         
-        //See if player is loaded or create a new one
-        Beam *playerTruck = BeamFactory::getSingleton().getCurrentTruck();
-        
         ChampionshipManager &cm = ChampionshipManager::getSingleton();
+		/* WHY did we get playerTruck??? It didn't seem to be used anywhere here!
+		RoRFrameListener *sim_controller = cm.GetSimController();
+		if (sim_controller == nullptr)
+		{
+			LOG("Error no sim controller when trying to get truck to enter race.");
+			return;
+		}
+		
+		//See if player is loaded or create a new one
+        Beam *playerTruck = sim_controller->GetBeamFactory()->getCurrentTruck();
+        */
+		
         //Need to set starting positions etc.
         
         int raceIndex = cm.getSelectedRaceIndex();

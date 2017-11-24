@@ -3,7 +3,7 @@
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
     Copyright 2009      Lefteris Stamatogiannakis
-    Copyright 2013-2015 Petr Ohlidal
+    Copyright 2013-2017 Petr Ohlidal
 
     For more information, see http://www.rigsofrods.org/
 
@@ -49,7 +49,9 @@ struct eventsource_t
 struct collision_box_t;
 
 //collision_history_t is for a collision event debounce, necessary when racing against AI trucks.
-//If say 2 trucks (or worse 4 or 5) are all across 1 checkpoint, the game logic would keep firing off the event from envokeScriptCallback() thousands of times [actually the original code only fired it for the first truck but //that's a bug when racing against AI trucks] - obviously keeping track of just the last truckNum that collided doesn't help here and keeping track of the last cbox hit doesn't work either, so we need a history of recent cboxes //per truck with a timeout:
+//If say 2 trucks (or worse 4 or 5) are all across 1 checkpoint, the game logic would keep firing off the event from envokeScriptCallback() thousands of times [actually the original code only fired it for the first truck but 
+//that's a bug when racing against AI trucks] - obviously keeping track of just the last truckNum that collided doesn't help here and keeping track of the last cbox hit doesn't work either, so we need a history of recent cboxes 
+//per truck with a timeout:
 
 struct collision_history_t
 {
@@ -60,8 +62,6 @@ struct collision_history_t
 	collision_box_t* last_cbox_3;
 	float timer;
 };
-
-typedef std::vector<int> cell_t;
 
 class Landusemap;
 
@@ -78,16 +78,26 @@ public:
         FX_PARTICLE
     };
 
-    // these are absolute maximums per terrain
-    static const int MAX_COLLISION_BOXES = 5000;
-    static const int MAX_COLLISION_TRIS = 100000;
-
 private:
 
-    struct hash_t
+    /// Static collision object lookup system
+    /// -------------------------------------
+    /// Terrain is split into equal-size 'cells' of dimension CELL_SIZE, identified by CellID
+    /// A hash table aggregates elements from multiple cells in one entry
+    struct hash_coll_element_t
     {
-        unsigned int cellid;
-        cell_t* cell;
+        static const int ELEMENT_TRI_BASE_INDEX = 1000000; // Effectively a maximum number of collision boxes
+
+        inline hash_coll_element_t(unsigned int cell_id_, int value): cell_id(cell_id_), element_index(value) {}
+
+        inline bool IsCollisionBox() const { return element_index < ELEMENT_TRI_BASE_INDEX; }
+        inline bool IsCollisionTri() const { return element_index >= ELEMENT_TRI_BASE_INDEX; }
+
+        unsigned int cell_id;
+
+        /// Values below ELEMENT_TRI_BASE_INDEX are collision box indices (Collisions::m_collision_boxes),
+        ///    values above are collision tri indices (Collisions::m_collision_tris).
+        int element_index;
     };
 
     struct collision_tri_t
@@ -111,30 +121,22 @@ private:
     // how many elements per cell? power of 2 minus 2 is better
     static const int CELL_BLOCKSIZE = 126;
 
-    // how many cells in the pool? Increase in case of sparse distribution of objects
-    //static const int MAX_CELLS = 10000;
-    static const int UNUSED_CELLID = 0xFFFFFFFF;
-    static const int UNUSED_CELLELEMENT = 0xFFFFFFFF;
-
     // terrain size is limited to 327km x 327km:
     static const int CELL_SIZE = 2.0; // we divide through this
     static const int MAXIMUM_CELL = 0x7FFF;
 
+    RoRFrameListener* m_sim_controller;
+
     // collision boxes pool
-    collision_box_t collision_boxes[MAX_COLLISION_BOXES];
-    collision_box_t* last_called_cbox;
+    std::vector<collision_box_t> m_collision_boxes; // Formerly MAX_COLLISION_BOXES = 5000
+    collision_box_t* m_last_called_cbox;
     int last_called_trucknum; //cosmic vole added flag so multiple trucks can trigger the same checkpoint in succession October 18 2016
-    int free_collision_box;
 
     // collision tris pool;
-    collision_tri_t* collision_tris;
-    int free_collision_tri;
+    std::vector<collision_tri_t> m_collision_tris; // Formerly MAX_COLLISION_TRIS = 100000
 
     // collision hashtable
-    hash_t hashtable[HASH_SIZE];
-
-    // cell pool
-    std::vector<cell_t*> cells;
+    std::vector<hash_coll_element_t> hashtable[HASH_SIZE];
 
     // ground models
     std::map<Ogre::String, ground_model_t> ground_models;
@@ -153,21 +155,22 @@ private:
     Landusemap* landuse;
     Ogre::ManualObject* debugmo;
     bool debugMode;
-    int collision_count;
     int collision_version;
-    int largest_cellcount;
-    long max_col_tris;
+    inline int GetNumCollisionTris() const { return static_cast<int>(m_collision_tris.size()); }
+    inline int GetNumCollisionBoxes() const { return static_cast<int>(m_collision_boxes.size()); }
     unsigned int hashmask;
 
     void hash_add(int cell_x, int cell_z, int value);
     void hash_free(int cell_x, int cell_z, int value);
-    cell_t* hash_find(int cell_x, int cell_z);
+    int hash_find(int cell_x, int cell_z); /// Returns index to 'hashtable'
     unsigned int hashfunc(unsigned int cellid);
     void parseGroundConfig(Ogre::ConfigFile* cfg, Ogre::String groundModel = "");
 
     Ogre::Vector3 calcCollidedSide(const Ogre::Vector3& pos, const Ogre::Vector3& lo, const Ogre::Vector3& hi);
 
 public:
+
+    
 
     std::mutex m_scriptcallback_mutex;
 
@@ -177,7 +180,7 @@ public:
 
     eventsource_t* getEvent(int eventID) { return &eventsources[eventID]; };
 
-    Collisions();
+    Collisions(RoRFrameListener* sim_controller);
     ~Collisions();
 
     Ogre::Vector3 getPosition(const Ogre::String& inst, const Ogre::String& box);
@@ -194,7 +197,6 @@ public:
 
     void clearEventCache();
     void finishLoadingTerrain();
-    void printStats();
 
     int addCollisionBox(Ogre::SceneNode* tenode, bool rotating, bool virt, Ogre::Vector3 pos, Ogre::Vector3 rot, Ogre::Vector3 l, Ogre::Vector3 h, Ogre::Vector3 sr, const Ogre::String& eventname, const Ogre::String& instancename, bool forcecam, Ogre::Vector3 campos, Ogre::Vector3 sc = Ogre::Vector3::UNIT_SCALE, Ogre::Vector3 dr = Ogre::Vector3::ZERO, int event_filter = EVENT_ALL, int scripthandler = -1);
     int addCollisionMesh(Ogre::String meshname, Ogre::Vector3 pos, Ogre::Quaternion q, Ogre::Vector3 scale, ground_model_t* gm = 0, std::vector<int>* collTris = 0);
@@ -216,7 +218,6 @@ public:
         size_t& index_count, unsigned* & indices,
         const Ogre::Vector3& position = Ogre::Vector3::ZERO,
         const Ogre::Quaternion& orient = Ogre::Quaternion::IDENTITY, const Ogre::Vector3& scale = Ogre::Vector3::UNIT_SCALE);
-    void resizeMemory(long newSize);
 };
 
 void primitiveCollision(node_t* node, Ogre::Vector3& force, const Ogre::Vector3& velocity, const Ogre::Vector3& normal, float dt, ground_model_t* gm, float* nso, float penetration = 0, float reaction = -1.0f);

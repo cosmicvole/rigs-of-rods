@@ -34,7 +34,7 @@ class BeamEngine : public ZeroedMemoryAllocator
 
 public:
 
-    BeamEngine(float minRPM, float maxRPM, float torque, std::vector<float> gears, float dratio, int trucknum);
+    BeamEngine(float minRPM, float maxRPM, float torque, std::vector<float> gears, float dratio, Beam* actor);
     ~BeamEngine();
 
     float getAcc();
@@ -212,6 +212,8 @@ protected:
         MANUAL_RANGES
     };
 
+    Beam* m_actor;
+
     // gear stuff
     float refWheelRevolutions; //!< Gears; estimated wheel revolutions based on current vehicle speed along the long axis
     float curWheelRevolutions; //!< Gears; measured wheel revolutions
@@ -305,8 +307,6 @@ protected:
     float apressure;
 
     int automode; //!< Transmission mode (@see enum BeamEngine::shiftmodes)
-
-    int trucknum;
 
     bool is_Electric;
 };

@@ -22,20 +22,26 @@
 /// @author Thomas Fischer (thomas{AT}thomasfischer{DOT}biz)
 /// @date   18th of July 2010
 
-#ifdef USE_MYGUI
-#ifdef USE_SOCKETW
 
 #pragma once
 
 #include "RoRPrerequisites.h"
 
-#include "rornet.h"
+#include "RoRnet.h"
 #include "Singleton.h"
 
 #include <MyGUI.h>
 
+#ifdef USE_SOCKETW
+
 namespace RoR {
 namespace GUI {
+
+struct client_t
+{
+    RoRnet::UserInfo   user;                 //!< user struct
+    bool               used;                 //!< if this slot is used already
+};
 
 class MpClientList
 {
@@ -48,6 +54,8 @@ public:
 
     bool IsVisible();
     void SetVisible(bool value);
+
+    void SetSimController(RoRFrameListener* sim) { m_sim_controller = sim; }
 
 protected:
 
@@ -66,7 +74,7 @@ protected:
     MyGUI::WidgetPtr tooltipPanel, mpPanel;
     MyGUI::WindowPtr msgwin;
 
-    player_row_t player_rows[MAX_PEERS + 1];
+    player_row_t player_rows[RORNET_MAX_PEERS + 1];
 
     void clickInfoIcon(MyGUI::WidgetPtr sender);
     void clickUserGoIcon(MyGUI::WidgetPtr sender);
@@ -75,10 +83,11 @@ protected:
     MyGUI::WindowPtr netmsgwin;
     MyGUI::StaticTextPtr netmsgtext;
 
-    void updateSlot(player_row_t* row, user_info_t c, bool self);
+    void updateSlot(player_row_t* row, RoRnet::UserInfo c, bool self);
 
     client_t* clients;
     int lineheight;
+    RoRFrameListener* m_sim_controller;
 
     static const int sidebarWidth = 250;
 };
@@ -87,5 +96,4 @@ protected:
 } // namespace RoR
 
 //cosmic vole bug fix - moved these back below the namespace curlies December 30 2016
-#endif // USE_SOCKETW
 #endif // USE_MYGUI

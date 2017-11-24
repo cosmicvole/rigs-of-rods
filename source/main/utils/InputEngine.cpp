@@ -2,7 +2,7 @@
     This source file is part of Rigs of Rods
     Copyright 2005-2012 Pierre-Michel Ricordel
     Copyright 2007-2012 Thomas Fischer
-    Copyright 2013+     Petr Ohlidal & contributors
+    Copyright 2013-2017 Petr Ohlidal & contributors
 
     For more information, see http://www.rigsofrods.org/
 
@@ -1629,6 +1629,12 @@ eventInfo_t eventInfo[] = {
         _L("toggle between windowed and fullscreen mode")
     },
     {
+        "COMMON_TELEPORT_TOGGLE",
+        EV_COMMON_TELEPORT_TOGGLE,
+        "Keyboard EXPL+F2", // Only in character mode
+        _L("enter/exit teleport mode")
+    },
+    {
         "CAMERA_FREE_MODE_FIX",
         EV_CAMERA_FREE_MODE_FIX,
         "Keyboard EXPL+ALT+C",
@@ -2016,7 +2022,7 @@ bool InputEngine::setup(String hwnd, bool capture, bool capturemouse, bool captu
             LOG(String("Exception raised on joystick creation: ") + String(ex.eText));
         }
 #else  //NOOGRE
-        catch(...)
+        catch (...)
         {
         }
 #endif //NOOGRE
@@ -2219,9 +2225,7 @@ void InputEngine::windowResized(Ogre::RenderWindow* rw)
     const OIS::MouseState& ms = mMouse->getMouseState();
     ms.width = width;
     ms.height = height;
-#ifdef USE_MYGUI
     RoR::App::GetGuiManager()->windowResized(rw);
-#endif //MYGUI
 }
 
 void InputEngine::SetKeyboardListener(OIS::KeyListener* keyboard_listener)
@@ -2312,10 +2316,8 @@ bool InputEngine::povMoved(const OIS::JoyStickEvent& arg, int)
 /* --- Key Events ------------------------------------------ */
 bool InputEngine::keyPressed(const OIS::KeyEvent& arg)
 {
-#ifdef USE_MYGUI
     if (RoR::App::GetGuiManager()->keyPressed(arg))
         return true;
-#endif //MYGUI
 
     //LOG("*** keyPressed");
     if (keyState[arg.key] != 1)
@@ -2327,10 +2329,8 @@ bool InputEngine::keyPressed(const OIS::KeyEvent& arg)
 
 bool InputEngine::keyReleased(const OIS::KeyEvent& arg)
 {
-#ifdef USE_MYGUI
     if (RoR::App::GetGuiManager()->keyReleased(arg))
         return true;
-#endif //MYGUI
     //LOG("*** keyReleased");
     if (keyState[arg.key] != 0)
         inputsChanged = true;
@@ -2341,10 +2341,8 @@ bool InputEngine::keyReleased(const OIS::KeyEvent& arg)
 /* --- Mouse Events ------------------------------------------ */
 bool InputEngine::mouseMoved(const OIS::MouseEvent& arg)
 {
-#ifdef USE_MYGUI
     if (RoR::App::GetGuiManager()->mouseMoved(arg))
         return true;
-#endif //MYGUI
     //LOG("*** mouseMoved");
     inputsChanged = true;
     mouseState = arg.state;
@@ -2353,10 +2351,8 @@ bool InputEngine::mouseMoved(const OIS::MouseEvent& arg)
 
 bool InputEngine::mousePressed(const OIS::MouseEvent& arg, OIS::MouseButtonID id)
 {
-#ifdef USE_MYGUI
     if (RoR::App::GetGuiManager()->mousePressed(arg, id))
         return true;
-#endif //MYGUI
     //LOG("*** mousePressed");
     inputsChanged = true;
     mouseState = arg.state;
@@ -2365,10 +2361,8 @@ bool InputEngine::mousePressed(const OIS::MouseEvent& arg, OIS::MouseButtonID id
 
 bool InputEngine::mouseReleased(const OIS::MouseEvent& arg, OIS::MouseButtonID id)
 {
-#ifdef USE_MYGUI
     if (RoR::App::GetGuiManager()->mouseReleased(arg, id))
         return true;
-#endif //MYGUI
     //LOG("*** mouseReleased");
     inputsChanged = true;
     mouseState = arg.state;

@@ -25,15 +25,14 @@
 
 #include "SceneMouse.h"
 
+#include "Application.h"
+#include "CameraManager.h"
 #include "Beam.h"
 #include "BeamFactory.h"
-#include "CameraManager.h"
-#include "Application.h"
 #include "GUIManager.h"
+#include "RoRFrameListener.h"
 
-#ifdef USE_MYGUI
 # include <MyGUI.h>
-#endif //USE_MYGUI
 #include <OgreSceneManager.h>
 #include <OgreMaterialManager.h>
 #include <OgreResourceGroupManager.h>
@@ -43,7 +42,8 @@
 using namespace Ogre;
 using namespace RoR;
 
-SceneMouse::SceneMouse()
+SceneMouse::SceneMouse():
+    m_sim_controller(nullptr)
 {
     mouseGrabForce = 30000.0f;
     grab_truck = NULL;
@@ -126,8 +126,8 @@ bool SceneMouse::mouseMoved(const OIS::MouseEvent& _arg)
         Ray mouseRay = getMouseRay();
 
         // walk all trucks
-        Beam** trucks = BeamFactory::getSingleton().getTrucks();
-        int trucksnum = BeamFactory::getSingleton().getTruckCount();
+        Beam** trucks = m_sim_controller->GetBeamFactory()->getTrucks();
+        int trucksnum = m_sim_controller->GetBeamFactory()->getTruckCount();
         minnode = -1;
         grab_truck = NULL;
         for (int i = 0; i < trucksnum; i++)
@@ -141,7 +141,7 @@ bool SceneMouse::mouseMoved(const OIS::MouseEvent& _arg)
 
                 for (int j = 0; j < trucks[i]->free_node; j++)
                 {
-                    if (trucks[i]->node_mouse_grab_disabled[j])
+                    if (trucks[i]->nodes[j].no_mouse_grab)
                         continue;
 
                     // check if our ray intersects with the node
@@ -228,7 +228,7 @@ bool SceneMouse::mousePressed(const OIS::MouseEvent& _arg, OIS::MouseButtonID _i
     {
         if (gEnv->cameraManager && gEnv->cameraManager->getCurrentBehavior() == CameraManager::CAMERA_BEHAVIOR_VEHICLE)
         {
-            Beam* truck = BeamFactory::getSingleton().getCurrentTruck();
+            Beam* truck = m_sim_controller->GetBeamFactory()->getCurrentTruck();
 
             if (truck)
             {
