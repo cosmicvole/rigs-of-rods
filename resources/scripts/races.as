@@ -559,22 +559,33 @@ class racesManager {
 					competitor.lastCheckpointInstance = inst;
 					competitor.penaltyGiven = false;
 					//this.message("cosmicvoleDEBUG Advancing checkpoint to " + checkpointNum + " for eventTruckNum: "+eventTruckNum+" curTruckNum: "+game.getCurrentTruckNumber(), "tick.png");
+					game.log("Advancing checkpoint to " + checkpointNum + " for eventTruckNum: "+eventTruckNum+" curTruckNum: "+game.getCurrentTruckNumber());
 					this.advanceCheckpoint(raceID, eventTruckNum, competitor);
 				}
 				else{
 					if( (checkpointNum == 0) and this.restartRaceOnStart )
 					{
+						game.log("Checkpoint 0 reached. (Re)starting the race.");
 						this.cancelCurrentRace();
 						competitor.lastCheckpointInstance = inst;
 						competitor.penaltyGiven = false;
 						this.startRace(raceID, competitor);
 					}
 					else if(competitor.isThePlayer and checkpointNum == this.raceDict[raceID].getNextCheckpointNum(this.raceDict[raceID].getNextCheckpointNum(competitor.lastCheckpoint)) )
+					{
 						this.message("You missed a checkpoint! Please go back and pass checkpoint "+this.raceDict[raceID].getNextCheckpointNum(this.lastCheckpoint)+" first." + " for eventTruckNum: "+eventTruckNum+" curTruckNum: "+game.getCurrentTruckNumber(), "cross.png");
+						game.log("You missed a checkpoint! Please go back and pass checkpoint "+this.raceDict[raceID].getNextCheckpointNum(this.lastCheckpoint)+" first." + " for eventTruckNum: "+eventTruckNum+" curTruckNum: "+game.getCurrentTruckNumber());
+					}
 					else if(competitor.isThePlayer and checkpointNum == this.raceDict[raceID].getPreviousCheckpointNum(competitor.lastCheckpoint) )
+					{
 						this.message("Wrong checkpoint! Are you driving in the correct direction?" + " for eventTruckNum: "+eventTruckNum+" curTruckNum: "+game.getCurrentTruckNumber(), "cross.png");
+						game.log("Wrong checkpoint! Are you driving in the correct direction?" + " for eventTruckNum: "+eventTruckNum+" curTruckNum: "+game.getCurrentTruckNumber());
+					}
 					else if (competitor.isThePlayer)
+					{
 						this.message("Wrong checkpoint! You must find and pass checkpoint "+this.raceDict[raceID].getNextCheckpointNum(competitor.lastCheckpoint) + " for eventTruckNum: "+eventTruckNum+" curTruckNum: "+game.getCurrentTruckNumber(), "cross.png");
+						game.log("Wrong checkpoint! You must find and pass checkpoint "+this.raceDict[raceID].getNextCheckpointNum(competitor.lastCheckpoint) + " for eventTruckNum: "+eventTruckNum+" curTruckNum: "+game.getCurrentTruckNumber());
+					}
 				}
 			}
 			else
@@ -1148,7 +1159,7 @@ class racesManager {
 	// post: The new time is checked and stored if necessary
 	void addLapTime(int raceID, double time, racesCompetitor@ competitor, bool &out newBestLap, bool &out newPersonalBestLap)
 	{
-		if( this.raceDict[raceID].bestLapTime > time or this.raceDict[raceID].bestLapTime == 0.0)
+		if( time > 0.0 and (this.raceDict[raceID].bestLapTime > time or this.raceDict[raceID].bestLapTime == 0.0))
 		{
 			// call the callback function TODO record truckNum / player / bot ID also! cosmic vole January 12 2017
 			RACE_EVENT_CALLBACK @handle;
@@ -1169,7 +1180,7 @@ class racesManager {
 			newBestLap = false;
             
         //check for personal best also, now that bots are also setting times - cosmic vole January 12 2017
-        if (competitor.bestLapTime > time or competitor.bestLapTime == 0.0)
+        if (time > 0.0 and (competitor.bestLapTime > time or competitor.bestLapTime == 0.0))
         {
             competitor.bestLapTime = time;
             newPersonalBestLap = true;
@@ -1211,7 +1222,7 @@ class racesManager {
 	// post: The new time is checked and stored if necessary
 	void addRaceTime(int raceID, double time, bool &out newBestRace)
 	{
-		if( this.raceDict[raceID].bestRaceTime > time or this.raceDict[raceID].bestRaceTime == 0.0)
+		if(time > 0 and (this.raceDict[raceID].bestRaceTime > time or this.raceDict[raceID].bestRaceTime == 0.0))
 		{
 			// call the callback function
 			RACE_EVENT_CALLBACK @handle;
@@ -1512,7 +1523,7 @@ class racesManager {
 			return;
 		}
 		if( competitor.state == this.STATE_Racing)
-			this.setupArrow(this.raceList[competitor.currentRace].getNextCheckpointNum(competitor.lastCheckpoint), competitor);
+			this.setupArrow(this.raceDict[competitor.currentRace].getNextCheckpointNum(competitor.lastCheckpoint), competitor);
 		else
 			this.removeArrow();
 	}
@@ -1520,7 +1531,7 @@ class racesManager {
 	// set a navigational arrow
 	void setupArrow(int position, racesCompetitor@ competitor)
 	{		
-		if( (position < 0) or (position > this.raceList[competitor.currentRace].checkPointsCount-1) )
+		if( (position < 0) or (position > this.raceDict[competitor.currentRace].checkPointsCount-1) )
 		{ // hide the arrow
 			this.removeArrow();
 			return;
@@ -1537,10 +1548,10 @@ class racesManager {
 				instanceNum = parseInt(tmp[3]);
 		}
 		
-		if( this.raceList[competitor.currentRace].checkpoints[position].length() > uint(instanceNum) )
-			v = this.raceList[competitor.currentRace].checkpoints[position][instanceNum];
-		else if( this.raceList[competitor.currentRace].checkpoints[position].length() > 0 )
-			v = this.raceList[competitor.currentRace].checkpoints[position][0];
+		if( this.raceDict[competitor.currentRace].checkpoints[position].length() > uint(instanceNum) )
+			v = this.raceDict[competitor.currentRace].checkpoints[position][instanceNum];
+		else if( this.raceDict[competitor.currentRace].checkpoints[position].length() > 0 )
+			v = this.raceDict[competitor.currentRace].checkpoints[position][0];
 		else
 		{
 			//this.message("cosmicvoleDEBUG removing arrow this.currentRace: " + this.currentRace + " position: "+position+" curTruckNum: "+game.getCurrentTruckNumber(), "flag_orange.png");
@@ -1560,20 +1571,20 @@ class racesManager {
 		}
 		if (competitor.currentLap > 0)
 		{
-			lapText = "\nlap " + competitor.currentLap + " / " + this.raceList[competitor.currentRace].laps;
+			lapText = "\nlap " + competitor.currentLap + " / " + this.raceDict[competitor.currentRace].laps;
 		}
 		else
 		{
-			lapText = "\nlap 1 / " + this.raceList[competitor.currentRace].laps;
+			lapText = "\nlap 1 / " + this.raceDict[competitor.currentRace].laps;
 		}
 
-		if( this.raceList[competitor.currentRace].laps == this.LAPS_NoLaps )
-			game.UpdateDirectionArrow(this.raceList[competitor.currentRace].raceName+"\ncheckpoint "+position+" / "+(this.raceList[this.currentRace].checkPointsCount-1+"\n"+racePosText), vector3(v[0], v[1], v[2]));
+		if( this.raceDict[competitor.currentRace].laps == this.LAPS_NoLaps )
+			game.UpdateDirectionArrow(this.raceDict[competitor.currentRace].raceName+"\ncheckpoint "+position+" / "+(this.raceDict[this.currentRace].checkPointsCount-1+"\n"+racePosText), vector3(v[0], v[1], v[2]));
 		else
 		{
 			if( position == 0 )
-				position = this.raceList[competitor.currentRace].checkPointsCount;
-			game.UpdateDirectionArrow(this.raceList[competitor.currentRace].raceName+"\ncheckpoint "+position+" / "+(this.raceList[this.currentRace].checkPointsCount+"\n"+lapText+racePosText), vector3(v[0], v[1], v[2]));
+				position = this.raceDict[competitor.currentRace].checkPointsCount;
+			game.UpdateDirectionArrow(this.raceDict[competitor.currentRace].raceName+"\ncheckpoint "+position+" / "+(this.raceDict[this.currentRace].checkPointsCount+"\n"+lapText+racePosText), vector3(v[0], v[1], v[2]));
 		}
 	}
 	
@@ -1584,32 +1595,32 @@ class racesManager {
 	
 	void setPenaltyTime(int raceID, int seconds)
 	{
-		this.raceList[raceID].penaltyTime = seconds;
+		this.raceDict[raceID].penaltyTime = seconds;
 	}
 	
 	int getPenaltyTime(int raceID)
 	{
-		return this.raceList[raceID].penaltyTime;
+		return this.raceDict[raceID].penaltyTime;
 	}
 	
 	void setVersion(int raceID, const string &in version)
 	{
-		this.raceList[raceID].setVersion(version);
+		this.raceDict[raceID].setVersion(version);
 	}
 	
 	void hideRace(int raceID)
 	{
-		this.raceList[raceID].hide();
+		this.raceDict[raceID].hide();
 	}
 	
 	void unhideRace(int raceID)
 	{
-		this.raceList[raceID].unhide();
+		this.raceDict[raceID].unhide();
 	}
 	
 	void setStartNumber(int raceID, int startNum)
 	{
-		this.raceList[raceID].startNum = startNum;
+		this.raceDict[raceID].startNum = startNum;
 	}
 	
 	void resetEventCallback()
@@ -1621,7 +1632,7 @@ class racesManager {
 	{
 		for( int raceID = 0; raceID < this.raceCount; ++raceID )
 		{
-			this.raceList[raceID].loadRace(@this.raceDataFile);
+			this.raceDict[raceID].loadRace(@this.raceDataFile);
 		}
 	}
 	
@@ -1635,7 +1646,7 @@ class racesManager {
 	{
 		for( int raceID = 0; raceID < this.raceCount; ++raceID )
 		{
-			this.raceList[raceID].saveRace(@this.raceDataFile);
+			this.raceDict[raceID].saveRace(@this.raceDataFile);
 		}
 
 		this.raceDataFile.save();		
@@ -1643,14 +1654,14 @@ class racesManager {
 	
 	void saveRace(int raceID)
 	{
-		this.raceList[raceID].saveRace(@this.raceDataFile);
+		this.raceDict[raceID].saveRace(@this.raceDataFile);
 		this.raceDataFile.save();
 	}
 	
 	
 	void loadRace(int raceID)
 	{
-		this.raceList[raceID].loadRace(@this.raceDataFile);
+		this.raceDict[raceID].loadRace(@this.raceDataFile);
 	}
 }
 

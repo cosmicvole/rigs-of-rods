@@ -370,8 +370,9 @@ void ChampionshipManager::loadChampionship(Ogre::DataStreamPtr& ds)//(Ogre::Stri
     //Add one on to represent the player. Note, I'm not too keen on this logic. cosmic vole October 24 2017
     number_of_competitors++;
     RaceCompetitor playerCompetitor;
-    playerCompetitor.SetName(Ogre::String("Player"));
-    playerCompetitor.SetModel(Ogre::String("FordTaunusSedan.truck")); //TODO Where to select player model?
+    playerCompetitor.SetName(Ogre::UTFString(L"Player"));
+	Ogre::String playerModel = m_championship_config.GetStringEx("Model", "Player");
+    playerCompetitor.SetModel(playerModel);
     playerCompetitor.SetSkin(Ogre::String(""));
     //These won't be used for the player (the difficulty settings hold the actual values used)
     playerCompetitor.SetTorqueMultiplier(1.0);

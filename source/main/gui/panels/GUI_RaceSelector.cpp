@@ -1038,116 +1038,132 @@ void CLASS::UpdateControls(CacheEntry* entry)
         const std::vector<RaceCompetitor> &competitors = cm.getCompetitors();
         const std::vector<Race> &races = cm.getRaces();
         int raceIndex = cm.getSelectedRaceIndex();
-        Race race = races[raceIndex];
-        /*
-        for (int i = 0; i < competitors.size(); i++)
-        {
-            RaceCompetitor &competitor = competitors[i];
-            RaceResult result = race.GetRaceResult(competitor.truckNum);
-            
-        }*/
-        std::vector<RaceResult> results = race.GetSortedRaceResults();
-        int pos = 1;
-        //We switch to an appropriate monospace font for this:
-        Ogre::UTFString raceresulttxt = _L("┌────────────────────────────────────────────────────────────────┐") + newline;
-        raceresulttxt = raceresulttxt + _L("│Race Results                                                    │") + newline;
-        raceresulttxt = raceresulttxt + _L("├────────────────────────────┬───────────┬───────────┬───────────┤") + newline;
-        raceresulttxt = raceresulttxt + _L("│Driver                      │Total Time │Best Lap   │Avg. Speed │") + newline;
-        raceresulttxt = raceresulttxt + _L("├────────────────────────────┼───────────┼───────────┼───────────┤") + newline;
-        for (std::vector<RaceResult>::iterator it = results.begin(); it != results.end(); ++it)
-        {
-            /*
-            if (&(*it) == (RaceResult*)nullptr)
-            {
-                LOG("Null RaceResult* at position " + TOSTRING(pos) + "!");
-                continue;
-            }
-            */
-            RaceResult &result = *it;
-            int truckNum = result.GetTruckNum();
-            LOG("Checking result for truckNum: " + TOSTRING(truckNum) + " at position " + TOSTRING(pos) + ".");
-            RaceCompetitor *competitor = cm.getCompetitorByTruckNum(truckNum);
-            Ogre::UTFString driverName = TOUTFSTRING(pos) + Ogre::UTFString(". ");
-            if (competitor != nullptr)
-            {
-                Ogre::UTFString name = competitor->GetName();
-                //BUG !! This crashes. They both wrap char *s and append is taking a const char * that seems to be a tab character....????
-                driverName.append(name);
-                LOG("Competitor driver name is '" + name + "'.");
-            }
-            else
-            {
-                LOG("Competitor not found for truckNum: " + TOSTRING(result.GetTruckNum()));
-            }
-            if (driverName.length() > 28)
-            {
-                driverName = driverName.substr(0, 28);
-            }
-            else if (driverName.length() < 28)
-            {
-                driverName.append(28 - driverName.length(), ' ');
-            }
-            Ogre::UTFString totalTime = result.FormatLapTime(result.GetTotalTime());
-            if (totalTime.length() > 11)
-            {
-                totalTime = totalTime.substr(0, 11);
-            }
-            else if (totalTime.length() < 11)
-            {
-                totalTime.append(11 - totalTime.length(), ' ');
-            }
-            Ogre::UTFString bestLapTime = result.FormatLapTime(result.GetBestLapTime());
-            if (bestLapTime.length() > 11)
-            {
-                bestLapTime = bestLapTime.substr(0, 11);
-            }
-            else if (bestLapTime.length() < 11)
-            {
-                bestLapTime.append(11 - bestLapTime.length(), ' ');
-            }
-            raceresulttxt = raceresulttxt + L"│" + driverName + L"│" + totalTime + L"│" + bestLapTime +  L"│           │" + newline;
-            pos++;
-        }
-        
-        raceresulttxt = raceresulttxt + L"│                            │           │           │           │" + newline;
-        raceresulttxt = raceresulttxt + L"│                            │           │           │           │" + newline;
-        raceresulttxt = raceresulttxt + L"└────────────────────────────┴───────────┴───────────┴───────────┘" + newline;
-        
-        //We need to do something like this (taken from Configurator.cpp):
-        /*
-        wxStaticText *dText = new wxStaticText(aboutPanel, wxID_ANY, name, wxPoint(x, y));
-        wxFont dfont=dText->GetFont();
-        dfont.SetWeight(wxFONTWEIGHT_BOLD);
-        dfont.SetPointSize(dfont.GetPointSize()+3);
-        dText->SetFont(dfont);
-        y += dText->GetSize().y;
-     */
-     
-     /* This possibly works better without using wxWidgets - it's in GUI_MultiplayerClientList.cpp
-    MyGUI::ImageBox* nimg = netmsgwin->createWidget<MyGUI::ImageBox>("ImageBox", 0, 0, 16, 16, MyGUI::Align::Default, "Main");
-    nimg->setImageTexture("error.png");
-    netmsgtext = netmsgwin->createWidget<MyGUI::TextBox>("TextBox", 18, 2, 300, 40, MyGUI::Align::Default, "helptext");
-    netmsgtext->setCaption(_L("Slow  Network  Download"));
-    netmsgtext->setFontName("DefaultBig");
-    netmsgtext->setTextColour(MyGUI::Colour::Red);
-    netmsgtext->setFontHeight(lineheight);
-    netmsgwin->setVisible(false);
-    */
-     
-     
-     
-        //m_EntryDescription->setFontName("Default");//"DejaVuSans"); //Needed for the ASCII table - TODO add it as a separate text area or box in the layout
-        //TODO also we probably need to set it back after - or it will probably stay like that forever!
-        /*
-        wxStaticText *dText = new wxStaticText(m_Main, wxID_ANY, descriptiontxt, wxPoint(x, y));
-        wxFont dfont=dText->GetFont();
-        dfont.SetName("DejaVuSans");
-        dfont.SetWeight(wxFONTWEIGHT_BOLD);
-        dfont.SetPointSize(dfont.GetPointSize()+3);
-        dText->SetFont(dfont);
-        */
-        m_RaceResults->setCaption(convertToMyGUIString(raceresulttxt));
-        //descriptiontxt = descriptiontxt + newline + raceresulttxt;
+		if (raceIndex >= 0 && raceIndex < races.size())
+		{
+			Race race = races[raceIndex];
+			/*
+			for (int i = 0; i < competitors.size(); i++)
+			{
+				RaceCompetitor &competitor = competitors[i];
+				RaceResult result = race.GetRaceResult(competitor.truckNum);
+				
+			}*/
+			std::vector<RaceResult> results = race.GetSortedRaceResults();
+			int pos = 1;
+			//We switch to an appropriate monospace font for this:
+			Ogre::UTFString raceresulttxt = _L("┌────────────────────────────────────────────────────────────────┐") + newline;
+			raceresulttxt = raceresulttxt + _L("│Race Results                                                    │") + newline;
+			raceresulttxt = raceresulttxt + _L("├────────────────────────────┬───────────┬───────────┬───────────┤") + newline;
+			raceresulttxt = raceresulttxt + _L("│Driver                      │Total Time │Best Lap   │Avg. Speed │") + newline;
+			raceresulttxt = raceresulttxt + _L("├────────────────────────────┼───────────┼───────────┼───────────┤") + newline;
+			for (std::vector<RaceResult>::iterator it = results.begin(); it != results.end(); ++it)
+			{
+				/*
+				if (&(*it) == (RaceResult*)nullptr)
+				{
+					LOG("Null RaceResult* at position " + TOSTRING(pos) + "!");
+					continue;
+				}
+				*/
+				RaceResult &result = *it;
+				int truckNum = result.GetTruckNum();
+				LOG("Checking result for truckNum: " + TOSTRING(truckNum) + " at position " + TOSTRING(pos) + ".");
+				RaceCompetitor *competitor = cm.getCompetitorByTruckNum(truckNum);
+				Ogre::UTFString driverName = TOUTFSTRING(pos) + Ogre::UTFString(". ");
+				if (competitor != nullptr)
+				{
+					LOG("Address of competitor: " + TOSTRING((long)competitor) + ".");
+					Ogre::UTFString name = competitor->GetName();
+					if (name.length() < 1 || name.length() > 1000)
+					{
+						LOG("Corrupt or missing driver name with length: " + TOSTRING(name.length()) + ".");
+						LOG("The corrupt name is: " + name + ".");
+					}
+					else
+					{
+						//BUG !! This crashes. They both wrap char *s and append is taking a const char * that seems to be a tab character....????
+						driverName.append(name);
+						LOG("Competitor driver name is '" + name + "'.");
+					}
+				}
+				else
+				{
+					LOG("Competitor not found for truckNum: " + TOSTRING(result.GetTruckNum()));
+				}
+				if (driverName.length() > 28)
+				{
+					driverName = driverName.substr(0, 28);
+				}
+				else if (driverName.length() < 28)
+				{
+					driverName.append(28 - driverName.length(), ' ');
+				}
+				Ogre::UTFString totalTime = result.FormatLapTime(result.GetTotalTime());
+				if (totalTime.length() > 11)
+				{
+					totalTime = totalTime.substr(0, 11);
+				}
+				else if (totalTime.length() < 11)
+				{
+					totalTime.append(11 - totalTime.length(), ' ');
+				}
+				Ogre::UTFString bestLapTime = result.FormatLapTime(result.GetBestLapTime());
+				if (bestLapTime.length() > 11)
+				{
+					bestLapTime = bestLapTime.substr(0, 11);
+				}
+				else if (bestLapTime.length() < 11)
+				{
+					bestLapTime.append(11 - bestLapTime.length(), ' ');
+				}
+				raceresulttxt = raceresulttxt + L"│" + driverName + L"│" + totalTime + L"│" + bestLapTime +  L"│           │" + newline;
+				pos++;
+			}
+			
+			raceresulttxt = raceresulttxt + L"│                            │           │           │           │" + newline;
+			raceresulttxt = raceresulttxt + L"│                            │           │           │           │" + newline;
+			raceresulttxt = raceresulttxt + L"└────────────────────────────┴───────────┴───────────┴───────────┘" + newline;
+			
+			//We need to do something like this (taken from Configurator.cpp):
+			/*
+			wxStaticText *dText = new wxStaticText(aboutPanel, wxID_ANY, name, wxPoint(x, y));
+			wxFont dfont=dText->GetFont();
+			dfont.SetWeight(wxFONTWEIGHT_BOLD);
+			dfont.SetPointSize(dfont.GetPointSize()+3);
+			dText->SetFont(dfont);
+			y += dText->GetSize().y;
+		 */
+		 
+		 /* This possibly works better without using wxWidgets - it's in GUI_MultiplayerClientList.cpp
+		MyGUI::ImageBox* nimg = netmsgwin->createWidget<MyGUI::ImageBox>("ImageBox", 0, 0, 16, 16, MyGUI::Align::Default, "Main");
+		nimg->setImageTexture("error.png");
+		netmsgtext = netmsgwin->createWidget<MyGUI::TextBox>("TextBox", 18, 2, 300, 40, MyGUI::Align::Default, "helptext");
+		netmsgtext->setCaption(_L("Slow  Network  Download"));
+		netmsgtext->setFontName("DefaultBig");
+		netmsgtext->setTextColour(MyGUI::Colour::Red);
+		netmsgtext->setFontHeight(lineheight);
+		netmsgwin->setVisible(false);
+		*/
+		 
+		 
+		 
+			//m_EntryDescription->setFontName("Default");//"DejaVuSans"); //Needed for the ASCII table - TODO add it as a separate text area or box in the layout
+			//TODO also we probably need to set it back after - or it will probably stay like that forever!
+			/*
+			wxStaticText *dText = new wxStaticText(m_Main, wxID_ANY, descriptiontxt, wxPoint(x, y));
+			wxFont dfont=dText->GetFont();
+			dfont.SetName("DejaVuSans");
+			dfont.SetWeight(wxFONTWEIGHT_BOLD);
+			dfont.SetPointSize(dfont.GetPointSize()+3);
+			dText->SetFont(dfont);
+			*/
+			m_RaceResults->setCaption(convertToMyGUIString(raceresulttxt));
+			//descriptiontxt = descriptiontxt + newline + raceresulttxt;
+		}
+		else
+		{
+			LOG("Selected race index out of range: " + TOSTRING(raceIndex) + ".");
+		}
     }
     else if (m_loader_type == RT_Championship)
     {

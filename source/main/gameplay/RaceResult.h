@@ -43,6 +43,10 @@
 class RaceResult : public ZeroedMemoryAllocator
 {
 public:
+	RaceResult()
+	{
+		truckNum = -1;
+	}
     void SetBestLapTime(float bestLapTime) {this->bestLapTime = bestLapTime;}
     void SetBestLapTimeOfRace(bool bestLapTimeOfRace) {this->bestLapTimeOfRace = bestLapTimeOfRace;}
     void SetCurrentLapTime(float currentLapTime) {this->currentLapTime = currentLapTime;}
@@ -100,6 +104,10 @@ public:
     }
     friend bool operator <(const RaceResult& a, const RaceResult& b)
     {
+		if (a.truckNum == -1)
+		{
+			return false;
+		}
         if (a.lapsStarted > b.lapsStarted)
         {
             return true;
@@ -126,6 +134,28 @@ public:
         }
         return false;
     }
+    RaceResult & operator = (const RaceResult &other)
+    {
+        // Don't do anything if it is the same reference
+        if (&other == this)
+            return *this;
+        this->raceID = other.raceID;
+        this->truckNum = other.truckNum;
+		this->currentLapTime = other.currentLapTime;
+		this->lastLapTime = other.lastLapTime;
+		this->bestLapTime = other.bestLapTime;
+		this->totalTime = other.totalTime;
+		this->lapsStarted = other.lapsStarted;
+		this->position = other.position;
+		this->waypointsPassed = other.waypointsPassed;
+		this->numWaypointsInLap = other.numWaypointsInLap;
+		this->totalDistance = other.totalDistance;
+		this->personalBestLapTime = other.personalBestLapTime;
+		this->bestLapTimeOfRace = other.bestLapTimeOfRace;
+		this->lapTimeRecord = other.lapTimeRecord;
+		this->disqualified = other.disqualified;
+		this->retired = other.retired;
+	}
 private:
     int raceID;
     int truckNum;

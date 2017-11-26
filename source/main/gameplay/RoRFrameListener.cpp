@@ -2639,7 +2639,7 @@ bool RoRFrameListener::SetupGameplayLoop()
         Beam *playerTruck = nullptr;
         if (competitors.size() > 0)
         {
-            const RaceCompetitor &player = competitors[0];
+            const RaceCompetitor /*&*/player = competitors[0];
             Vector3 pos;
             int gridPos = player.GetGridPosition() - 1;
             int row = gridPos / 2;
@@ -2675,7 +2675,7 @@ bool RoRFrameListener::SetupGameplayLoop()
             
             /*const RaceCompetitor& competitor*/RaceCompetitor competitor = competitors[competitorIndex];
             model = competitor.GetModel();
-            if (model == "")
+            if (model.empty()) //== "")
             {
                 //TODO championship needs to control selection of player truck model
                 model = "FordTaunusSedan.truck";
@@ -2731,9 +2731,9 @@ bool RoRFrameListener::SetupGameplayLoop()
                     if (isPlayer)
                     {
                         //This is the player's race car on the grid
-                        if (competitor.GetName() == "")
+                        if (competitor.GetName().empty()) //== "")
                         {
-                            competitor.SetName("Player");
+                            competitor.SetName(Ogre::UTFString("Player"));
                             cm.updateCompetitorByIndex(competitor, competitorIndex);
                         }
                         GetBeamFactory()->setCurrentTruck(truck->trucknum);              

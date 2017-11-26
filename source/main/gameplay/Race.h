@@ -48,7 +48,7 @@ class RaceCompetitor //: public ZeroedMemoryAllocator
 public:
     RaceCompetitor()
     {
-        this->name = "";
+        this->name = Ogre::UTFString(L"");
         this->model = "";
         this->skin = "";
         this->driverScale = 0.85f; //TODO set to 1.0 and load from championship file!
@@ -63,7 +63,7 @@ public:
         this->gripMultiplier = 1.0f;
         this->aggression = 1.0f;
     }
-    static RaceCompetitor NONE;
+    //static RaceCompetitor NONE;
     Ogre::UTFString GetName() const
     {
         return name;
@@ -202,9 +202,9 @@ public:
     inline float GetTorqueMultiplier() const {return torqueMultiplier;}
 
 private:
-    Ogre::String name;
-    Ogre::String model;
-    Ogre::String skin;
+    Ogre::UTFString name;
+    Ogre::UTFString model;
+    Ogre::UTFString skin;
     float driverScale;
     int truckNum;
     Beam *beam;
@@ -233,7 +233,7 @@ public:
     inline void Update(float dt) { if (IsRunning()) raceElapsedTime += dt; }
     double GetRaceStartTime()
     { 
-        LOG("GetRaceStartTime() for raceID:" + TOSTRING(raceID) + " Time: " + TOSTRING(raceStartTime) + " Name: " + trackName + ".");
+        //LOG("GetRaceStartTime() for raceID:" + TOSTRING(raceID) + " Time: " + TOSTRING(raceStartTime) + " Name: " + trackName + ".");
         return raceStartTime;
     }
     inline float GetElapsedRaceTime() { return raceElapsedTime; }
@@ -254,7 +254,14 @@ public:
         std::vector<RaceResult> sorted;
         for (std::map<int, RaceResult>::iterator it = results.begin(); it != results.end(); ++it)
         {
-            sorted.push_back(it->second);
+			if (it->second.truckNum >= 0)
+			{
+				sorted.push_back(it->second);
+			}
+			else
+			{
+				LOG("GetSortedRaceResults(): Ignoring result with truckNum: " + TOSTRING(it->second.truckNum) + ".");
+			}
         }
         std::sort(sorted.begin(), sorted.end());
         return sorted;

@@ -178,7 +178,7 @@ public:
         {
             return nullptr;
         }
-        return &(*it->second);
+        return it->second;//&(*it->second);
     }
     inline void setSelectedRaceIndex(int index) { if (current_race < 0 || current_race >= number_of_races) return; selected_race = index; }
     inline void setCurrentRaceIndex(int index) { current_race = index; }
@@ -235,11 +235,13 @@ public:
     {
         std::vector<RaceCompetitor> sorted;
         int numCompetitors = competitors.size();
+		LOG("GetSortedStandings(): competitors.size() " + TOSTRING(numCompetitors) + ".");
         for (std::vector<RaceCompetitor>::iterator itc = competitors.begin(); itc != competitors.end(); ++itc)
         {
             int truckNum = itc->GetTruckNum();
             if (truckNum < 0)
             {
+				LOG("GetSortedStandings(): Skipping competitor with truckNum: " + TOSTRING(truckNum) + ".");
                 continue;
             }
             itc->SetPoints(0);
@@ -251,7 +253,7 @@ public:
                 int points = itc->GetPoints();
                 int podiums = itc->GetPodiums();
                 const RaceResult &result = it->GetRaceResult(truckNum);
-                int position = result.GetPosition();
+                int position = (result.GetTruckNum() >= 0)?result.GetPosition():-1;
                 switch (position)
                 {
                     case 1:

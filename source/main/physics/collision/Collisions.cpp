@@ -131,7 +131,8 @@ Collisions::Collisions(RoRFrameListener* sim_controller)
         hashmask++;
     }
 
-        //cosmic vole added to handle collisions with multiple trucks
+	//cosmic vole added to handle collisions with multiple trucks
+	memset(collision_history, 0, sizeof(collision_history_t) * MAX_TRUCKS);
 
     loadDefaultModels();
     defaultgm = getGroundModelByString("concrete");
